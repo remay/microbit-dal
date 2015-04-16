@@ -5,7 +5,11 @@
   */
 #include "inc/MicroBitDisplay.h"
 
- 
+    /**
+      * Provides the mapping from Matrix ROW/COL to a linear X/Y buffer. 
+      * It's arranged such that matrixMap[col, row] provides the [x,y] screen co-ord.     
+      */
+#ifdef MICROBUG_REFERENCE_DEVICE
     const MatrixPoint MicroBitDisplay::matrixMap[MICROBIT_DISPLAY_COLUMN_COUNT][MICROBIT_DISPLAY_ROW_COUNT] = 
     {   {MatrixPoint(0,0),MatrixPoint(0,1),MatrixPoint(0,2), MatrixPoint(0,3), MatrixPoint(0,4)},
         {MatrixPoint(1,0),MatrixPoint(1,1),MatrixPoint(1,2), MatrixPoint(1,3), MatrixPoint(1,4)},
@@ -13,6 +17,31 @@
         {MatrixPoint(3,0),MatrixPoint(3,1),MatrixPoint(3,2), MatrixPoint(3,3), MatrixPoint(3,4)},
         {MatrixPoint(4,0),MatrixPoint(4,1),MatrixPoint(4,2), MatrixPoint(4,3), MatrixPoint(4,4)} 
     };
+#endif
+
+#ifdef MICROBIT_3X9
+    const MatrixPoint MicroBitDisplay::matrixMap[MICROBIT_DISPLAY_COLUMN_COUNT][MICROBIT_DISPLAY_ROW_COUNT] = 
+    {   
+        {MatrixPoint(0,4),MatrixPoint(0,3),MatrixPoint(1,1)},
+        {MatrixPoint(1,4),MatrixPoint(4,2),MatrixPoint(0,1)},
+        {MatrixPoint(2,4),MatrixPoint(3,2),MatrixPoint(4,0)},  
+        {MatrixPoint(3,4),MatrixPoint(2,2),MatrixPoint(3,0)},
+        {MatrixPoint(4,4),MatrixPoint(1,2),MatrixPoint(2,0)},
+        {MatrixPoint(4,3),MatrixPoint(0,2),MatrixPoint(1,0)},
+        {MatrixPoint(3,3),MatrixPoint(4,1),MatrixPoint(0,0)},
+        {MatrixPoint(2,3),MatrixPoint(3,1),MatrixPoint(NO_CONN,NO_CONN)},
+        {MatrixPoint(1,3),MatrixPoint(2,1),MatrixPoint(NO_CONN,NO_CONN)}
+    };
+#endif
+
+#ifdef MICROBIT_9X3
+    const MatrixPoint MicroBitDisplay::matrixMap[MICROBIT_DISPLAY_COLUMN_COUNT][MICROBIT_DISPLAY_ROW_COUNT] = 
+    {   
+        {MatrixPoint(0,4), MatrixPoint(1,4), MatrixPoint(2,4), MatrixPoint(3,4), MatrixPoint(4,4), MatrixPoint(4,3), MatrixPoint(3,3), MatrixPoint(2,3), MatrixPoint(1,3)},
+        {MatrixPoint(0,3), MatrixPoint(4,2), MatrixPoint(3,2), MatrixPoint(2,2), MatrixPoint(1,2), MatrixPoint(0,2), MatrixPoint(4,1), MatrixPoint(3,1), MatrixPoint(2,1)},
+        {MatrixPoint(1,1), MatrixPoint(0,1), MatrixPoint(4,0), MatrixPoint(3,0), MatrixPoint(2,0), MatrixPoint(1,0), MatrixPoint(0,0), MatrixPoint(NO_CONN,NO_CONN), MatrixPoint(NO_CONN,NO_CONN)}        
+    };
+#endif
 
  
 /**
@@ -35,16 +64,27 @@ MatrixPoint::MatrixPoint(int x, int y)
   * @param x the width of the display in pixels.
   * @param y the height of the display in pixels.     
   */
-MicroBitDisplay::MicroBitDisplay(int id, int x, int y) : columnPins(MICROBIT_DISPLAY_COLUMN_PINS), rowPins(MICROBIT_DISPLAY_ROW_PINS), image(x,y)
+MicroBitDisplay::MicroBitDisplay(int id, int x, int y) : columnPins(MICROBIT_DISPLAY_COLUMN_PINS), rowPins(MICROBIT_DISPLAY_ROW_PINS), image(x*2,y)
 {
     this->id = id;
+    this->width = x;
+    this->height = y;
     this->brightness = MICROBIT_DEFAULT_BRIGHTNESS;
     this->strobeRow = 0;
-    this->strobe.attach(this, &MicroBitDisplay::strobeUpdate, 0.005);
+    
+    this->scrollingDelay = 0;
+    this->scrollingTick = 0;
+    this->scrollingPosition = 0;
+    this->scrollingChar = 0;
+    this->scrollingText = NULL;
+
+    this->strobe.attach(this, &MicroBitDisplay::strobeUpdate, MICROBIT_DISPLAY_REFRESH_PERIOD);
 }
 
 /**
   * Internal frame update method, used to strobe the display.
+  * TODO: Write a more efficient, complementary variation of this method for the case where 
+  * MICROBIT_DISPLAY_ROW_COUNT > MICROBIT_DISPLAY_COLUMN_COUNT.
   */   
 void MicroBitDisplay::strobeUpdate()
 {
@@ -65,10 +105,40 @@ void MicroBitDisplay::strobeUpdate()
     }
 
     // Write to the matrix display.
+    columnPins.write(0xff);    
     rowPins.write(rowdata);
     columnPins.write(~coldata);
+    
+    // Update Scrolling Text if we need to.
+    if (scrollingText != NULL && (++scrollingTick == scrollingDelay))
+    {
+        scrollingTick = 0;
+        this->updateScroll();
+    }
 }
 
+/**
+  * Internal scrollText update method. 
+  * Shift the screen image by one pixel to the left. If necessary, paste in the next char.
+  */   
+void MicroBitDisplay::updateScroll()
+{    
+    image.shiftLeft(1);
+    scrollingPosition++;
+    
+    if (scrollingPosition == width)
+    {        
+        scrollingPosition=0;
+        
+        image.print(scrollingChar < scrollTextLength ? scrollingText[scrollingChar] : ' ',width,0);
+
+        if (scrollingChar > scrollTextLength)
+            scrollingText = NULL;
+        
+        scrollingChar++;
+   }
+    
+}
 
 /**
   * Prints the given character to the display.
@@ -113,7 +183,7 @@ void MicroBitDisplay::printString(char *str, int delay)
   */
 void MicroBitDisplay::scrollString(char *str)
 {
-    // TODO:
+    this->scrollString(str, MICROBIT_DEFAULT_SCROLL_SPEED);
 }
 
 /**
@@ -126,7 +196,13 @@ void MicroBitDisplay::scrollString(char *str)
   */
 void MicroBitDisplay::scrollString(char *str, int delay)
 {
-    // TODO:
+    this->image.clear();
+    this->scrollingDelay = delay;
+    this->scrollingTick = delay-1;
+    this->scrollingPosition = width-1;
+    this->scrollingChar = 0;
+    this->scrollingText = str;
+    this->scrollTextLength = strlen(str);
 }
 
 /**

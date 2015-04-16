@@ -8,6 +8,7 @@
 #define MICROBIT_H
 
 #include "mbed.h"
+#include "MicroBitMessageBus.h"
 #include "MicroBitButton.h"
 #include "MicroBitDisplay.h"
 #include "MicroBitImage.h"
@@ -34,31 +35,23 @@
 #define MICROBIT_PIN_USER_LED          P0_18
 
 
-struct MicroBitEvent
-{
-    int source;         // ID of the component sending the event.
-    int value;          // context specific value.
-    void *context;      // context specific data.
-};
-
 class MicroBit
 {
-    static void (*messageBus)(MicroBitEvent *);     // Message Bus Handle
-    void init();                                    // Internal constructor. ARM compiler doesn't seem to support constructor chaining...
+    // Internal constructor. The ARM compiler doesn't seem to support constructor chaining...
+    void init();                                    
     
     public:
-    
+    static MicroBitMessageBus MessageBus;      
     //
     // Add member variables to represent each of the core components on the device.
     //
 
-
     MicroBitLED         userLED;
     MicroBitDisplay     display;
-
-/*
     MicroBitButton      leftButton;
+/*
     MicroBitButton      rightButton;
+
     MicroBitIO          pins[MICROBIT_IO_PINS];
 */    
 
@@ -67,7 +60,7 @@ class MicroBit
       * Create a representation of a MicroBit device.
       * @param messageBus callback function to receive MicroBitMessageBus events.
       */
-    MicroBit(void (*messageBus)(MicroBitEvent *));    
+    MicroBit();    
 };
 
 #endif

@@ -7,14 +7,33 @@
 #ifndef MICROBIT_DISPLAY_H
 #define MICROBIT_DISPLAY_H
 
-#define MICROBIT_DEFAULT_SCROLL_SPEED       1000
+#define MICROBIT_DISPLAY_REFRESH_PERIOD     0.002
+#define MICROBIT_9X3
+#define NO_CONN 0
+
+#define MICROBIT_DEFAULT_SCROLL_SPEED       50
 #define MICROBIT_DEFAULT_BRIGHTNESS         128
 
-#define MICROBIT_DISPLAY_COLUMN_COUNT       5
-#define MICROBIT_DISPLAY_COLUMN_PINS        P0_24, P0_25, P0_28, P0_29, P0_30
+#ifdef MICROBUG_REFERENCE_DEVICE
 #define MICROBIT_DISPLAY_ROW_COUNT          5
 #define MICROBIT_DISPLAY_ROW_PINS           P0_0, P0_1, P0_2, P0_3, P0_4
+#define MICROBIT_DISPLAY_COLUMN_COUNT       5
+#define MICROBIT_DISPLAY_COLUMN_PINS        P0_24, P0_25, P0_28, P0_29, P0_30
+#endif
 
+#ifdef MICROBIT_3X9
+#define MICROBIT_DISPLAY_ROW_COUNT          3
+#define MICROBIT_DISPLAY_ROW_PINS           P0_12, P0_13, P0_14
+#define MICROBIT_DISPLAY_COLUMN_COUNT       9
+#define MICROBIT_DISPLAY_COLUMN_PINS        P0_15, P0_16, P0_17, P0_18, P0_19, P0_24, P0_25, P0_28, P0_29
+#endif
+
+#ifdef MICROBIT_9X3
+#define MICROBIT_DISPLAY_ROW_COUNT          9
+#define MICROBIT_DISPLAY_ROW_PINS           P0_15, P0_16, P0_17, P0_18, P0_19, P0_24, P0_25, P0_28, P0_29
+#define MICROBIT_DISPLAY_COLUMN_COUNT       3
+#define MICROBIT_DISPLAY_COLUMN_PINS        P0_12, P0_13, P0_14
+#endif
 
 #include "mbed.h"
 #include "MicroBitImage.h"
@@ -31,18 +50,27 @@ struct MatrixPoint
 class MicroBitDisplay
 {
     int id;
+    int width;
+    int height;
     int brightness;
     int strobeRow;
     Ticker strobe;
     BusOut columnPins;
     BusOut rowPins;
-
+    
+    char *scrollingText;
+    int scrollTextLength;
+    int scrollingChar;
+    int scrollingPosition;
+    int scrollingDelay;
+    int scrollingTick;
+    
     static const MatrixPoint matrixMap[MICROBIT_DISPLAY_COLUMN_COUNT][MICROBIT_DISPLAY_ROW_COUNT];
+    
+    void updateScroll();
     
     public:
     MicroBitImage image;
- 
-
 
     /**
       * Constructor. 

@@ -67,10 +67,10 @@ void MicroBitImage::init(int x, int y, int **bitmap)
     
     // create a jagged array to represent the image. We use a jagged rather than 2D array here to 
     // ease type checking across the myriad of languages that might target us.
-    this->bitmap = new int*[height];
+    this->bitmap = new int*[width];
 
-    for (int i = 0; i < height; i++)
-        this->bitmap[i] = new int[width];
+    for (int i = 0; i < width; i++)
+        this->bitmap[i] = new int[height];
 
     if (bitmap)
         this->printImage(0,0,bitmap);
@@ -85,8 +85,9 @@ void MicroBitImage::init(int x, int y, int **bitmap)
   */
 void MicroBitImage::clear()
 {
-    for (int i = 0; i < height; i++)
-        memset(this->bitmap[i], 0, width*sizeof(int));
+    for (int x = 0; x < width; x++)
+        for (int y = 0; y < height; y++)
+            this->bitmap[x][y] = 0;
 }
  
 
@@ -162,43 +163,12 @@ void MicroBitImage::print(char c, int x, int y)
     
     unsigned char v;
     
-    /*
-    
-    // Smiley.
-    // - * - * -
-    // - - - - -
-    // * - * - *
-    // * - - - *
-    // - * * * -
-    char font[5] = {0x0a, 0x00, 0x15, 0x11, 0x0e};
-
-    this->clear();
-    this->bitmap[1][0] = 1;
-    this->bitmap[3][0] = 1;
-    this->bitmap[0][2] = 1;
-    this->bitmap[2][2] = 1;
-    this->bitmap[4][2] = 1;
-    this->bitmap[0][3] = 1;
-    this->bitmap[4][3] = 1;
-    this->bitmap[1][4] = 1;
-    this->bitmap[2][4] = 1;
-    this->bitmap[3][4] = 1;
-    */
-    
     // Sanity check. Silently ignore anything out of bounds.
     if (x >= width || y >= height || c < MICROBIT_FONT_ASCII_START || c > MICROBIT_FONT_ASCII_END)
         return;
     
     // Paste.
     int offset = (c-MICROBIT_FONT_ASCII_START) * 3;
-    
-    /*
-    for (int i = 0; i < min(MICROBIT_FONT_WIDTH,width-x); i++)
-        for (int j = 0; j < min(MICROBIT_FONT_HEIGHT,height-y); j++)
-             this->bitmap[i+x][j+y] = ((font[c][j] & (0x10 >> i)) ? 1 : 0);
-    */
-
-//   Format: {0xR1:R2, 0xR3:R4, 0xR5:0....}
     
     for (int row=0; row<MICROBIT_FONT_HEIGHT; row++)
     {
@@ -230,7 +200,7 @@ void MicroBitImage::shiftLeft(int n)
                 
     // Blank fill the rightmost column.
     for (int j = 0; j < height; j++)
-        this->bitmap[width][j] = 0;
+        this->bitmap[width-1][j] = 0;
         
 }
 
