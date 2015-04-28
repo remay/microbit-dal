@@ -14,6 +14,7 @@
 #include "MicroBitImage.h"
 #include "MicroBitIO.h"
 #include "MicroBitLED.h"
+#include "MicroBitFiber.h"
 
 #define MICROBIT_IO_PINS       8            // TODO: Need to know how many. :-)
 

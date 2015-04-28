@@ -4,6 +4,7 @@
   * An MicroBitDisplay represents the LED matrix array on the MicroBit device.
   */
 #include "inc/MicroBitDisplay.h"
+#include "MicroBitFiber.h"
 
     /**
       * Provides the mapping from Matrix ROW/COL to a linear X/Y buffer. 
@@ -115,6 +116,9 @@ void MicroBitDisplay::strobeUpdate()
         scrollingTick = 0;
         this->updateScroll();
     }
+    
+    // Scheduler callback. We do this here just as a single timer is more efficient. :-)
+    scheduler_tick();
 }
 
 /**

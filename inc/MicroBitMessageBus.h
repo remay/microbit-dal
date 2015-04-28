@@ -42,10 +42,10 @@ struct MicroBitListener
 {
 	int id;								// The ID of the component that this listener is interested in. 
 	int value;							// Value this listener is interested in receiving. 
-	void (*cb)(MicroBitEvent *);		// Callback function associated with this listener.
+	void (*cb)(void);					// Callback function associated with this listener.
 	MicroBitListener *next;
 
-	MicroBitListener(int id, int value, void (*messageBus)(MicroBitEvent *));
+	MicroBitListener(int id, int value, void (*messageBus)(void));
 };
 
 struct MicroBitMessageBusCache
@@ -96,7 +96,7 @@ class MicroBitMessageBus
 	  * @param hander The function to call when an event is received.
 	  */
 
-	void listen(int id, int value, void (*handler)(MicroBitEvent *));
+	void listen(int id, int value, void (*handler)(void));
 
 	private:
 	MicroBitListener *listeners;		// Chain of active listeners.

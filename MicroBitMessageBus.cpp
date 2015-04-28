@@ -5,12 +5,13 @@
   */
 
 #include "MicroBitMessageBus.h"
+#include "MicroBitFiber.h"
 
 /**
   * Constructor. 
   * Create a new Message Bus Listener.
   */
-MicroBitListener::MicroBitListener(int id, int value, void (*handler)(MicroBitEvent *))
+MicroBitListener::MicroBitListener(int id, int value, void (*handler)(void))
 {
 	this->id = id;
 	this->value = value;
@@ -75,7 +76,8 @@ void MicroBitMessageBus::send(MicroBitEvent *evt, MicroBitMessageBusCache *c)
 	while (l != NULL && l->id == evt->source)
 	{
 		if(l->value ==  MICROBIT_BUS_VALUE_ANY || l->value == evt->value)
-			l->cb(evt);
+			//l->cb();
+			create_fiber(l->cb);
 
 		l = l->next;
 	}
@@ -84,7 +86,8 @@ void MicroBitMessageBus::send(MicroBitEvent *evt, MicroBitMessageBusCache *c)
 	l = listeners;
 	while (l != NULL && l->id == MICROBIT_BUS_ID_ANY)
 	{
-		l->cb(evt);
+		//l->cb();
+		create_fiber(l->cb);
 		l = l->next;	
 	}
 
@@ -110,7 +113,7 @@ void MicroBitMessageBus::send(MicroBitEvent *evt, MicroBitMessageBusCache *c)
   * TODO: We currently don't support C++ member functions as callbacks, which we should.
   */
 
-void MicroBitMessageBus::listen(int id, int value, void (*handler)(MicroBitEvent *))
+void MicroBitMessageBus::listen(int id, int value, void (*handler)(void))
 {
 	MicroBitListener *l, *p;
 	MicroBitListener *newListener = new MicroBitListener(id, value, handler);
