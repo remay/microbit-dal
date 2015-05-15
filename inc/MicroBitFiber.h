@@ -23,7 +23,7 @@
 // TODO: Consider a split mode scheduler, that monitors used stack size, and maintains a dedicated, persistent
 // stack for any long lived fibers with large stacks.
 //
-#define FIBER_STACK_SIZE        64
+#define FIBER_STACK_SIZE        512
 #define FIBER_TICK_PERIOD_MS    2
 #define CORTEX_M0_STACK_BASE    (0x20004000 - 4) 
 

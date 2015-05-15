@@ -8,6 +8,7 @@
 #define MICROBIT_H
 
 #include "mbed.h"
+#include "MicroBitCompat.h"
 #include "MicroBitMessageBus.h"
 #include "MicroBitButton.h"
 #include "MicroBitDisplay.h"
@@ -15,8 +16,12 @@
 #include "MicroBitIO.h"
 #include "MicroBitLED.h"
 #include "MicroBitFiber.h"
+#include "BLEDevice.h"
+#include "DeviceInformationService.h"
+#include "DFUService.h"
 
-#define MICROBIT_IO_PINS       8            // TODO: Need to know how many. :-)
+
+#define MICROBIT_IO_PINS                8            // TODO: Need to know how many. :-)
 
 // Enumeration of core components.
 #define MICROBIT_ID_LEFT_BUTTON         1
@@ -33,29 +38,33 @@
 #define MICROBIT_ID_IO_8                13
 
 // mBed pin assignments of core components.
-#define MICROBIT_PIN_USER_LED          P0_18
+#define MICROBIT_PIN_USER_LED           P0_18
+#define MICROBIT_PIN_SDA                P0_22
+#define MICROBIT_PIN_SCL                P0_20
 
 
 class MicroBit
-{
-    // Internal constructor. The ARM compiler doesn't seem to support constructor chaining...
-    void init();                                    
-    
+{                                    
     public:
-    static MicroBitMessageBus MessageBus;      
-    //
-    // Add member variables to represent each of the core components on the device.
-    //
+    
+    // Device level Message Bus abstraction
+    MicroBitMessageBus  MessageBus;      
 
-    MicroBitLED         userLED;
-    MicroBitDisplay     display;
-    MicroBitButton      leftButton;
+    // Member variables to represent each of the core components on the device.
+    //MicroBitLED         userLED;
+    MicroBitDisplay     *display;
+    //MicroBitButton      leftButton;
+    //I2C                 i2c;
 /*
     MicroBitButton      rightButton;
 
     MicroBitIO          pins[MICROBIT_IO_PINS];
 */    
-
+    // Bluetooth related member variables.
+    BLEDevice                   *ble;
+    DeviceInformationService    *ble_device_information_service;
+    DFUService                  *ble_firmware_update_service;
+    
     /**
       * Constructor. 
       * Create a representation of a MicroBit device.
@@ -63,6 +72,12 @@ class MicroBit
       */
     MicroBit();    
 };
+
+// Definition of the global instance of the MicroBit class.
+// Using this as a variation on the singleton pattern, just to make
+// code integration a littl bit easier for 3rd parties.
+extern MicroBit uBit;
+
 
 #endif
 

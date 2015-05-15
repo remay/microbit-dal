@@ -6,6 +6,8 @@
 #include "inc/MicroBitDisplay.h"
 #include "MicroBitFiber.h"
 
+extern Serial pc;
+
     /**
       * Provides the mapping from Matrix ROW/COL to a linear X/Y buffer. 
       * It's arranged such that matrixMap[col, row] provides the [x,y] screen co-ord.     
@@ -35,12 +37,27 @@
     };
 #endif
 
-#ifdef MICROBIT_9X3
+#ifdef MICROBIT_SB1
     const MatrixPoint MicroBitDisplay::matrixMap[MICROBIT_DISPLAY_COLUMN_COUNT][MICROBIT_DISPLAY_ROW_COUNT] = 
     {   
         {MatrixPoint(0,4), MatrixPoint(1,4), MatrixPoint(2,4), MatrixPoint(3,4), MatrixPoint(4,4), MatrixPoint(4,3), MatrixPoint(3,3), MatrixPoint(2,3), MatrixPoint(1,3)},
         {MatrixPoint(0,3), MatrixPoint(4,2), MatrixPoint(3,2), MatrixPoint(2,2), MatrixPoint(1,2), MatrixPoint(0,2), MatrixPoint(4,1), MatrixPoint(3,1), MatrixPoint(2,1)},
         {MatrixPoint(1,1), MatrixPoint(0,1), MatrixPoint(4,0), MatrixPoint(3,0), MatrixPoint(2,0), MatrixPoint(1,0), MatrixPoint(0,0), MatrixPoint(NO_CONN,NO_CONN), MatrixPoint(NO_CONN,NO_CONN)}        
+    };
+#endif
+
+#ifdef MICROBIT_SB2
+    const MatrixPoint MicroBitDisplay::matrixMap[MICROBIT_DISPLAY_COLUMN_COUNT][MICROBIT_DISPLAY_ROW_COUNT] = 
+    {   
+        {MatrixPoint(0,0),MatrixPoint(4,2),MatrixPoint(2,4)},
+        {MatrixPoint(2,0),MatrixPoint(0,2),MatrixPoint(4,4)},
+        {MatrixPoint(4,0),MatrixPoint(2,2),MatrixPoint(0,4)},  
+        {MatrixPoint(4,3),MatrixPoint(1,0),MatrixPoint(0,1)},
+        {MatrixPoint(3,3),MatrixPoint(3,0),MatrixPoint(1,1)},
+        {MatrixPoint(2,3),MatrixPoint(3,4),MatrixPoint(2,1)},
+        {MatrixPoint(1,3),MatrixPoint(1,4),MatrixPoint(3,1)},
+        {MatrixPoint(0,3),MatrixPoint(NO_CONN,NO_CONN),MatrixPoint(4,1)},
+        {MatrixPoint(1,2),MatrixPoint(NO_CONN,NO_CONN),MatrixPoint(3,2)}
     };
 #endif
 
@@ -65,7 +82,7 @@ MatrixPoint::MatrixPoint(int x, int y)
   * @param x the width of the display in pixels.
   * @param y the height of the display in pixels.     
   */
-MicroBitDisplay::MicroBitDisplay(int id, int x, int y) : columnPins(MICROBIT_DISPLAY_COLUMN_PINS), rowPins(MICROBIT_DISPLAY_ROW_PINS), image(x*2,y)
+MicroBitDisplay::MicroBitDisplay(int id, int x, int y) : columnPins(MICROBIT_DISPLAY_COLUMN_PINS), rowPins(MICROBIT_DISPLAY_ROW_PINS), image(x*2,y*2)
 {
     this->id = id;
     this->width = x;
@@ -92,7 +109,7 @@ void MicroBitDisplay::strobeUpdate()
     // TODO: Cache row data for future use, so we don't recompute so often?
     int rowdata;
     int coldata;
-
+    
     // move on to next row.
     strobeRow = (strobeRow+1) % MICROBIT_DISPLAY_ROW_COUNT;
     rowdata = 1 << strobeRow;
@@ -106,7 +123,7 @@ void MicroBitDisplay::strobeUpdate()
     }
 
     // Write to the matrix display.
-    columnPins.write(0xff);    
+    columnPins.write(0xffff);    
     rowPins.write(rowdata);
     columnPins.write(~coldata);
     
@@ -118,7 +135,9 @@ void MicroBitDisplay::strobeUpdate()
     }
     
     // Scheduler callback. We do this here just as a single timer is more efficient. :-)
+#ifdef FIBER_SCHEDULER    
     scheduler_tick();
+#endif    
 }
 
 /**

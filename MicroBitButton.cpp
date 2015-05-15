@@ -27,7 +27,7 @@ void MicroBitButton::rising()
     evt->timestamp = 0;
     evt->value = MICROBIT_BUTTON_EVT_UP;
     
-    MicroBit::MessageBus.send(evt);        
+    uBit.MessageBus.send(evt);        
 }
 
 /**
@@ -42,7 +42,7 @@ void MicroBitButton::falling()
     evt->timestamp = 0;
     evt->value = MICROBIT_BUTTON_EVT_DOWN;
     
-    MicroBit::MessageBus.send(evt);        
+    uBit.MessageBus.send(evt);        
 }
 
 
@@ -54,5 +54,4 @@ int MicroBitButton::isPressed()
 {
     return !pin;
 }
-
 
