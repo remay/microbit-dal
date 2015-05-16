@@ -9,7 +9,7 @@
 
 #define MICROBIT_DISPLAY_REFRESH_PERIOD     0.002
 
-#define MICROBIT_SB1
+#define MICROBIT_SB2
 
 #define NO_CONN 0
 
@@ -55,7 +55,6 @@ struct MatrixPoint
     MatrixPoint(int x, int y);
 };
 
-
 class MicroBitDisplay
 {
     int id;
@@ -95,6 +94,12 @@ class MicroBitDisplay
       * Frame update method, invoked periodically to strobe the display.
       */   
     void strobeUpdate();
+
+    /**
+      * Registers the strobeUpdate method with the IRQ handler.
+      * Display begins refreshing after this call.
+      */   
+    void startDisplay();
 
     /**
       * Prints the given character to the display.

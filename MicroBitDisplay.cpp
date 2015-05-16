@@ -3,10 +3,7 @@
   *
   * An MicroBitDisplay represents the LED matrix array on the MicroBit device.
   */
-#include "inc/MicroBitDisplay.h"
-#include "MicroBitFiber.h"
-
-extern Serial pc;
+#include "MicroBit.h"
 
     /**
       * Provides the mapping from Matrix ROW/COL to a linear X/Y buffer. 
@@ -82,7 +79,7 @@ MatrixPoint::MatrixPoint(int x, int y)
   * @param x the width of the display in pixels.
   * @param y the height of the display in pixels.     
   */
-MicroBitDisplay::MicroBitDisplay(int id, int x, int y) : columnPins(MICROBIT_DISPLAY_COLUMN_PINS), rowPins(MICROBIT_DISPLAY_ROW_PINS), image(x*2,y*2)
+MicroBitDisplay::MicroBitDisplay(int id, int x, int y) : strobe(), columnPins(MICROBIT_DISPLAY_COLUMN_PINS), rowPins(MICROBIT_DISPLAY_ROW_PINS), image(x*2,y)
 {
     this->id = id;
     this->width = x;
@@ -95,9 +92,18 @@ MicroBitDisplay::MicroBitDisplay(int id, int x, int y) : columnPins(MICROBIT_DIS
     this->scrollingPosition = 0;
     this->scrollingChar = 0;
     this->scrollingText = NULL;
-
-    this->strobe.attach(this, &MicroBitDisplay::strobeUpdate, MICROBIT_DISPLAY_REFRESH_PERIOD);
 }
+
+void displayISR()
+{
+    uBit.display->strobeUpdate();
+}
+
+void MicroBitDisplay::startDisplay()
+{
+    this->strobe.attach(displayISR, MICROBIT_DISPLAY_REFRESH_PERIOD);
+}
+
 
 /**
   * Internal frame update method, used to strobe the display.
@@ -105,7 +111,7 @@ MicroBitDisplay::MicroBitDisplay(int id, int x, int y) : columnPins(MICROBIT_DIS
   * MICROBIT_DISPLAY_ROW_COUNT > MICROBIT_DISPLAY_COLUMN_COUNT.
   */   
 void MicroBitDisplay::strobeUpdate()
-{
+{   
     // TODO: Cache row data for future use, so we don't recompute so often?
     int rowdata;
     int coldata;
@@ -126,7 +132,7 @@ void MicroBitDisplay::strobeUpdate()
     columnPins.write(0xffff);    
     rowPins.write(rowdata);
     columnPins.write(~coldata);
-    
+
     // Update Scrolling Text if we need to.
     if (scrollingText != NULL && (++scrollingTick == scrollingDelay))
     {
@@ -136,7 +142,7 @@ void MicroBitDisplay::strobeUpdate()
     
     // Scheduler callback. We do this here just as a single timer is more efficient. :-)
 #ifdef FIBER_SCHEDULER    
-    scheduler_tick();
+    //scheduler_tick();
 #endif    
 }
 

@@ -4,10 +4,6 @@
 
 #include "MicroBit.h"
 
-#ifdef MICROBIT_DBG
-Serial pc(USBTX, USBRX);
-#endif
-
 MicroBit uBit;
 
 char *defaultMessage = "HI HOWARD! WANT TO PLAY?";
@@ -23,18 +19,26 @@ updateScroll(char* str, int len)
     update = 1;
 }
 
-
-void dfuCallbackFn()
-{
-}
-
 int main()
-{    
-    //scheduler_init();
+{   
     char msg[50];
     
+    uBit.initDisplay();
+    uBit.initBLE();
+ 
+ #ifdef DBG
+    uBit.display->scrollString(defaultMessage);
+    
+    while(1)
+    {
+        wait(0.01);
+                    
+        if (uBit.ble)
+            uBit.ble->waitForEvent();
+    }
+#endif
+
     strcpy(msg, defaultMessage);
-     
     while(1)
     {
         if (update)
@@ -44,11 +48,11 @@ int main()
         }
         
         uBit.display->scrollString(msg);
-    
+
         for (int i=0; i<150; i++)
         {
             wait(0.1);
-            
+                        
             if (uBit.ble)
                 uBit.ble->waitForEvent();
             

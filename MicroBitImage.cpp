@@ -30,11 +30,32 @@ const unsigned char font[] = {0x0, 0x0, 0x0, 0x44, 0x40, 0x40, 0xaa, 0x0, 0x0, 0
   * 
   * @param x the width of the image.
   * @param y the height of the image.     
+  *
+  * Bitmap buffer is linear, with 8 bits per pixel, row by row, 
+  * top to bottom with no word alignment. Stride is therefore the image width in pixels.
+  * in where w and h are width and height respectively, the layout is therefore:
+  *
+  * |[0,0]...[w,o][1,0]...[w,1]  ...  [[w,h]
+  *
+  * A copy of the image is made in RAM, as images are mutable.
+  *
+  * TODO: Consider an immutable flavour, which might save us RAM for animation spritesheets...
+  * ...as these could be kept in FLASH.
   */
 MicroBitImage::MicroBitImage(int x, int y)
 {
     this->init(x,y,NULL);
+}
 
+/**
+    * Copy Constructor. 
+    * Clone an existing MicroBitImage.
+    * 
+    * @param image The MicroBitImage to clone.
+    */
+MicroBitImage::MicroBitImage(MicroBitImage &image)
+{
+    this->init(image.getWidth(),image.getHeight(),image.bitmap);
 }
 
 /**
@@ -43,37 +64,32 @@ MicroBitImage::MicroBitImage(int x, int y)
   * 
   * @param x the width of the image.
   * @param y the height of the image.
-  * @param bitmap a 2D array representing the image.
-  *     
+  * @param the bitmap buffer to copy. 
+  *
   */
-MicroBitImage::MicroBitImage(int x, int y, int **bitmap)
+MicroBitImage::MicroBitImage(int x, int y, uint8_t *bitmap)
 {
     this->init(x,y,bitmap);
 }
 
 MicroBitImage::~MicroBitImage()
 {
-    for (int i = 0; i < height; i++)
-            delete[] this->bitmap[i];
-
     delete[] this->bitmap;
 }
 
-void MicroBitImage::init(int x, int y, int **bitmap)
+void MicroBitImage::init(int x, int y, uint8_t *bitmap)
 {
     // Create a copy of the array
     this->width = x;
     this->height = y;
     
-    // create a jagged array to represent the image. We use a jagged rather than 2D array here to 
-    // ease type checking across the myriad of languages that might target us.
-    this->bitmap = new int*[width];
-
-    for (int i = 0; i < width; i++)
-        this->bitmap[i] = new int[height];
+    // create a linear buffer to represent the image. We could use a jagged/2D array here, but experimentation
+    // showed this had a negative effect on memory management (heap fragmentation etc).
+     
+    this->bitmap = new uint8_t[width*height];
 
     if (bitmap)
-        this->printImage(0,0,bitmap);
+        this->printImage(x,y,bitmap);
     else
         this->clear();
 }
@@ -85,9 +101,7 @@ void MicroBitImage::init(int x, int y, int **bitmap)
   */
 void MicroBitImage::clear()
 {
-    for (int x = 0; x < width; x++)
-        for (int y = 0; y < height; y++)
-            this->bitmap[x][y] = 0;
+    memclr(this->bitmap, width*height);
 }
  
 
@@ -98,35 +112,54 @@ void MicroBitImage::clear()
   * @param y The co-ordinate of the pixel to change w.r.t. top left origin.
   * @param value The new value of the pixel.
   */
-void MicroBitImage::setPixelValue(int x , int y, int value)
+void MicroBitImage::setPixelValue(int x , int y, uint8_t value)
 {
-    this->bitmap[x][y] = value;
+    this->bitmap[y*width+x] = value;
 }
 
 /**
   * Determined the value of a given pixel.
   * @return The value assigned to the givne pixel location
   */
-int MicroBitImage::getPixelValue(int x , int y)
+uint8_t MicroBitImage::getPixelValue(int x , int y)
 {
-    return this->bitmap[x][y];
+    return this->bitmap[y*width+x];
 }
 
 /**
   * Replaces the content of this image with that of a given 
-  * 2D array representing the image.
-  * Origin is in the top left corner of the image.
+  * bitmap representation of an image.
+  *
+  * Data is copied. Any out of range data is safely ignored.
   *
   * @param x the width of the image.
   * @param y the height of the image.
-  * @param bitmap a 2D array representing the image.
+  * @param linear bitmap representing the image.
   *     
   */
-void MicroBitImage::printImage(int x, int y, int **bitmap)
+void MicroBitImage::printImage(int width, int height, uint8_t *bitmap)
 {
-    for (int i = 0; i < min(x,width); i++)
-        for (int j = 0; j < min(y,height); j++)
-            this->bitmap[i][j] = bitmap[i][j];
+    uint8_t *pIn, *pOut;
+    int pixelsToCopyX, pixelsToCopyY;
+
+    // Sanity check.
+    if (width <= 0 || width <= 0)
+        return;
+
+    // Calcualte sane start pointer.
+    pixelsToCopyX = min(width,this->width);
+    pixelsToCopyY = min(height,this->height);
+
+    pIn = bitmap;
+    pOut = this->bitmap;
+    
+    // Copy the image, stride by stride.
+    for (int i=0; i<pixelsToCopyY; i++)
+    {
+        memcpy(pOut, pIn, pixelsToCopyX);
+        pIn += width;
+        pOut += this->width;
+    }
 }
   
 /**
@@ -138,17 +171,55 @@ void MicroBitImage::printImage(int x, int y, int **bitmap)
   * @param y The uppermost Y co-ordinate in this image where the given image should be pasted.
   * @param alpha set to 1 if transparency clear pixels in given image should be treated as transparent. Set to 0 otherwise.
   */
-void MicroBitImage::paste(MicroBitImage *image, int x, int y, int alpha)
+void MicroBitImage::paste(MicroBitImage &image, int x, int y, int alpha)
 {
+    uint8_t *pIn, *pOut;
+    int cx, cy;
+
     // Sanity check.
-    if (x >= width || y >= height)
+    // We permit writes that overlap us, but ones that are clearly out of scope we can filter early.
+    if (x >= width || y >= height || x+image.width <= 0 || y+image.height <= 0)
         return;
+
+    //Calculate the number of byte we need to copy in each dimension.
+    cx = x < 0 ? min(image.width + x, width) : min(image.width, width - x);
+    cy = y < 0 ? min(image.height + y, height) : min(image.height, height - y);
+
+    // Calcualte sane start pointer.
+    pIn = image.bitmap;
+    pOut = bitmap;
+    pOut += (x > 0) ? x : 0;
+    pOut += (y > 0) ? width*y : 0;
+
+    // Copy the image, stride by stride
+    // If we want primitive transparecy, we do this byte by byte.
+    // If we don't, use a more efficient block memory copy instead. Every little helps!
+
+    if (alpha)
+    {
+        for (int i=0; i<cy; i++)
+        {
+            for (int j=0; j<cx; j++)
+            {
+                // Copy this byte if appropriate.
+                if (*(pIn+j) != 0)
+                    *(pOut+j) = *(pIn+j);
+            }
     
-    // Paste.
-    for (int i = 0; i < min(image->width,width-x); i++)
-        for (int j = 0; j < min(image->height,height-y); j++)
-            if (!(alpha && bitmap[i][j] == 0)) 
-                this->bitmap[i+x][j+y] = bitmap[i][j];        
+            pIn += image.width;
+            pOut += width;
+        }
+    }
+    else
+    {
+        for (int i=0; i<cy; i++)
+        {
+            memcpy(pOut, pIn, cx);
+
+            pIn += image.width;
+            pOut += width;
+        }
+    }
 }
 
  /**
@@ -160,8 +231,8 @@ void MicroBitImage::paste(MicroBitImage *image, int x, int y, int alpha)
   */
 void MicroBitImage::print(char c, int x, int y)
 {
-    
     unsigned char v;
+    int x1, y1;
     
     // Sanity check. Silently ignore anything out of bounds.
     if (x >= width || y >= height || c < MICROBIT_FONT_ASCII_START || c > MICROBIT_FONT_ASCII_END)
@@ -179,10 +250,17 @@ void MicroBitImage::print(char c, int x, int y)
         else
             offset++;
         
-        for (int col = 0; col < MICROBIT_FONT_WIDTH; col++)
-            if (x+col < width && y+row < height)
-                this->bitmap[x+col][y+row] = (v & (0x08 >> col)) ? 1 : 0;
+        // Update our Y co-ord write position
+        y1 = y+row;
         
+        for (int col = 0; col < MICROBIT_FONT_WIDTH; col++)
+        {
+            // Update our X co-ord write position
+            x1 = x+col;
+            
+            if (x1 < width && y1 < height)
+                this->bitmap[y1*width+x1] = (v & (0x08 >> col)) ? 255 : 0;
+        }
     }  
 }
 
@@ -194,14 +272,20 @@ void MicroBitImage::print(char c, int x, int y)
   */
 void MicroBitImage::shiftLeft(int n)
 {
-    for (int i = 0; i < width-1 ; i++)
-        for (int j = 0; j < height; j++)
-                this->bitmap[i][j] = this->bitmap[i+1][j];         
-                
-    // Blank fill the rightmost column.
-    for (int j = 0; j < height; j++)
-        this->bitmap[width-1][j] = 0;
-        
+    uint8_t *p = bitmap;
+    int pixels = width-n;
+    
+    if (n <= 0 || n > width)
+        return;
+
+
+    for (int y = 0; y < height; y++)
+    {
+        // Copy, and blank fill the rightmost column.
+        memcpy(p, p+n, pixels);
+        memclr(p+pixels, n);
+        p += width;
+    }        
 }
 
 /**
@@ -211,13 +295,19 @@ void MicroBitImage::shiftLeft(int n)
   */
 void MicroBitImage::shiftRight(int n)
 {
-    for (int i = 0; i < width-1 ; i++)
-        for (int j = 0; j < height; j++)
-                this->bitmap[i+1][j] = this->bitmap[i][j];         
+    uint8_t *p = bitmap;
+    int pixels = width-n;
+    
+    if (n <= 0 || n > width)
+        return;
 
-    // Blank fill the leftmost column.
-    for (int j = 0; j < height; j++)
-        this->bitmap[0][j] = 0;
+    for (int y = 0; y < height; y++)
+    {
+        // Copy, and blank fill the leftmost column.
+        memcpy(p+n, p, pixels);
+        memclr(p, n);
+        p += width;
+    }        
 }
 
 
@@ -228,13 +318,25 @@ void MicroBitImage::shiftRight(int n)
   */
 void MicroBitImage::shiftUp(int n)
 {
-    for (int i = 0; i < width ; i++)
-        for (int j = 0; j < height-1; j++)
-            this->bitmap[i][j] = this->bitmap[i][j+1];         
-            
-    // Blank fill the bottommost row.
-    for (int i = 0; i < width; i++)
-        this->bitmap[i][height] = 0;
+    uint8_t *pOut, *pIn;
+   
+    if (n <= 0 || n > height)
+        return;
+    
+    pOut = bitmap;
+    pIn = bitmap+width*n;
+    
+    for (int y = 0; y < height; y++)
+    {
+        // Copy, and blank fill the leftmost column.
+        if (y < height-n)
+            memcpy(pOut, pIn, width);
+        else
+            memclr(pOut, width);
+             
+        pIn += width;
+        pOut += width;
+    }        
 }
 
 
@@ -245,14 +347,25 @@ void MicroBitImage::shiftUp(int n)
   */
 void MicroBitImage::shiftDown(int n)
 {
-    for (int i = 0; i < width ; i++)
-        for (int j = 0; j < height-1; j++)
-            this->bitmap[i][j+1] = this->bitmap[i][j];         
-
-    // Blank fill the topmost row.
-    for (int i = 0; i < height; i++)
-        this->bitmap[i][0] = 0;
-
+    uint8_t *pOut, *pIn;
+   
+    if (n <= 0 || n > height)
+        return;
+    
+    pOut = bitmap + width*(height-1);
+    pIn = pOut - width*n;
+    
+    for (int y = 0; y < height; y++)
+    {
+        // Copy, and blank fill the leftmost column.
+        if (y < height-n)
+            memcpy(pOut, pIn, width);
+        else
+            memclr(pOut, width);
+             
+        pIn -= width;
+        pOut -= width;
+    }        
 }
 /**
   * Gets the width of this image.

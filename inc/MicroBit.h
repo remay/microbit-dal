@@ -70,7 +70,10 @@ class MicroBit
       * Create a representation of a MicroBit device.
       * @param messageBus callback function to receive MicroBitMessageBus events.
       */
-    MicroBit();    
+    MicroBit();  
+    
+    void initDisplay();
+    void initBLE();  
 };
 
 // Definition of the global instance of the MicroBit class.

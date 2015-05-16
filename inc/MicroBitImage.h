@@ -11,17 +11,24 @@
 
 class MicroBitImage
 {
-    int width;          // Width of the bitmap, in pixels.
-    int height;         // Height of the bitmap, in pixels.
-    int **bitmap;       // 2D array representing the bitmap image.    
+    int width;              // Width of the bitmap, in pixels.
+    int height;             // Height of the bitmap, in pixels.
     
     /**
       * Internal constructor support function. 
       */
-    void init(int x, int y, int **bitmap);
+    void init(int x, int y, uint8_t *bitmap);
     
     public:
-
+    uint8_t *bitmap;        // 2D array representing the bitmap image.    
+    
+    /**
+      * Copy Constructor. 
+      * Clone an existing MicroBitImage.
+      * 
+      * @param image The MicroBitImage to clone.
+      */
+    MicroBitImage(MicroBitImage &image);
     
     /**
       * Constructor. 
@@ -41,7 +48,7 @@ class MicroBitImage
       * @param bitmap a 2D array representing the image.
       *     
       */
-    MicroBitImage(int x, int y, int **bitmap);
+    MicroBitImage(int x, int y, uint8_t *bitmap);
 
     /**
       * Destructor. 
@@ -61,13 +68,13 @@ class MicroBitImage
       * @param y The co-ordinate of the pixel to change w.r.t. top left origin.
       * @param value The new value of the pixel.
       */
-    void setPixelValue(int x , int y, int value);
+    void setPixelValue(int x , int y, uint8_t value);
 
     /**
       * Determined the value of a given pixel.
       * @return The value assigned to the givne pixel location
       */
-    int getPixelValue(int x , int y);
+    uint8_t getPixelValue(int x , int y);
 
     /**
       * Replaces the content of this image with that of a given 
@@ -79,7 +86,7 @@ class MicroBitImage
       * @param bitmap a 2D array representing the image.
       *     
       */
-    void printImage(int x, int y, int **bitmap);
+    void printImage(int x, int y, uint8_t *bitmap);
     
     /**
       * Pastes a given bitmap at the given co-ordinates.
@@ -90,7 +97,7 @@ class MicroBitImage
       * @param y The uppermost Y co-ordinate in this image where the given image should be pasted.
       * @param alpha set to 1 if transparency clear pixels in given image should be treated as transparent. Set to 0 otherwise.
       */
-    void paste(MicroBitImage *image, int x, int y, int alpha);
+    void paste(MicroBitImage &image, int x, int y, int alpha);
  
      /**
       * Prints a character to the display at the given location
