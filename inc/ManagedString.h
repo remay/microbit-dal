@@ -121,6 +121,15 @@ class ManagedString
     ManagedString& operator+ (ManagedString& s);
 
     /**
+      * Provides a character value at a given position in the string, indexed from zero.
+      *
+      * @param index The position of the character to return.
+      * @return the character at posisiton index, zero if index is invalid.
+      */    
+    char charAt(int index);
+
+
+    /**
       * Provides an immutable 8 bit wide haracter buffer representing this string.
       *
       * @return a pointer to the charcter buffer.
@@ -133,6 +142,12 @@ class ManagedString
       * @return the length of the string in characters.
       */ 
     int length();
+
+    /**
+      * Empty String constant
+      */    
+    static ManagedString EmptyString;
+
 };
 
 #endif

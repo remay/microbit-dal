@@ -8,18 +8,23 @@
 #define MICROBIT_H
 
 #include "mbed.h"
-#include "MicroBitCompat.h"
-#include "MicroBitMessageBus.h"
-#include "MicroBitButton.h"
-#include "MicroBitDisplay.h"
-#include "MicroBitImage.h"
-#include "MicroBitIO.h"
-#include "MicroBitLED.h"
-#include "MicroBitFiber.h"
 #include "BLEDevice.h"
 #include "DeviceInformationService.h"
 #include "DFUService.h"
 
+#include "MicroBitCompat.h"
+#include "ManagedString.h"
+#include "MicroBitImage.h"
+#include "MicroBitMessageBus.h"
+#include "MicroBitButton.h"
+#include "MicroBitDisplay.h"
+#include "MicroBitIO.h"
+#include "MicroBitLED.h"
+#include "MicroBitFiber.h"
+#include "MicroBitDFUService.h"
+
+// MicroBit::flags values
+#define MICROBIT_FLAG_SCHEDULER_RUNNING     0x00000001
 
 #define MICROBIT_IO_PINS                8            // TODO: Need to know how many. :-)
 
@@ -42,6 +47,7 @@
 #define MICROBIT_PIN_SDA                P0_22
 #define MICROBIT_PIN_SCL                P0_20
 
+extern Serial pc;
 
 class MicroBit
 {                                    
@@ -51,19 +57,24 @@ class MicroBit
     MicroBitMessageBus  MessageBus;      
 
     // Member variables to represent each of the core components on the device.
-    //MicroBitLED         userLED;
-    MicroBitDisplay     *display;
-    //MicroBitButton      leftButton;
+    
+    MicroBitDisplay     display;
+    MicroBitButton      leftButton;
+    //MicroBitButton      rightButton;
+    
     //I2C                 i2c;
 /*
-    MicroBitButton      rightButton;
+
 
     MicroBitIO          pins[MICROBIT_IO_PINS];
 */    
     // Bluetooth related member variables.
     BLEDevice                   *ble;
     DeviceInformationService    *ble_device_information_service;
-    DFUService                  *ble_firmware_update_service;
+    MicroBitDFUService          *ble_firmware_update_service;
+
+    // Map of device state.
+    uint32_t flags;
     
     /**
       * Constructor. 
@@ -71,9 +82,15 @@ class MicroBit
       * @param messageBus callback function to receive MicroBitMessageBus events.
       */
     MicroBit();  
-    
-    void initDisplay();
-    void initBLE();  
+
+    /**
+      * Post constructor initialisation method.
+      * After *MUCH* pain, it's noted that the BLE stack can't be brought up in a 
+      * static context, so we bring it up here rather than in the constructor.
+      * n.b. This method *must* be called in main() or later, not before.
+      */
+    void init();
+
 };
 
 // Definition of the global instance of the MicroBit class.
@@ -81,6 +98,8 @@ class MicroBit
 // code integration a littl bit easier for 3rd parties.
 extern MicroBit uBit;
 
+// FOR TESTING ONLY...
+extern "C" void updateScroll(char *str, int len);
 
 #endif
 

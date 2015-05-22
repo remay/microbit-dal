@@ -7,7 +7,7 @@
   * 2) To provide ISR decoupling for Messagebus events generted in an ISR context.
   */
   
-#include "MicroBitFiber.h"
+#include "MicroBit.h"
 
 /*
  * Statically allocated values used to create and destroy Fibers.
@@ -105,6 +105,9 @@ void scheduler_init()
     // Remove it from the run queue though, as IDLE is a special case.
     idle = create_fiber(idle_task);    
     dequeue_fiber(idle);    
+    
+    // Flag that we now have a scheduler running
+    uBit.flags |= MICROBIT_FLAG_SCHEDULER_RUNNING;
 }
 
 /**

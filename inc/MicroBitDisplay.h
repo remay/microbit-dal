@@ -7,15 +7,24 @@
 #ifndef MICROBIT_DISPLAY_H
 #define MICROBIT_DISPLAY_H
 
+/**
+  * Core Confuration settings.
+  */
+
+#define MICROBIT_SB1
 #define MICROBIT_DISPLAY_REFRESH_PERIOD     0.002
 
-#define MICROBIT_SB2
-
-#define NO_CONN 0
-
+/**
+  * Default parameters.
+  */
 #define MICROBIT_DEFAULT_SCROLL_SPEED       50
+#define MICROBIT_DEFAULT_PRINT_SPEED        200
 #define MICROBIT_DEFAULT_BRIGHTNESS         128
 
+
+/**
+  * I/O configurations for common devices.
+  */
 #ifdef MICROBUG_REFERENCE_DEVICE
 #define MICROBIT_DISPLAY_ROW_COUNT          5
 #define MICROBIT_DISPLAY_ROW_PINS           P0_0, P0_1, P0_2, P0_3, P0_4
@@ -45,7 +54,15 @@
 #endif
 
 #include "mbed.h"
-#include "MicroBitImage.h"
+#include "MicroBit.h"
+
+enum AnimationMode
+{
+    ANIMATION_MODE_NONE,
+    ANIMATION_MODE_SCROLL_TEXT,
+    ANIMATION_MODE_PRINT_TEXT,
+    ANIMATION_MODE_SCROLL_IMAGE    
+};
 
 struct MatrixPoint
 {
@@ -66,18 +83,60 @@ class MicroBitDisplay
     BusOut columnPins;
     BusOut rowPins;
     
-    char *scrollingText;
-    int scrollTextLength;
-    int scrollingChar;
-    int scrollingPosition;
-    int scrollingDelay;
-    int scrollingTick;
+    //
+    // State used by all animation routines.
+    //
+
+    // The animation mode that's currently running (if any)
+    AnimationMode animationMode;
+
+    // The time (in ticks) between each frame update.
+    int animationDelay;
     
+    // The time (in ticks) since the frame update.
+    int animationTick;
+
+    // Stop playback of any animations
+    void stopAnimation(int delay);
+    
+    //
+    // State for scrollString() method.
+    // This is a surprisingly intricate method. 
+    //
+    // The text being displayed. NULL if no message is scheduled for playback.
+    ManagedString scrollingText;        
+
+    // The index of the character currently being displayed.
+    int scrollingChar;
+    
+    // The number of pixels the current character has been shifted on the display.
+    int scrollingPosition;
+    
+    //
+    // State for printString() method.
+    //
+    // The text being displayed. NULL if no message is scheduled for playback.
+    // We *could* get some reuse in here with the scroll* variables above,
+    // but best to keep it clean in case kids try concurrent operation (they will!),
+    // given the small RAM overhead needed to maintain orthogonality.
+
+    ManagedString printingText;        
+    
+    // The index of the character currently being displayed.
+    int printingChar;
+
     static const MatrixPoint matrixMap[MICROBIT_DISPLAY_COLUMN_COUNT][MICROBIT_DISPLAY_ROW_COUNT];
     
-    void updateScroll();
+    // Internal methods to handle animation.
+    void resetAnimation(int delay);
+    void animationUpdate();
+    void updateScrollText();
+    void updatePrintText();
+    void updateScrollImage();
+    
     
     public:
+    // The mutable bitmap buffer being rendered to the LED matrix.
     MicroBitImage image;
 
     /**
@@ -114,7 +173,7 @@ class MicroBitDisplay
       *
       * @param str The string to display.
       */
-    void printString(char *str);
+    void printString(ManagedString s);
 
     /**
       * Prints the given string to the display, one character at a time.
@@ -124,7 +183,7 @@ class MicroBitDisplay
       * @param str The string to display.
       * @param delay The time to delay between characters, in milliseconds.
       */
-    void printString(char *str, int delay);
+    void printString(ManagedString s, int delay);
 
     /**
       * Scrolls the given string to the display, from right to left.
@@ -133,7 +192,7 @@ class MicroBitDisplay
       *
       * @param str The string to display.
       */
-    void scrollString(char *str);
+    void scrollString(ManagedString s);
 
     /**
       * Scrolls the given string to the display, from right to left.
@@ -143,7 +202,7 @@ class MicroBitDisplay
       * @param str The string to display.
       * @param delay The time to delay between characters, in milliseconds.
       */
-    void scrollString(char *str, int delay);
+    void scrollString(ManagedString s, int delay);
 
     /**
       * Scrolls the given image across the display, from right to left.

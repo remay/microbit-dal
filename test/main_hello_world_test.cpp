@@ -5,6 +5,7 @@
 #include "MicroBit.h"
 
 MicroBit uBit;
+Serial pc(USBTX, USBRX);
 
 char *defaultMessage = "HI HOWARD! WANT TO PLAY?";
 char bleMessage[50];
@@ -21,33 +22,36 @@ updateScroll(char* str, int len)
 
 int main()
 {   
-    char msg[50];
-    
-    uBit.initDisplay();
-    uBit.initBLE();
+    pc.baud(115200);
  
- #ifdef DBG
-    uBit.display->scrollString(defaultMessage);
+    wait(10.0);
     
+    pc.printf("=== Starting Display Test ===\n");
+     
+    uBit.init();
+
+    ManagedString msg(defaultMessage); 
     while(1)
     {
-        wait(0.01);
-                    
-        if (uBit.ble)
-            uBit.ble->waitForEvent();
+        uBit.display.scrollString(msg);
+        wait(15);
     }
-#endif
 
-    strcpy(msg, defaultMessage);
+    // Enter Pairing mode if appropriate
+    if(uBit.leftButton.isPressed())
+        uBit.ble_firmware_update_service->pair();
+ 
+ 
+    // Start main app.
+    
     while(1)
     {
         if (update)
         {
             update = 0;
-            strcpy(msg, bleMessage);
         }
         
-        uBit.display->scrollString(msg);
+        uBit.display.scrollString(msg);
 
         for (int i=0; i<150; i++)
         {

@@ -214,6 +214,17 @@ ManagedString& ManagedString::operator+ (ManagedString& s)
 
 
 /**
+  * Provides a character value at a given position in the string, indexed from zero.
+  *
+  * @param index The position of the character to return.
+  * @return the character at posisiton index, zero if index is invalid.
+  */    
+char ManagedString::charAt(int index)
+{
+    return (index >=0 && index < len) ? data[index] : 0;
+}
+
+/**
   * Provides an immutable 8 bit wide haracter buffer representing this string.
   *
   * @return a pointer to the charcter buffer.
@@ -233,5 +244,9 @@ int ManagedString::length()
     return len;
 }
 
+/**
+  * Empty string constant literal
+  */
+ManagedString ManagedString::EmptyString("");
 
 
