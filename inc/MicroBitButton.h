@@ -9,7 +9,9 @@
 
 #include "mbed.h"
 
-#define MICROBIT_PIN_LEFT_BUTTON          P0_23
+#define MICROBIT_PIN_LEFT_BUTTON          P0_17
+#define MICROBIT_PIN_RIGHT_BUTTON         P0_26
+
 
 #define MICROBIT_BUTTON_EVT_DOWN          1
 #define MICROBIT_BUTTON_EVT_UP            2

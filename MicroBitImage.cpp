@@ -2,6 +2,7 @@
   * Class definition for a MicroBitImage.
   *
   * An MicroBitImage is a simple bitmap representation of an image.
+  * n.b. This is a mutable, managed type.
   */
 
 #include "MicroBitImage.h"
@@ -23,6 +24,23 @@
  * We could compress further, but the complexity of decode would likely outweigh the gains.
  */
 const unsigned char font[] = {0x0, 0x0, 0x0, 0x44, 0x40, 0x40, 0xaa, 0x0, 0x0, 0xaf, 0xaf, 0xa0, 0x6d, 0x6b, 0x60, 0x92, 0x49, 0x0, 0x64, 0x96, 0x0, 0x88, 0x0, 0x0, 0x12, 0x22, 0x10, 0x84, 0x44, 0x80, 0xa, 0x4a, 0x0, 0x4, 0xe4, 0x0, 0x0, 0x4, 0x40, 0x0, 0xe0, 0x0, 0x0, 0x4, 0x0, 0x22, 0x48, 0x80, 0x4a, 0xaa, 0x40, 0x4c, 0x44, 0x40, 0xe1, 0x68, 0xf0, 0xf1, 0x29, 0x60, 0x8a, 0xaf, 0x20, 0xf8, 0x61, 0xe0, 0x78, 0xe9, 0xe0, 0xf1, 0x24, 0x40, 0x69, 0x69, 0x60, 0x79, 0x71, 0x10, 0x4, 0x4, 0x0, 0x4, 0x4, 0x40, 0x12, 0x42, 0x10, 0xe, 0xe, 0x0, 0x42, 0x12, 0x40, 0x69, 0x20, 0x60, 0x7b, 0xb8, 0x60, 0x69, 0x9f, 0x90, 0xe9, 0xe9, 0xe0, 0x78, 0x88, 0x70, 0xe9, 0x99, 0xe0, 0xf8, 0xe8, 0xf0, 0xf8, 0xe8, 0x80, 0x78, 0xb9, 0x70, 0x99, 0xf9, 0x90, 0xe4, 0x44, 0xe0, 0xf1, 0x19, 0x60, 0x9a, 0xca, 0x90, 0x88, 0x88, 0xf0, 0x9f, 0xff, 0x90, 0x9d, 0xbb, 0x90, 0x69, 0x99, 0x60, 0xe9, 0xe8, 0x80, 0x69, 0x96, 0x30, 0xe9, 0xe9, 0x90, 0x78, 0x61, 0xe0, 0x72, 0x22, 0x20, 0x99, 0x99, 0x60, 0x99, 0x9a, 0x40, 0x9b, 0xff, 0x90, 0x99, 0x69, 0x90, 0x95, 0x24, 0x80, 0xf2, 0x48, 0xf0, 0x32, 0x22, 0x30, 0x44, 0x21, 0x10, 0xc4, 0x44, 0xc0, 0x4a, 0x0, 0x0, 0x0, 0x0, 0xf0, 0x42, 0x0, 0x0, 0x7, 0x97, 0x0, 0x8e, 0x9e, 0x0, 0x7, 0x87, 0x0, 0x17, 0x97, 0x0, 0x69, 0xe7, 0x0, 0x34, 0xe4, 0x0, 0xf, 0x9f, 0xf0, 0x8e, 0x99, 0x0, 0x60, 0x66, 0x0, 0x20, 0x44, 0x80, 0x8b, 0xe9, 0x0, 0x44, 0x46, 0x0, 0xe, 0xbb, 0x0, 0xc, 0xaa, 0x0, 0x6, 0x96, 0x0, 0xe, 0x9e, 0x80, 0x7, 0x97, 0x10, 0x3, 0x44, 0x0, 0x3, 0x6e, 0x0, 0x46, 0x42, 0x0, 0x9, 0x97, 0x0, 0x9, 0xa4, 0x0, 0x9, 0xb6, 0x0, 0x9, 0x69, 0x0, 0x9, 0xd2, 0xc0, 0xf, 0x4f, 0x0, 0x32, 0x62, 0x30, 0x44, 0x44, 0x40, 0xc4, 0x64, 0xc0, 0x5a, 0x0, 0x0};
+
+/*
+ * The null image. We actally create a small one byte buffer here, just to keep NULL pointers out of the equation.
+ */
+MicroBitImage MicroBitImage::EmptyImage(1,1);
+
+/**
+  * Default Constructor. 
+  * Creates a new reference to the empty MicroBitImage.
+  * 
+  */
+MicroBitImage::MicroBitImage()
+{
+    // Create new reference to the EmptyImage and we're done.
+    *this = MicroBitImage::EmptyImage;
+}
+
 
 /**
   * Constructor. 
@@ -74,7 +92,11 @@ MicroBitImage::MicroBitImage(int x, int y, uint8_t *bitmap)
 
 MicroBitImage::~MicroBitImage()
 {
-    delete[] this->bitmap;
+    if(--(*ref) == 0)
+    {
+        delete[] bitmap;
+        delete ref;
+    }
 }
 
 void MicroBitImage::init(int x, int y, uint8_t *bitmap)
@@ -92,8 +114,61 @@ void MicroBitImage::init(int x, int y, uint8_t *bitmap)
         this->printImage(x,y,bitmap);
     else
         this->clear();
+        
+    ref = (int *) malloc(sizeof(int));
+    *ref = 1;
 }
 
+
+
+/**
+  * Copy assign operation. 
+  *
+  * Called when one MicroBitImage is assigned the value of another using the '=' operator.
+  * Decrement our reference count and free up the buffer as necessary.
+  * Then, update our buffer to refer to that of the supplied MicroBitImage,
+  * and increase its reference count.
+  *
+  * @param s The MicroBitImage to reference.
+  */
+MicroBitImage& MicroBitImage::operator = (const MicroBitImage& i)
+{
+    if(this == &i)
+        return *this;
+     
+    bitmap = i.bitmap;
+    width = i.width;
+    height = i.height;
+    ref = i.ref;
+    
+    (*ref)++;
+
+    // Handle the case where our operand is actually generated soley for us to consume...
+    // Typically this is because it's been created by this class in a service function.
+    if (*ref == 1)
+    {
+        (*ref)++;
+        delete &i;
+    }
+
+    return *this;
+}
+
+/**
+  * Equality operation.
+  *
+  * Called when one MicroBitImage is tested to be equal to another using the '==' operator.
+  *
+  * @param i The MicroBitImage to test ourselves against.
+  * @return true if this MicroBitImage is identical to the one supplied, false otherwise.
+  */
+bool MicroBitImage::operator== (const MicroBitImage& i)
+{
+    if (bitmap == i.bitmap)
+        return true;
+    else
+        return ((width == i.width) && (height == i.height) && (memcmp(bitmap, i.bitmap,width*height)==0));    
+}
 
 
 /**
@@ -104,8 +179,6 @@ void MicroBitImage::clear()
     memclr(this->bitmap, width*height);
 }
  
-
-
 /**
   * Sets the pixel at the given co-ordinates to a given value.
   * @param x The co-ordinate of the pixel to change w.r.t. top left origin.
@@ -170,16 +243,18 @@ void MicroBitImage::printImage(int width, int height, uint8_t *bitmap)
   * @param x The leftmost X co-ordinate in this image where the given image should be pasted.
   * @param y The uppermost Y co-ordinate in this image where the given image should be pasted.
   * @param alpha set to 1 if transparency clear pixels in given image should be treated as transparent. Set to 0 otherwise.
+  * @return The number of pixels written.
   */
-void MicroBitImage::paste(MicroBitImage &image, int x, int y, int alpha)
+int MicroBitImage::paste(MicroBitImage &image, int x, int y, int alpha)
 {
     uint8_t *pIn, *pOut;
     int cx, cy;
+    int pxWritten = 0;
 
     // Sanity check.
     // We permit writes that overlap us, but ones that are clearly out of scope we can filter early.
     if (x >= width || y >= height || x+image.width <= 0 || y+image.height <= 0)
-        return;
+        return 0;
 
     //Calculate the number of byte we need to copy in each dimension.
     cx = x < 0 ? min(image.width + x, width) : min(image.width, width - x);
@@ -202,8 +277,10 @@ void MicroBitImage::paste(MicroBitImage &image, int x, int y, int alpha)
             for (int j=0; j<cx; j++)
             {
                 // Copy this byte if appropriate.
-                if (*(pIn+j) != 0)
+                if (*(pIn+j) != 0){
                     *(pOut+j) = *(pIn+j);
+                    pxWritten++;
+                }
             }
     
             pIn += image.width;
@@ -216,10 +293,13 @@ void MicroBitImage::paste(MicroBitImage &image, int x, int y, int alpha)
         {
             memcpy(pOut, pIn, cx);
 
+            pxWritten += cx;
             pIn += image.width;
             pOut += width;
         }
     }
+    
+    return pxWritten;
 }
 
  /**

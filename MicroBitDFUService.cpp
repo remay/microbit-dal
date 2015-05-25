@@ -112,6 +112,7 @@ void MicroBitDFUService::pair()
                 uBit.display.scrollString(pairString);
                 for (int j=0; j<40; j++)
                 {
+#ifdef NOB                    
                     if (uBit.leftButton.isPressed())
                     {
                         i=100;
@@ -121,6 +122,7 @@ void MicroBitDFUService::pair()
                         authenticated = true;
                         break;
                     }
+#endif                    
                     wait(0.1);
                 }
             }

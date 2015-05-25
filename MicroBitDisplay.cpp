@@ -60,8 +60,6 @@ void MicroBitDisplay::strobeUpdate()
     int rowdata;
     int coldata;
     
-    pc.printf(":");
-    
     // move on to next row.
     strobeRow = (strobeRow+1) % MICROBIT_DISPLAY_ROW_COUNT;
     rowdata = 1 << strobeRow;
@@ -93,14 +91,11 @@ void MicroBitDisplay::strobeUpdate()
 void
 MicroBitDisplay::animationUpdate()
 {   
-    pc.printf(".");
-    
     if (animationMode == ANIMATION_MODE_NONE)
         return;
         
     if(++animationTick == animationDelay)
     {
-        pc.printf("=== MicroBitDisplay::animationUpdate ===\n");
         animationTick = 0;
         
         if (animationMode == ANIMATION_MODE_SCROLL_TEXT)
@@ -115,14 +110,23 @@ MicroBitDisplay::animationUpdate()
     }
 }
 
+void MicroBitDisplay::sendEvent(int eventCode)
+{
+    MicroBitEvent *evt = new MicroBitEvent();
+    evt->source = id;
+    evt->context = NULL;
+    evt->timestamp = ticks;
+    evt->value = eventCode;
+    
+    uBit.MessageBus.send(evt);
+}
+
 /**
   * Internal scrollText update method. 
   * Shift the screen image by one pixel to the left. If necessary, paste in the next char.
   */   
 void MicroBitDisplay::updateScrollText()
 {    
-    pc.printf("=== MicroBitDisplay::updateScrollText ===\n");
-
     image.shiftLeft(1);
     scrollingPosition++;
     
@@ -133,8 +137,11 @@ void MicroBitDisplay::updateScrollText()
         image.print(scrollingChar < scrollingText.length() ? scrollingText.charAt(scrollingChar) : ' ',width,0);
 
         if (scrollingChar > scrollingText.length())
+        {
             animationMode = ANIMATION_MODE_NONE;
-        
+            this->sendEvent(MICROBIT_DISPLAY_EVT_SCROLLTEXT_COMPLETE);
+            return;
+        }
         scrollingChar++;
    }
 }
@@ -150,17 +157,27 @@ void MicroBitDisplay::updatePrintText()
     if (printingChar > printingText.length())
     {
         animationMode = ANIMATION_MODE_NONE;   
-        printingChar++;
+        this->sendEvent(MICROBIT_DISPLAY_EVT_PRINTTEXT_COMPLETE);
+        return;
     }
+    
+    printingChar++;
 }
 
 /**
-  * Internal printText update method. 
-  * Paste in the next char in the string.
+  * Internal scrollImage update method. 
+  * Paste the stored bitmap at the appropriate point.
   */   
 void MicroBitDisplay::updateScrollImage()
 {        
-    // TODO: Write this!
+    if(image.paste(scrollingImage, scrollingImagePosition, 0, 0) == 0)
+    {
+        animationMode = ANIMATION_MODE_NONE;  
+        this->sendEvent(MICROBIT_DISPLAY_EVT_SCROLLIMAGE_COMPLETE);        
+        return;
+    }
+
+    scrollingImagePosition += scrollingImageStride;
 }
 
 
@@ -169,7 +186,6 @@ void MicroBitDisplay::resetAnimation(int delay)
 {
     // Reset any ongoing animation.
     // Clear the display and setup the animation timers.
-    pc.printf("=== MicroBitDisplay::resetAnimation ===\n");
     animationMode = ANIMATION_MODE_NONE;
 
     this->image.clear();
@@ -190,13 +206,20 @@ void MicroBitDisplay::print(char c)
 
 /**
   * Prints the given string to the display, one character at a time.
-  * Uses the default delay between characters as defined by DEFAULT_SCROLLTEXT_SPEED.
+  * Uses the given delay between characters.
+  * Returns immediately, and executes the animation asynchronously.
   *
-  * @param str The string to display.
-  */
-void MicroBitDisplay::printString(ManagedString s)
+  * @param s The string to display.
+  * @param delay The time to delay between characters, in timer ticks.
+*/
+void MicroBitDisplay::printStringAsync(ManagedString s, int delay)
 {
-    this->printString(s, MICROBIT_DEFAULT_PRINT_SPEED); 
+    this->resetAnimation(delay);
+    
+    this->printingChar = 0;
+    this->printingText = s;
+    
+    animationMode = ANIMATION_MODE_PRINT_TEXT;
 }
 
 /**
@@ -204,72 +227,97 @@ void MicroBitDisplay::printString(ManagedString s)
   * Uses the given delay between characters.
   * Blocks the calling thread until all the text has been displayed.
   *
-  * @param str The string to display.
-  * @param delay The time to delay between characters, in milliseconds.
+  * @param s The string to display.
+  * @param delay The time to delay between characters, in timer ticks.
   */
 void MicroBitDisplay::printString(ManagedString s, int delay)
 {
-    this->resetAnimation(delay);
+    // Start the effect.
+    this->printStringAsync(s, delay);
     
-    this->printingChar = 0;
-    this->printingText = s;
+    // Wait for completion.
+    // TODO: We're polling here for now, but should really block on an event here.
+    while (animationMode == ANIMATION_MODE_PRINT_TEXT)
+        uBit.sleep(100);
 }
 
-/**
-  * Scrolls the given string to the display, from right to left.
-  * Uses the default delay between characters as defined by DEFAULT_SCROLLTEXT_SPEED.
-  * Blocks the calling thread until all the text has been displayed.
-  *
-  * @param str The string to display.
-  */
-void MicroBitDisplay::scrollString(ManagedString s)
-{
-    this->scrollString(s, MICROBIT_DEFAULT_SCROLL_SPEED);
-}
 
 /**
   * Scrolls the given string to the display, from right to left.
   * Uses the given delay between characters.
-  * Blocks the calling thread until all the text has been displayed.
+  * Returns immediately, and executes the animation asynchronously.
   *
-  * @param str The string to display.
-  * @param delay The time to delay between characters, in milliseconds.
+  * @param s The string to display.
+  * @param delay The time to delay between characters, in timer ticks.
   */
-void MicroBitDisplay::scrollString(ManagedString s, int delay)
+void MicroBitDisplay::scrollStringAsync(ManagedString s, int delay)
 {
-    pc.printf("=== MicroBitDisplay::scrollString ===\n");
     this->resetAnimation(delay);
     
     this->scrollingPosition = width-1;
     this->scrollingChar = 0;
     this->scrollingText = s;
-}
-
-
-/**
-  * Scrolls the given image across the display, from right to left.
-  * Uses the default delay between characters as defined by DEFAULT_SCROLLTEXT_SPEED.
-  * Blocks the calling thread until all the text has been displayed.
-  *
-  * @param image The image to display.
-  */
-void MicroBitDisplay::scrollImage(MicroBitImage *image)
-{
-    // TODO:
+    
+    animationMode = ANIMATION_MODE_SCROLL_TEXT;
 }
 
 /**
-  * Scrolls the given image across the display, from right to left.
+  * Scrolls the given string to the display, from right to left.
   * Uses the given delay between characters.
   * Blocks the calling thread until all the text has been displayed.
   *
-  * @param image The image to display.
-  * @param delay The time to delay between characters, in milliseconds.
+  * @param s The string to display.
+  * @param delay The time to delay between characters, in timer ticks.
   */
-void MicroBitDisplay::scrollImage(MicroBitImage *image, int delay)
+void MicroBitDisplay::scrollString(ManagedString s, int delay)
 {
-    // TODO:
+    // Start the effect.
+    this->scrollStringAsync(s, delay);
+    
+    // Wait for completion.
+    // TODO: We're polling here for now, but should really block on an event here.
+    while (animationMode == ANIMATION_MODE_SCROLL_TEXT)
+        uBit.sleep(100);
 }
+
+
+/**
+  * Scrolls the given image across the display, from right to left.
+  * Returns immediately, and executes the animation asynchronously.      
+  *
+  * @param image The image to display.
+  * @param delay The time to delay between each scroll update, in timer ticks.
+  * @param stride The number of pixels to move in each quantum.
+  */
+void MicroBitDisplay::scrollImageAsync(MicroBitImage image, int delay, int stride)
+{
+    this->resetAnimation(delay);
+
+    this->scrollingImageStride = stride;
+    this->scrollingImage = image;
+    
+    animationMode = ANIMATION_MODE_SCROLL_IMAGE;
+}
+
+/**
+  * Scrolls the given image across the display, from right to left.
+  * Blocks the calling thread until all the text has been displayed.
+  *
+  * @param image The image to display.
+  * @param delay The time to delay between each scroll update, in timer ticks.
+  * @param stride The number of pixels to move in each quantum.
+  */
+void MicroBitDisplay::scrollImage(MicroBitImage image, int delay, int stride)
+{
+    // Start the effect.
+    this->scrollImageAsync(image, delay, stride);
+    
+    // Wait for completion.
+    // TODO: We're polling here for now, but should really block on an event here.
+    while (animationMode == ANIMATION_MODE_SCROLL_IMAGE)
+        uBit.sleep(100);
+}
+
 
  /**
   * Sets the display brightness to the specified level.

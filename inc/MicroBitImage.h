@@ -2,6 +2,7 @@
   * Class definition for a MicroBitImage.
   *
   * An MicroBitImage is a simple bitmap representation of an image.
+  * n.b. This is a mutable, managed type.
   */
   
 #ifndef MICROBIT_IMAGE_H
@@ -11,8 +12,9 @@
 
 class MicroBitImage
 {
-    int width;              // Width of the bitmap, in pixels.
-    int height;             // Height of the bitmap, in pixels.
+    int width;                               // Width of the bitmap, in pixels.
+    int height;                              // Height of the bitmap, in pixels.
+    int *ref;                                // Reference count.
     
     /**
       * Internal constructor support function. 
@@ -20,11 +22,20 @@ class MicroBitImage
     void init(int x, int y, uint8_t *bitmap);
     
     public:
-    uint8_t *bitmap;        // 2D array representing the bitmap image.    
+    static MicroBitImage EmptyImage;    // Shared representation of a null image.
+    uint8_t *bitmap;                    // 2D array representing the bitmap image.    
+    
+    /**
+      * Default Constructor. 
+      * Creates a new reference to the empty MicroBitImage bitmap
+      * 
+      */
+    MicroBitImage();
+    
     
     /**
       * Copy Constructor. 
-      * Clone an existing MicroBitImage.
+      * Creates a new reference to an existing MicroBitImage.
       * 
       * @param image The MicroBitImage to clone.
       */
@@ -41,7 +52,7 @@ class MicroBitImage
 
     /**
       * Constructor. 
-      * Create a bitmap representation of a given size.
+      * Create a bitmap representation of a given size, based on a given buffer.
       * 
       * @param x the width of the image.
       * @param y the height of the image.
@@ -56,7 +67,29 @@ class MicroBitImage
       */
     ~MicroBitImage();
 
+    /**
+      * Copy assign operation. 
+      *
+      * Called when one MicroBitImage is assigned the value of another using the '=' operator.
+      * Decrement our reference count and free up the buffer as necessary.
+      * Then, update our buffer to refer to that of the supplied MicroBitImage,
+      * and increase its reference count.
+      *
+      * @param s The MicroBitImage to reference.
+      */
+    MicroBitImage& operator = (const MicroBitImage& i);
 
+
+    /**
+      * Equality operation.
+      *
+      * Called when one MicroBitImage is tested to be equal to another using the '==' operator.
+      *
+      * @param i The MicroBitImage to test ourselves against.
+      * @return true if this MicroBitImage is identical to the one supplied, false otherwise.
+      */
+    bool operator== (const MicroBitImage& i);
+    
     /**
       * Clears all pixels in this image
       */
@@ -92,12 +125,13 @@ class MicroBitImage
       * Pastes a given bitmap at the given co-ordinates.
       * Any pixels in the relvant area of this image are replaced.
       * 
-      * @param image The MicroBiImage to paste.
+      * @param image The MicroBitImage to paste.
       * @param x The leftmost X co-ordinate in this image where the given image should be pasted.
       * @param y The uppermost Y co-ordinate in this image where the given image should be pasted.
       * @param alpha set to 1 if transparency clear pixels in given image should be treated as transparent. Set to 0 otherwise.
+      * @return The number of pixels written.
       */
-    void paste(MicroBitImage &image, int x, int y, int alpha);
+    int paste(MicroBitImage &image, int x, int y, int alpha);
  
      /**
       * Prints a character to the display at the given location

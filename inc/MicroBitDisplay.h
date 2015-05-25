@@ -19,7 +19,15 @@
   */
 #define MICROBIT_DEFAULT_SCROLL_SPEED       50
 #define MICROBIT_DEFAULT_PRINT_SPEED        200
+#define MICROBIT_DEFAULT_SCROLL_STRIDE      -1
 #define MICROBIT_DEFAULT_BRIGHTNESS         128
+
+/**
+  * MessageBus Event Codes
+  */
+#define MICROBIT_DISPLAY_EVT_SCROLLTEXT_COMPLETE         1
+#define MICROBIT_DISPLAY_EVT_PRINTTEXT_COMPLETE          2
+#define MICROBIT_DISPLAY_EVT_SCROLLIMAGE_COMPLETE        3
 
 
 /**
@@ -103,7 +111,7 @@ class MicroBitDisplay
     // State for scrollString() method.
     // This is a surprisingly intricate method. 
     //
-    // The text being displayed. NULL if no message is scheduled for playback.
+    // The text being displayed. 
     ManagedString scrollingText;        
 
     // The index of the character currently being displayed.
@@ -119,11 +127,23 @@ class MicroBitDisplay
     // We *could* get some reuse in here with the scroll* variables above,
     // but best to keep it clean in case kids try concurrent operation (they will!),
     // given the small RAM overhead needed to maintain orthogonality.
-
     ManagedString printingText;        
     
     // The index of the character currently being displayed.
     int printingChar;
+
+    //
+    // State for scrollImage() method.
+    //
+    // The image being displayed. 
+    MicroBitImage scrollingImage;        
+    
+    // The number of pixels the image has been shifted on the display.
+    int scrollingImagePosition;
+
+    // The number of pixels the image is shifted on the display in each quantum.
+    int scrollingImageStride;
+
 
     static const MatrixPoint matrixMap[MICROBIT_DISPLAY_COLUMN_COUNT][MICROBIT_DISPLAY_ROW_COUNT];
     
@@ -133,6 +153,7 @@ class MicroBitDisplay
     void updateScrollText();
     void updatePrintText();
     void updateScrollImage();
+    void sendEvent(int eventcode);
     
     
     public:
@@ -166,62 +187,68 @@ class MicroBitDisplay
       * @param c The character to display.
       */
     void print(char c);
-
-    /**
-      * Prints the given string to the display, one character at a time.
-      * Uses the default delay between characters as defined by DEFAULT_SCROLLTEXT_SPEED.
-      *
-      * @param str The string to display.
-      */
-    void printString(ManagedString s);
-
+    
     /**
       * Prints the given string to the display, one character at a time.
       * Uses the given delay between characters.
       * Blocks the calling thread until all the text has been displayed.
       *
-      * @param str The string to display.
-      * @param delay The time to delay between characters, in milliseconds.
+      * @param s The string to display.
+      * @param delay The time to delay between characters, in timer ticks.
       */
-    void printString(ManagedString s, int delay);
+    void printString(ManagedString s, int delay = MICROBIT_DEFAULT_PRINT_SPEED);
 
     /**
-      * Scrolls the given string to the display, from right to left.
-      * Uses the default delay between characters as defined by DEFAULT_SCROLLTEXT_SPEED.
-      * Blocks the calling thread until all the text has been displayed.
+      * Prints the given string to the display, one character at a time.
+      * Uses the given delay between characters.
+      * Returns immediately, and executes the animation asynchronously.
       *
-      * @param str The string to display.
+      * @param s The string to display.
+      * @param delay The time to delay between characters, in timer ticks.
       */
-    void scrollString(ManagedString s);
+    void printStringAsync(ManagedString s, int delay = MICROBIT_DEFAULT_PRINT_SPEED);
+
 
     /**
       * Scrolls the given string to the display, from right to left.
       * Uses the given delay between characters.
       * Blocks the calling thread until all the text has been displayed.
       *
-      * @param str The string to display.
-      * @param delay The time to delay between characters, in milliseconds.
+      * @param s The string to display.
+      * @param delay The time to delay between characters, in timer ticks.
       */
-    void scrollString(ManagedString s, int delay);
+    void scrollString(ManagedString s, int delay = MICROBIT_DEFAULT_SCROLL_SPEED);
 
     /**
-      * Scrolls the given image across the display, from right to left.
-      * Uses the default delay between characters as defined by DEFAULT_SCROLLTEXT_SPEED.
-      * Blocks the calling thread until all the text has been displayed.
-      *
-      * @param image The image to display.
-      */
-    void scrollImage(MicroBitImage *image);
-
-    /**
-      * Scrolls the given image across the display, from right to left.
+      * Scrolls the given string to the display, from right to left.
       * Uses the given delay between characters.
+      * Returns immediately, and executes the animation asynchronously.
+      *
+      * @param s The string to display.
+      * @param delay The time to delay between characters, in timer ticks.
+      */
+    void scrollStringAsync(ManagedString s, int delay = MICROBIT_DEFAULT_SCROLL_SPEED);
+
+
+    /**
+      * Scrolls the given image across the display, from right to left.
       * Blocks the calling thread until all the text has been displayed.
       *
       * @param image The image to display.
-      * @param delay The time to delay between characters, in milliseconds.
+      * @param delay The time to delay between each scroll update, in timer ticks.
+      * @param stride The number of pixels to move in each quantum.
       */
-    void scrollImage(MicroBitImage *image, int delay);
+    void scrollImage(MicroBitImage image, int delay = MICROBIT_DEFAULT_SCROLL_SPEED, int stride = MICROBIT_DEFAULT_SCROLL_STRIDE);
+
+
+    /**
+      * Scrolls the given image across the display, from right to left.
+      * Returns immediately, and executes the animation asynchronously.      *
+      * @param image The image to display.
+      * @param delay The time to delay between each scroll update, in timer ticks.
+      * @param stride The number of pixels to move in each quantum.
+      */
+    void scrollImageAsync(MicroBitImage image, int delay = MICROBIT_DEFAULT_SCROLL_SPEED, int stride = MICROBIT_DEFAULT_SCROLL_STRIDE);
 
      /**
       * Sets the display brightness to the specified level.
@@ -234,6 +261,7 @@ class MicroBitDisplay
       * @return the brightness of this display, in the range 0..255.
       */    
     int getBrightness();    
+    
 };
 
 #endif

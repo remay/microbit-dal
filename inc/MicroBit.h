@@ -7,20 +7,26 @@
 #ifndef MICROBIT_H
 #define MICROBIT_H
 
+#define uBit (*microBit)
+
 #include "mbed.h"
 #include "BLEDevice.h"
 #include "DeviceInformationService.h"
 #include "DFUService.h"
 
 #include "MicroBitCompat.h"
+#include "MicroBitFiber.h"
 #include "ManagedString.h"
 #include "MicroBitImage.h"
 #include "MicroBitMessageBus.h"
+
 #include "MicroBitButton.h"
 #include "MicroBitDisplay.h"
 #include "MicroBitIO.h"
 #include "MicroBitLED.h"
-#include "MicroBitFiber.h"
+#include "MicroBitMagnetometer.h"
+#include "MicroBitAccelerometer.h"
+
 #include "MicroBitDFUService.h"
 
 // MicroBit::flags values
@@ -43,7 +49,6 @@
 #define MICROBIT_ID_IO_8                13
 
 // mBed pin assignments of core components.
-#define MICROBIT_PIN_USER_LED           P0_18
 #define MICROBIT_PIN_SDA                P0_22
 #define MICROBIT_PIN_SCL                P0_20
 
@@ -55,14 +60,15 @@ class MicroBit
     
     // Device level Message Bus abstraction
     MicroBitMessageBus  MessageBus;      
-
-    // Member variables to represent each of the core components on the device.
     
+    // Member variables to represent each of the core components on the device.
     MicroBitDisplay     display;
-    MicroBitButton      leftButton;
+    //MicroBitButton      leftButton;
     //MicroBitButton      rightButton;
     
-    //I2C                 i2c;
+    // I2C Interface
+    //I2C                 i2c;   
+
 /*
 
 
@@ -91,12 +97,22 @@ class MicroBit
       */
     void init();
 
+    /**
+      * Delay for the givne amount of time.
+      * If the scheduler is running, this will deschedule the current fiber and perform
+      * a power efficent, concurrent sleep operation.
+      * If the scheduler is disabled or we're running in an interrupt context, this
+      * will revert to a busy wait. 
+      */
+    void sleep(int milliseconds);
+
+
 };
 
 // Definition of the global instance of the MicroBit class.
 // Using this as a variation on the singleton pattern, just to make
 // code integration a littl bit easier for 3rd parties.
-extern MicroBit uBit;
+extern MicroBit *microBit;
 
 // FOR TESTING ONLY...
 extern "C" void updateScroll(char *str, int len);

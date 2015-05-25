@@ -24,7 +24,7 @@ void MicroBitButton::rising()
     MicroBitEvent *evt = new MicroBitEvent();
     evt->source = id;
     evt->context = NULL;
-    evt->timestamp = 0;
+    evt->timestamp = ticks;
     evt->value = MICROBIT_BUTTON_EVT_UP;
     
     uBit.MessageBus.send(evt);        
