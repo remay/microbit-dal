@@ -278,7 +278,29 @@ void schedule()
     // Swap to the context of the chosen fiber, and we're done.
     // Don't bother with the overhead of switching if there's only one fiber on the runqueue!
     if (currentFiber != oldFiber)        
+    {
+        // Ensure the stack buffer is large enough to hold the stack Reallocate if necessary.
+        uint32_t stackDepth;
+        uint32_t bufferSize;
+        
+        // Calculate the stack depth.
+        stackDepth = CORTEX_M0_STACK_BASE - ((uint32_t) __get_MSP());
+        bufferSize = oldFiber->stack_top - oldFiber->stack_bottom;
+        
+        // If we're too small, increase our buffer exponentially.
+        if (bufferSize < stackDepth)
+        {
+            while (bufferSize < stackDepth)
+                bufferSize = bufferSize << 1;
+                    
+            free((void *)oldFiber->stack_bottom);
+            oldFiber->stack_bottom = (uint32_t) malloc(bufferSize);
+            oldFiber->stack_top = oldFiber->stack_bottom + bufferSize;
+        }
+
+        // Schedule in the new fiber.
         swap_context(&oldFiber->tcb, &currentFiber->tcb, oldFiber->stack_top, currentFiber->stack_top);
+    }
 }
 
 /**
@@ -290,9 +312,9 @@ void idle_task()
 {
     while(1)
     {
-        // TODO: Efficient sleep goes here. :-)
-        //sleep();
-        
+        if (uBit.ble)
+            uBit.ble->waitForEvent();
+
         schedule();
     }
 }

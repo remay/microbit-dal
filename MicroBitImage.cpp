@@ -5,8 +5,7 @@
   * n.b. This is a mutable, managed type.
   */
 
-#include "MicroBitImage.h"
-#include "MicroBitCompat.h"
+#include "MicroBit.h"
 
 #define MICROBIT_FONT_WIDTH 4
 #define MICROBIT_FONT_HEIGHT 5
@@ -67,18 +66,29 @@ MicroBitImage::MicroBitImage(int x, int y)
 
 /**
     * Copy Constructor. 
-    * Clone an existing MicroBitImage.
+    * Add ourselves as a reference to an existing MicroBitImage.
     * 
-    * @param image The MicroBitImage to clone.
+    * @param image The MicroBitImage to reference.
     */
 MicroBitImage::MicroBitImage(MicroBitImage &image)
 {
-    this->init(image.getWidth(),image.getHeight(),image.bitmap);
+    bitmap = image.bitmap;
+    width = image.width;
+    height = image.height;
+    ref = image.ref;
+
+    (*ref)++;
+
+    if (*ref == 1)
+    {
+        (*ref)++;
+        delete &image;
+    }    
 }
 
 /**
   * Constructor. 
-  * Create a bitmap representation of a given size.
+  * Create a new bitmap representation of a given size.
   * 
   * @param x the width of the image.
   * @param y the height of the image.
@@ -262,6 +272,9 @@ int MicroBitImage::paste(MicroBitImage &image, int x, int y, int alpha)
 
     // Calcualte sane start pointer.
     pIn = image.bitmap;
+    pIn += (x < 0) ? -x : 0;
+    pIn += (y < 0) ? -image.width*y : 0;
+    
     pOut = bitmap;
     pOut += (x > 0) ? x : 0;
     pOut += (y > 0) ? width*y : 0;

@@ -4,8 +4,7 @@
   * An MicroBitImage is a simple bitmap representation of an image.
   */
 
-#include "MicroBitMessageBus.h"
-#include "MicroBitFiber.h"
+#include "MicroBit.h"
 
 /**
   * Constructor. 
@@ -76,8 +75,9 @@ void MicroBitMessageBus::send(MicroBitEvent *evt, MicroBitMessageBusCache *c)
 	while (l != NULL && l->id == evt->source)
 	{
 		if(l->value ==  MICROBIT_BUS_VALUE_ANY || l->value == evt->value)
-			//l->cb();
+		{
 			create_fiber(l->cb);
+		}
 
 		l = l->next;
 	}
@@ -86,7 +86,6 @@ void MicroBitMessageBus::send(MicroBitEvent *evt, MicroBitMessageBusCache *c)
 	l = listeners;
 	while (l != NULL && l->id == MICROBIT_BUS_ID_ANY)
 	{
-		//l->cb();
 		create_fiber(l->cb);
 		l = l->next;	
 	}

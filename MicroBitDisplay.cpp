@@ -38,6 +38,7 @@ MicroBitDisplay::MicroBitDisplay(int id, int x, int y) : strobe(), columnPins(MI
     this->height = y;
     this->brightness = MICROBIT_DEFAULT_BRIGHTNESS;
     this->strobeRow = 0;
+    this->rotation = MICROBIT_DISPLAY_ROTATION_0;
     
     animationMode = ANIMATION_MODE_NONE;
 }
@@ -68,7 +69,30 @@ void MicroBitDisplay::strobeUpdate()
     coldata = 0;
     for (int i = 0; i<MICROBIT_DISPLAY_COLUMN_COUNT; i++)
     {
-        if(image.getPixelValue(matrixMap[i][strobeRow].x, matrixMap[i][strobeRow].y))
+        int x = matrixMap[i][strobeRow].x;
+        int y = matrixMap[i][strobeRow].y;
+        int t = x;        
+        
+        switch (rotation)
+        {
+            case MICROBIT_DISPLAY_ROTATION_90:
+                x = width - 1 - y;
+                y = t;
+                break;
+                
+            case MICROBIT_DISPLAY_ROTATION_180:
+                x = width - 1 - x;
+                y = height - 1 - y;
+                break;
+                
+            case MICROBIT_DISPLAY_ROTATION_270:
+                x = y;
+                y = height - 1 - t;
+                break;
+        }
+        
+        //if(image.getPixelValue(matrixMap[i][strobeRow].x, matrixMap[i][strobeRow].y))
+        if(image.getPixelValue(x, y))
             coldata |= (1 << i);
     }
 
@@ -80,6 +104,10 @@ void MicroBitDisplay::strobeUpdate()
     // Update text and image animations if we need to.
     this->animationUpdate();
         
+    // Update Accelerometer if needed.
+    if (uBit.flags & MICROBIT_FLAG_ACCELEROMETER_RUNNING)
+        uBit.accelerometer.tick();
+ 
     // Scheduler callback. We do this here just as a single timer is more efficient. :-)
     if (uBit.flags & MICROBIT_FLAG_SCHEDULER_RUNNING)
         scheduler_tick();  
@@ -169,8 +197,10 @@ void MicroBitDisplay::updatePrintText()
   * Paste the stored bitmap at the appropriate point.
   */   
 void MicroBitDisplay::updateScrollImage()
-{        
-    if(image.paste(scrollingImage, scrollingImagePosition, 0, 0) == 0)
+{   
+    image.clear();     
+
+    if ((image.paste(scrollingImage, scrollingImagePosition, 0, 0) == 0) && scrollingImageRendered)
     {
         animationMode = ANIMATION_MODE_NONE;  
         this->sendEvent(MICROBIT_DISPLAY_EVT_SCROLLIMAGE_COMPLETE);        
@@ -178,6 +208,7 @@ void MicroBitDisplay::updateScrollImage()
     }
 
     scrollingImagePosition += scrollingImageStride;
+    scrollingImageRendered = true;
 }
 
 
@@ -293,9 +324,11 @@ void MicroBitDisplay::scrollImageAsync(MicroBitImage image, int delay, int strid
 {
     this->resetAnimation(delay);
 
+    this->scrollingImagePosition = stride < 0 ? width : -image.getWidth();
     this->scrollingImageStride = stride;
     this->scrollingImage = image;
-    
+    this->scrollingImageRendered = false;
+        
     animationMode = ANIMATION_MODE_SCROLL_IMAGE;
 }
 
@@ -337,4 +370,14 @@ int MicroBitDisplay::getBrightness()
     return this->brightness;
 }
 
-
+ /**
+  * Rotates the display to the given position. 
+  * Axis aligned values only.
+  */    
+void MicroBitDisplay::rotateTo(int position)
+{
+    if (position < MICROBIT_DISPLAY_ROTATION_0 || position > MICROBIT_DISPLAY_ROTATION_270)
+        return;
+        
+    this->rotation = position;
+}

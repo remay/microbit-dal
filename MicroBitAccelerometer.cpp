@@ -1,7 +1,7 @@
 /**
   * Class definition for MicroBit Accelerometer.
   *
-  * Represents an implementation of the Freescale MMA8652 3 axis accelerometer
+  * Represents an implementation of the Freescale MMA8653 3 axis accelerometer
   * Also includes basic data caching and on demand activation.
   */
   
@@ -20,7 +20,7 @@ void MicroBitAccelerometer::writeCommand(uint8_t reg, uint8_t value)
     command[0] = reg;
     command[1] = value;
     
-    //uBit.i2c.write(address, (const char *)command, 2);
+    uBit.i2c.write(address, (const char *)command, 2);
 }
 
 /**
@@ -33,42 +33,74 @@ void MicroBitAccelerometer::writeCommand(uint8_t reg, uint8_t value)
   */
 void MicroBitAccelerometer::readCommand(uint8_t reg, uint8_t* buffer, int length)
 {
-    //uBit.i2c.write(address, (const char *)&reg, 1, true);
-    //uBit.i2c.read(address, (char *)buffer, length);
+    uBit.i2c.write(address, (const char *)&reg, 1, true);
+    uBit.i2c.read(address, (char *)buffer, length);
 }
 
-MicroBitAccelerometer::MicroBitAccelerometer(int id, int address) : sample()
+MicroBitAccelerometer::MicroBitAccelerometer(int id, int address) : sample(), int1(MICROBIT_PIN_ACCEL_DATA_READY)
 {
     // Store our identifiers.
     this->id = id;
     this->address = address;
 
     // Enable the accelerometer.
-    // Firts place the device into standby mode, so it can be configured.
-    writeCommand(MMA8652_CTRL_REG1, 0x00);
+    // First place the device into standby mode, so it can be configured.
+    writeCommand(MMA8653_CTRL_REG1, 0x00);
     
+    // Enable the INT1 interrupt pin.
+    writeCommand(MMA8653_CTRL_REG4, 0x01);
+
+    // Select the DATA_READY event source to be routed to INT1
+    writeCommand(MMA8653_CTRL_REG5, 0x01);
+
     // Configure for a +/- 2g range.
-    writeCommand(MMA8652_XYZ_DATA_CFG, 0x00);
+    writeCommand(MMA8653_XYZ_DATA_CFG, 0x00);
     
-    // Bring the device back online, with a 50Hz sample frequency.
-    writeCommand(MMA8652_CTRL_REG1, 0x21);
+    // Bring the device back online, with 10bit wide samples at a 50Hz frequency.
+    writeCommand(MMA8653_CTRL_REG1, 0x21);
+
+    // indicate that we're ready to receive tick callbacks.
+    uBit.flags |= MICROBIT_FLAG_ACCELEROMETER_RUNNING;
 }
 
+int MicroBitAccelerometer::whoAmI()
+{
+    uint8_t data;
+
+    readCommand(MMA8653_WHOAMI, &data, 1);    
+    return (int)data;
+}
 
 /**
   * Reads the acceleration data from the accelerometer, and stores it in our buffer.
   */
 void MicroBitAccelerometer::update()
 {
-    uint8_t data[7];
+    int8_t data[6];
 
-    readCommand( MMA8652_STATUS, data, 7);
-    sample.x = ((data[1] * 256) + ((unsigned short) data[2]));
-    sample.y = ((data[3] * 256) + ((unsigned short) data[4]));
-    sample.z = ((data[5] * 256) + ((unsigned short) data[6]));
+    readCommand(MMA8653_OUT_X_MSB, (uint8_t *)data, 6);
+
+    // read MSB values...
+    sample.x = data[0]; 
+    sample.y = data[2];
+    sample.z = data[4];
     
+    // Scale into millig (approx!)
+    sample.x *= 16;
+    sample.y *= 16;
+    sample.z *= 16;
+
+    // We ignore the LSB bits for now, as they're just noise...
+    // TODO: Revist this when we have working samples to see if additional resolution is needed.
+
+#ifdef USE_ACCEL_LSB
+    // Add in LSB values.
+    sample.x += (data[1] / 64);
+    sample.y += (data[3] / 64);
+    sample.z += (data[5] / 64);
+#endif
+
     //TODO: Issue an event.
-    
 };
 
 /**
@@ -99,3 +131,14 @@ int MicroBitAccelerometer::getZ()
 }
 
 
+/**
+  * periodic callback from MicroBit clock.
+  * Check if any data is ready for reading...
+  */    
+void MicroBitAccelerometer::tick()
+{
+    // Poll interrupt line from accelerometer.
+    // n.b. Default is Active LO. Interrupt is cleared in data read.
+    if(!int1)
+        update();
+}

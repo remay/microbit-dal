@@ -3,38 +3,38 @@
 #ifdef MAIN_STRING_TEST
 
 #include "MicroBit.h"
-#include "ManagedString.h"
-
-MicroBit uBit;
-Serial pc(USBTX, USBRX);
-
 
 void f1(ManagedString s)
 {
+#ifdef MICROBIT_DBG    
     pc.printf("f1: %s\n", s.toCharArray());
+#endif    
 }
 
 void f2(ManagedString s)
 {
-    ManagedString s2=s;  
+    ManagedString s2=s;
+#ifdef MICROBIT_DBG          
     pc.printf("String: %s\n", s2.toCharArray());
+#endif
 }
 
 void f3(ManagedString s1, ManagedString s2)
 {
     ManagedString t = s1+s2;
     
+#ifdef MICROBIT_DBG              
     pc.printf("String: %s\n", t.toCharArray());
+#endif    
 }
 
-int main()
+void app_main()
 { 
-    // Set up debug console.
-    pc.baud (115200);
 
-    wait(10.0);
     
+#ifdef MICROBIT_DBG              
     pc.printf("=== Starting String Test ===\n");
+#endif    
     
     ManagedString a("Alice");
     ManagedString b("Bob");
@@ -45,12 +45,12 @@ int main()
     f2(b);
     f3(c,b);
      
+#ifdef MICROBIT_DBG              
     pc.printf("String: %s\n", d.toCharArray());
+#endif    
     
     while(1)
-    {
-        wait(1.0);
-    }
+        uBit.sleep(1000);
 }
 
 #endif

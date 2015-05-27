@@ -1,7 +1,7 @@
 /**
   * Class definition for MicroBit Accelerometer.
   *
-  * Represents an implementation of the Freescale MMA8652 3 axis accelerometer
+  * Represents an implementation of the Freescale MMA8653 3 axis accelerometer
   * Also includes basic data caching and on demand activation.
   */
   
@@ -10,22 +10,36 @@
 
 #include "mbed.h"
 
+/**
+  * Relevant pin assignments
+  */
+#define MICROBIT_PIN_ACCEL_DATA_READY          P0_28
+
 /*
  * I2C constants
  */
-#define MMA8652_DEFAULT_ADDR    0x3A
+#define MMA8653_DEFAULT_ADDR    0x3A
 
 /*
- * MMA8652 Register map
+ * MMA8653 Register map (partial)
  */
-#define MMA8652_STATUS          0x00
-#define MMA8652_OUT_X_MSB       0x01
-#define MMA8652_WHOAMI          0x0D
-#define MMA8652_XYZ_DATA_CFG    0x0E
-#define MMA8652_CTRL_REG1       0x2A
-#define MMA8652_WHOAMI_VAL      0x4A
+#define MMA8653_STATUS          0x00
+#define MMA8653_OUT_X_MSB       0x01
+#define MMA8653_WHOAMI          0x0D
+#define MMA8653_XYZ_DATA_CFG    0x0E
+#define MMA8653_CTRL_REG1       0x2A
+#define MMA8653_CTRL_REG2       0x2B
+#define MMA8653_CTRL_REG3       0x2C
+#define MMA8653_CTRL_REG4       0x2D
+#define MMA8653_CTRL_REG5       0x2E
 
-struct MMA8652Sample
+
+/**
+  * MMA8653 constants
+  */
+#define MMA8653_WHOAMI_VAL      0x5A
+
+struct MMA8653Sample
 {
     int16_t         x;
     int16_t         y;
@@ -41,8 +55,9 @@ class MicroBitAccelerometer
       
     int             id;            // Event Bus ID
     int             address;       // I2C address of this accelerometer.
-    MMA8652Sample   sample;        // The last sample read.
-
+    MMA8653Sample   sample;        // The last sample read.
+    DigitalIn       int1;          // Data ready interrupt.
+    
     public:
     
     /**
@@ -56,6 +71,12 @@ class MicroBitAccelerometer
       * Reads the acceleration data from the accelerometer, and stores it in our buffer.
       */
     void update();
+    
+    
+    /**
+      * Attempts to determine the 8 bit ID from the accelerometer. 
+      */
+    int whoAmI();
 
     /**
       * Reads the X axis value of the latest update from the accelerometer.
@@ -75,6 +96,12 @@ class MicroBitAccelerometer
       */    
     int getZ();
 
+    /**
+      * periodic callback from MicroBit clock.
+      * Check if any data is ready for reading...
+      */    
+    void tick();
+    
     private:
     /**
       * Issues a standard, 2 byte I2C command write to the accelerometer.

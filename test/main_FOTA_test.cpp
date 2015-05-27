@@ -4,59 +4,39 @@
 
 #include "MicroBit.h"
 
-extern "C" void bootloader_start(void);
+char *defaultMessage = "FOTA TEST... ";
+char bleMessage[50];
+int update = 0;
 
-MicroBit uBit;
-
-
-
-Serial pc(USBTX, USBRX);
-char version[] = "1.1";
-
-void dfuCallbackFn()
+void
+updateScroll(char* str, int len)
 {
-    pc.printf("=== DFU Callback ===\n");   
+    len = min(len,50);
+    memcpy(bleMessage, str, len);
+    bleMessage[len]=0;
+    update = 1;
 }
 
-int
-ble_pair()
-{
-    pc.printf("=== Entering FOTA Pairing Mode ===\n");   
+void app_main()
+{         
+    // Enter Pairing mode if appropriate     
+    if(uBit.leftButton.isPressed())
+        uBit.ble_firmware_update_service->pair();
+
+    // Otherwise, just hang out and wait for a BLE request for FOTA programming.
+    ManagedString msg(defaultMessage);
+
+    uBit.display.scrollStringAsync(msg);
+ 
     while(1)
-    {
-        //uBit.ble->waitForEvent();
-        wait(1.0);
-    }
-}
-
-int main()
-{ 
-    // Set up debug console.
-    pc.baud (115200);
-
-    wait(10.0);
-    
-    pc.printf("=== Starting FOTA Test ===\n");
-    for (int i=5; i>0; i--)
-    {
-        pc.printf("%d...\n",i);
-        wait(1.0);
-    }
-
-    
-    //if(uBit.leftButton.isPressed())
-    //{
-    //    ble_pair(); 
-    //}    
-    
-    pc.printf("=== Starting Bootloader ===\n");    
-    bootloader_start();
-    
-    pc.printf("=== Starting Application ===\n");    
-    while(1)
-    {
-        //pc.printf("Running: %s\n", version);
-        uBit.ble->waitForEvent();
+    {        
+        uBit.sleep(100);
+        if (update)
+        {
+            msg = ManagedString(bleMessage);
+            uBit.display.scrollStringAsync(msg);    
+            update = 0;   
+        }
     }
 }
 

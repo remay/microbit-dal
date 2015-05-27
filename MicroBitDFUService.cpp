@@ -17,6 +17,7 @@
 #include "MicroBit.h"
 #include "UUID.h"
 
+#include "inc/MicroBitTest.h"
 /**
   * Constructor. 
   * Create a representation of a MicroBit device.
@@ -198,11 +199,13 @@ void MicroBitDFUService::onDataWritten(const GattCharacteristicWriteCBParams *pa
             }
         }      
     }
-    
+
+#ifdef MAIN_FOTA_TEST
     if (params->charHandle == microBitScrollTextCharacteristic.getValueHandle()) {
         pc.printf("ScrollText\n\n");    
         updateScroll((char *)params->data, params->len);
     }
+#endif
 }
 
 /**

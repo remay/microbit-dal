@@ -8,10 +8,19 @@
 #define MICROBIT_DISPLAY_H
 
 /**
+  * User definable constants
+  */
+#define MICROBIT_DISPLAY_ROTATION_0         0
+#define MICROBIT_DISPLAY_ROTATION_90        1
+#define MICROBIT_DISPLAY_ROTATION_180       2
+#define MICROBIT_DISPLAY_ROTATION_270       3
+
+
+/**
   * Core Confuration settings.
   */
 
-#define MICROBIT_SB1
+#define MICROBIT_SB2
 #define MICROBIT_DISPLAY_REFRESH_PERIOD     0.002
 
 /**
@@ -87,6 +96,7 @@ class MicroBitDisplay
     int height;
     int brightness;
     int strobeRow;
+    int rotation;
     Ticker strobe;
     BusOut columnPins;
     BusOut rowPins;
@@ -144,6 +154,8 @@ class MicroBitDisplay
     // The number of pixels the image is shifted on the display in each quantum.
     int scrollingImageStride;
 
+    // Flag to indicate if image has been rendered to screen yet (or not)
+    bool scrollingImageRendered;
 
     static const MatrixPoint matrixMap[MICROBIT_DISPLAY_COLUMN_COUNT][MICROBIT_DISPLAY_ROW_COUNT];
     
@@ -262,6 +274,11 @@ class MicroBitDisplay
       */    
     int getBrightness();    
     
+     /**
+      * Rotates the display to the given position. 
+      * Axis aligned values only.
+      */    
+    void rotateTo(int position);    
 };
 
 #endif

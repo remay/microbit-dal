@@ -33,12 +33,12 @@ class MicroBitImage
     MicroBitImage();
     
     
-    /**
-      * Copy Constructor. 
-      * Creates a new reference to an existing MicroBitImage.
-      * 
-      * @param image The MicroBitImage to clone.
-      */
+  /**
+    * Copy Constructor. 
+    * Add ourselves as a reference to an existing MicroBitImage.
+    * 
+    * @param image The MicroBitImage to reference.
+    */
     MicroBitImage(MicroBitImage &image);
     
     /**
