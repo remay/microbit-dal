@@ -32,7 +32,7 @@ MicroBit::MicroBit() :
   */
 void MicroBit::init()
 {   
-#ifdef BLE
+#ifdef MICROBIT_BLE
     // Start the BLE stack.        
     ble = new BLEDevice();
     
@@ -61,8 +61,7 @@ void MicroBit::init()
 #endif
 
     // Start refreshing the Matrix Display
-    display.startDisplay();
-
+    display.startDisplay();        
 }
 
 /**

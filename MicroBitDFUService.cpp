@@ -29,11 +29,8 @@ MicroBitDFUService::MicroBitDFUService(BLEDevice &_ble) :
         microBitDFUServiceFlashCodeCharacteristic(MicroBitDFUServiceFlashCodeCharacteristicUUID, (uint8_t *)&flashCode, 0, sizeof(uint32_t),
         GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_READ | GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_WRITE),
         microBitScrollTextCharacteristic(MicroBitDFUServiceScrollTextCharacteristicUUID, scrollBytes, 20, 20,
-        GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_WRITE_WITHOUT_RESPONSE),
-        pc(USBTX, USBRX)
+        GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_WRITE_WITHOUT_RESPONSE)
 {
-    pc.baud(115200);
-
     authenticated = false;
     flashCodeRequested = false;
 
@@ -76,7 +73,9 @@ int MicroBitDFUService::getName(char *name)
     int d = MICROBIT_DFU_HISTOGRAM_HEIGHT;
     int h;
 
+#ifdef MICROBIT_DEBUG
     pc.printf("MicroBitDFUService::getName: Called [%.8x]\n",n);
+#endif    
 
     for (int i=0; i<MICROBIT_DFU_HISTOGRAM_WIDTH;i++)
     {
@@ -96,7 +95,10 @@ int MicroBitDFUService::getName(char *name)
   */
 void MicroBitDFUService::pair()
 {
+#ifdef MICROBIT_DEBUG
     pc.printf("MicroBitDFUService::pair: Called\n");
+#endif
+    
     ManagedString blueZoneString("BLUE ZONE...");
     ManagedString pairString("PAIR?");
     
@@ -112,8 +114,7 @@ void MicroBitDFUService::pair()
             {
                 uBit.display.scrollString(pairString);
                 for (int j=0; j<40; j++)
-                {
-#ifdef NOB                    
+                {          
                     if (uBit.leftButton.isPressed())
                     {
                         i=100;
@@ -123,7 +124,7 @@ void MicroBitDFUService::pair()
                         authenticated = true;
                         break;
                     }
-#endif                    
+                             
                     wait(0.1);
                 }
             }
@@ -145,20 +146,29 @@ void MicroBitDFUService::pair()
   */
 void MicroBitDFUService::onDataWritten(const GattCharacteristicWriteCBParams *params)
 {
+#ifdef MICROBIT_DEBUG
     pc.printf("MicroBitDFUService::onDataWritten: Called... ");       
+#endif
     
     if (params->charHandle == microBitDFUServiceControlCharacteristic.getValueHandle()) {
-        pc.printf("Control Point:\n   ");
-    
+
+#ifdef MICROBIT_DEBUG        
+    pc.printf("Control Point:\n   ");
+#endif    
         if (params->len < 1)
         {
+#ifdef MICROBIT_DEBUG
             pc.printf("  invalid. Ignoring.\n");
+#endif
             return;
         }
         
+#ifdef MICROBIT_DEBUG
         for (int i=0; i<params->len; i++)
-            pc.printf("%.2x ", params->data[i]);
+            pc.printf("%.2x ", params->data[i]);            
+
         pc.printf("\n");
+#endif
         
         switch(params->data[0])
         {
@@ -166,14 +176,18 @@ void MicroBitDFUService::onDataWritten(const GattCharacteristicWriteCBParams *pa
             
                 if (authenticated)
                 {
+#ifdef MICROBIT_DEBUG
                     pc.printf("  ACTIVATING BOOTLOADER.\n");
-                    //bootloader_start();    
+#endif
+                    bootloader_start();    
                 }   
             
                 break;
             
             case MICROBIT_DFU_OPCODE_START_PAIR:
+#ifdef MICROBIT_DEBUG
                 pc.printf("  START_PAIR:  ");                
+#endif                
                 flashCodeRequested = true;
                 break;
                                 
@@ -181,8 +195,11 @@ void MicroBitDFUService::onDataWritten(const GattCharacteristicWriteCBParams *pa
     }
     
     if (params->charHandle == microBitDFUServiceFlashCodeCharacteristic.getValueHandle()) {
+
+#ifdef MICROBIT_DEBUG
         pc.printf("FlashCode\n\n");    
-        
+#endif        
+
         if (params->len >= 4)
         {            
             uint32_t lockCode=0;
@@ -191,10 +208,14 @@ void MicroBitDFUService::onDataWritten(const GattCharacteristicWriteCBParams *pa
             //if (lockCode == NRF_FICR->DEVICEID[0])
             if (lockCode == 0xcafe)
             {
+#ifdef MICROBIT_DEBUG
                 pc.printf("AUTHENTICATED\n");                
+#endif
                 authenticated = true;
             }else{
+#ifdef MICROBIT_DEBUG                
                 pc.printf("NOT AUTHENTICATED: %8x : %8x\n", lockCode, t);                
+#endif
                 authenticated = false;
             }
         }      
@@ -202,7 +223,9 @@ void MicroBitDFUService::onDataWritten(const GattCharacteristicWriteCBParams *pa
 
 #ifdef MAIN_FOTA_TEST
     if (params->charHandle == microBitScrollTextCharacteristic.getValueHandle()) {
+#ifdef MICROBIT_DEBUG
         pc.printf("ScrollText\n\n");    
+#endif        
         updateScroll((char *)params->data, params->len);
     }
 #endif
@@ -227,7 +250,10 @@ void MicroBitDFUService::showTick()
   */
 void MicroBitDFUService::showNameHistogram()
 {
+#ifdef MICROBIT_DEBUG
     pc.printf("MicroBitDFUService::showNameHistogram: Called\n");
+#endif
+    
     uBit.display.scrollString(ManagedString::EmptyString);
 
     //int n = NRF_FICR->DEVICEID[1];
@@ -254,7 +280,9 @@ void MicroBitDFUService::showNameHistogram()
   */
 void MicroBitDFUService::releaseFlashCode()
 {
+#ifdef MICROBIT_DEBUG
     pc.printf("MicroBitDFUService::releaseFlashCode: Called\n");       
+#endif    
     //flashCode = NRF_FICR->DEVICEID[0];
     flashCode = 0xcafe;
     ble.updateCharacteristicValue(microBitDFUServiceFlashCodeCharacteristic.getValueHandle(), (uint8_t *)&flashCode, sizeof(uint32_t));

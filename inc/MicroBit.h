@@ -10,6 +10,8 @@
 // DEBUG. Enable this to get debug message routed through the USB serial interface.
 //#define MICROBIT_DBG
 
+//#define MICROBIT_BLE
+
 #include "mbed.h"
 #include "BLEDevice.h"
 #include "DeviceInformationService.h"

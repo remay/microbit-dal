@@ -94,9 +94,6 @@ class MicroBitDFUService
     // BODGE: Temporary home for this.
     GattCharacteristic  microBitScrollTextCharacteristic;
     
-    // Debug
-    Serial pc;    
-
     // Displays the device's ID code as a histogram on the LED matrix display.
     void showNameHistogram();
     
