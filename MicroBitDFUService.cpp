@@ -17,7 +17,7 @@
 #include "MicroBit.h"
 #include "UUID.h"
 
-#include "inc/MicroBitTest.h"
+#include "test/MicroBitTest.h"
 /**
   * Constructor. 
   * Create a representation of a MicroBit device.

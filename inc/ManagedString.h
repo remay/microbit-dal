@@ -34,7 +34,7 @@ class ManagedString
       *
       * @param str The character array on which to base the new ManagedString.
       */    
-    ManagedString(char *str);
+    ManagedString(const char *str);
     
     /**
       * Copy constructor. 
@@ -43,7 +43,8 @@ class ManagedString
       *
       * @param s The ManagedString to copy.
       */
-    ManagedString(ManagedString &s);
+    ManagedString(const ManagedString &s);
+    
     /**
       * Default constructor. 
       *

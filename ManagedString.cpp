@@ -11,7 +11,7 @@
   *
   * @param str The character array on which to base the new ManagedString.
   */    
-ManagedString::ManagedString(char *str)
+ManagedString::ManagedString(const char *str)
 {
     len = strlen(str);
     data = (char *) malloc(len+1);
@@ -27,7 +27,8 @@ ManagedString::ManagedString(char *str)
   *
   * @param s The ManagedString to copy.
   */
-ManagedString::ManagedString(ManagedString &s)
+
+ManagedString::ManagedString(const ManagedString &s)
 {
     data = s.data;
     ref = s.ref;
@@ -41,6 +42,7 @@ ManagedString::ManagedString(ManagedString &s)
         delete &s;
     }
 }
+
 
 /**
   * Default constructor. 
@@ -81,6 +83,8 @@ ManagedString::~ManagedString()
   *
   * @param s The ManagedString to copy.
   */
+
+  
 ManagedString& ManagedString::operator = (const ManagedString& s)
 {
     if(this == &s)
