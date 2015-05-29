@@ -88,6 +88,17 @@ MicroBitImage::MicroBitImage(const MicroBitImage &image)
 
 /**
   * Constructor. 
+  * Create a blank bitmap representation of a given size.
+  * 
+  * @param s A text based representation of the image given whitespace delimited numeric values.
+  */
+MicroBitImage::MicroBitImage(const char *s)
+{
+ 
+}
+
+/**
+  * Constructor. 
   * Create a new bitmap representation of a given size.
   * 
   * @param x the width of the image.

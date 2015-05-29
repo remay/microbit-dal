@@ -45,10 +45,9 @@ class MicroBitImage
       * Constructor. 
       * Create a blank bitmap representation of a given size.
       * 
-      * @param s A textual desctiption of 
-      * @param y the height of the image.     
+      * @param s A text based representation of the image given whitespace delimited numeric values.
       */
-    MicroBitImage(char *s);
+    MicroBitImage(const char *s);
 
     /**
       * Constructor. 
