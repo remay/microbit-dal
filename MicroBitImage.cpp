@@ -59,7 +59,7 @@ MicroBitImage::MicroBitImage()
   * TODO: Consider an immutable flavour, which might save us RAM for animation spritesheets...
   * ...as these could be kept in FLASH.
   */
-MicroBitImage::MicroBitImage(int x, int y)
+MicroBitImage::MicroBitImage(const int x, const int y)
 {
     this->init(x,y,NULL);
 }
@@ -70,7 +70,7 @@ MicroBitImage::MicroBitImage(int x, int y)
     * 
     * @param image The MicroBitImage to reference.
     */
-MicroBitImage::MicroBitImage(MicroBitImage &image)
+MicroBitImage::MicroBitImage(const MicroBitImage &image)
 {
     bitmap = image.bitmap;
     width = image.width;
@@ -95,7 +95,7 @@ MicroBitImage::MicroBitImage(MicroBitImage &image)
   * @param the bitmap buffer to copy. 
   *
   */
-MicroBitImage::MicroBitImage(int x, int y, uint8_t *bitmap)
+MicroBitImage::MicroBitImage(const int x, const int y, const uint8_t *bitmap)
 {
     this->init(x,y,bitmap);
 }
@@ -109,7 +109,7 @@ MicroBitImage::~MicroBitImage()
     }
 }
 
-void MicroBitImage::init(int x, int y, uint8_t *bitmap)
+void MicroBitImage::init(const int x, const int y, const uint8_t *bitmap)
 {
     // Create a copy of the array
     this->width = x;
@@ -220,9 +220,10 @@ uint8_t MicroBitImage::getPixelValue(int x , int y)
   * @param linear bitmap representing the image.
   *     
   */
-void MicroBitImage::printImage(int width, int height, uint8_t *bitmap)
+void MicroBitImage::printImage(int width, int height, const uint8_t *bitmap)
 {
-    uint8_t *pIn, *pOut;
+    const uint8_t *pIn;
+    uint8_t *pOut;
     int pixelsToCopyX, pixelsToCopyY;
 
     // Sanity check.

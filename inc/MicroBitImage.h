@@ -19,7 +19,7 @@ class MicroBitImage
     /**
       * Internal constructor support function. 
       */
-    void init(int x, int y, uint8_t *bitmap);
+    void init(const int x, const int y, const uint8_t *bitmap);
     
     public:
     static MicroBitImage EmptyImage;    // Shared representation of a null image.
@@ -39,7 +39,7 @@ class MicroBitImage
     * 
     * @param image The MicroBitImage to reference.
     */
-    MicroBitImage(MicroBitImage &image);
+    MicroBitImage(const MicroBitImage &image);
     
     /**
       * Constructor. 
@@ -57,7 +57,7 @@ class MicroBitImage
       * @param x the width of the image.
       * @param y the height of the image.     
       */
-    MicroBitImage(int x, int y);
+    MicroBitImage(const int x, const int y);
 
     /**
       * Constructor. 
@@ -68,7 +68,7 @@ class MicroBitImage
       * @param bitmap a 2D array representing the image.
       *     
       */
-    MicroBitImage(int x, int y, uint8_t *bitmap);
+    MicroBitImage(const int x, const int y, const uint8_t *bitmap);
 
     /**
       * Destructor. 
@@ -128,7 +128,7 @@ class MicroBitImage
       * @param bitmap a 2D array representing the image.
       *     
       */
-    void printImage(int x, int y, uint8_t *bitmap);
+    void printImage(int x, int y, const uint8_t *bitmap);
     
     /**
       * Pastes a given bitmap at the given co-ordinates.
