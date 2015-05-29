@@ -14,12 +14,12 @@
   * This helps to minimize our SRAM footprint.
   */
 
-inline bool min(int a, int b)
+inline int min(int a, int b)
 {
     return (a < b ? a : b);
 }
 
-inline bool max(int a, int b)
+inline int max(int a, int b)
 {
     return (a > b ? a : b);
 }

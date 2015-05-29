@@ -148,7 +148,8 @@ MicroBitImage::MicroBitImage(const char *s)
     this->width = width;
     this->height = height;
     this->bitmap = new uint8_t[width * height];
-
+    this->ref = (int *) malloc(sizeof(int));
+    *ref = 1;
 
     // Second pass: collect the data.
     parseReadPtr = s;
