@@ -34,7 +34,6 @@
 extern const uint8_t  MicroBitDFUServiceUUID[];
 extern const uint8_t  MicroBitDFUServiceControlCharacteristicUUID[];
 extern const uint8_t  MicroBitDFUServiceFlashCodeCharacteristicUUID[]; 
-extern const uint8_t  MicroBitDFUServiceScrollTextCharacteristicUUID[];
 
 // Handle on the memory resident Nordic bootloader.
 extern "C" void bootloader_start(void);
@@ -83,16 +82,12 @@ class MicroBitDFUService
 
     // memory for our 8 bit control characteristics.
     uint8_t             controlByte;
-    uint8_t             scrollBytes[20];
     
     // Opcodes can be issued here to control the MicroBitDFU Service, as defined above.
     WriteOnlyGattCharacteristic<uint8_t> microBitDFUServiceControlCharacteristic;
 
     // Read/Write characteristic to enable unlocking and discovery of the MicroBit's flashcode.
     GattCharacteristic  microBitDFUServiceFlashCodeCharacteristic;
-    
-    // BODGE: Temporary home for this.
-    GattCharacteristic  microBitScrollTextCharacteristic;
     
     // Displays the device's ID code as a histogram on the LED matrix display.
     void showNameHistogram();
@@ -102,8 +97,6 @@ class MicroBitDFUService
 
     // Update BLE characteristic to release our flash code.
     void releaseFlashCode();
-
-    
 };
 
 #endif

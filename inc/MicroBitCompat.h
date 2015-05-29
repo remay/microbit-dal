@@ -29,4 +29,9 @@ inline void *memclr(void *a, size_t b)
     return memset(a,0,b);
 }
 
+inline bool isdigit(char c)
+{
+    return (c > 47 && c < 58);
+}
+
 #endif

@@ -107,7 +107,7 @@ class MicroBit
     void init();
 
     /**
-      * Delay for the givne amount of time.
+      * Delay for the given amount of time.
       * If the scheduler is running, this will deschedule the current fiber and perform
       * a power efficent, concurrent sleep operation.
       * If the scheduler is disabled or we're running in an interrupt context, this
@@ -115,7 +115,21 @@ class MicroBit
       */
     void sleep(int milliseconds);
 
+    /**
+      * Generate a randoim number in the given range.
+      * We use the NRF51822 in built random number generator here
+      * TODO: Determine if we want to, given its relatively high power consumption!
+      *
+      * @return A random, natural number between 0 and the the given maximum value.
+      */
     int random(int max);
+
+    /**
+      * Determine the time since this MicroBit was last reset.
+      *
+      * @return The time since the last reset, in milliseconds.
+      */
+    unsigned long systemTime();
 
 };
 
@@ -127,10 +141,6 @@ extern MicroBit uBit;
 // Entry point for application programs. Called after the super-main function
 // has initialized the device and runtime environment.
 extern "C" void app_main();
-
-// FOR TESTING ONLY...
-extern "C" void updateScroll(char *str, int len);
-
 
 
 #endif

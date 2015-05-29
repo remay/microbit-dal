@@ -103,3 +103,13 @@ int MicroBit::random(int max)
     // Set output according to the random value
     return ((int) NRF_RNG->VALUE) % (max+1);
 }
+
+/**
+  * Determine the time since this MicroBit was last reset.
+  *
+  * @return The time since the last reset, in milliseconds.
+  */
+unsigned long MicroBit::systemTime()
+{
+    return ticks;
+}

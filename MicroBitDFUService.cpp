@@ -17,7 +17,6 @@
 #include "MicroBit.h"
 #include "UUID.h"
 
-#include "test/MicroBitTest.h"
 /**
   * Constructor. 
   * Create a representation of a MicroBit device.
@@ -27,9 +26,7 @@ MicroBitDFUService::MicroBitDFUService(BLEDevice &_ble) :
         ble(_ble), 
         microBitDFUServiceControlCharacteristic(MicroBitDFUServiceControlCharacteristicUUID, &controlByte),
         microBitDFUServiceFlashCodeCharacteristic(MicroBitDFUServiceFlashCodeCharacteristicUUID, (uint8_t *)&flashCode, 0, sizeof(uint32_t),
-        GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_READ | GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_WRITE),
-        microBitScrollTextCharacteristic(MicroBitDFUServiceScrollTextCharacteristicUUID, scrollBytes, 20, 20,
-        GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_WRITE_WITHOUT_RESPONSE)
+        GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_READ | GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_WRITE)
 {
     authenticated = false;
     flashCodeRequested = false;
@@ -37,7 +34,7 @@ MicroBitDFUService::MicroBitDFUService(BLEDevice &_ble) :
     controlByte = 0x00;
     flashCode = 0x00;
     
-    GattCharacteristic *characteristics[] = {&microBitDFUServiceControlCharacteristic, &microBitDFUServiceFlashCodeCharacteristic, &microBitScrollTextCharacteristic};
+    GattCharacteristic *characteristics[] = {&microBitDFUServiceControlCharacteristic, &microBitDFUServiceFlashCodeCharacteristic};
     GattService         service(MicroBitDFUServiceUUID, characteristics, sizeof(characteristics) / sizeof(GattCharacteristic *));
 
     ble.addService(service);
@@ -66,8 +63,7 @@ int MicroBitDFUService::getName(char *name)
     // We count right to left, so fast forward the pointer.
     name += MICROBIT_DFU_HISTOGRAM_WIDTH;
 
-    //int n = NRF_FICR->DEVICEID[1];
-    int n = 0xbabe;
+    int n = NRF_FICR->DEVICEID[1];
     
     int ld = 1;
     int d = MICROBIT_DFU_HISTOGRAM_HEIGHT;
@@ -103,7 +99,7 @@ void MicroBitDFUService::pair()
     ManagedString pairString("PAIR?");
     
     uBit.display.scrollString(blueZoneString);
-    wait(8.0);
+
     showNameHistogram();
     
     while(1)
@@ -203,10 +199,8 @@ void MicroBitDFUService::onDataWritten(const GattCharacteristicWriteCBParams *pa
         if (params->len >= 4)
         {            
             uint32_t lockCode=0;
-            uint32_t t = 0xcafe;
             memcpy(&lockCode, params->data, 4);
-            //if (lockCode == NRF_FICR->DEVICEID[0])
-            if (lockCode == 0xcafe)
+            if (lockCode == NRF_FICR->DEVICEID[0])
             {
 #ifdef MICROBIT_DEBUG
                 pc.printf("AUTHENTICATED\n");                
@@ -214,21 +208,12 @@ void MicroBitDFUService::onDataWritten(const GattCharacteristicWriteCBParams *pa
                 authenticated = true;
             }else{
 #ifdef MICROBIT_DEBUG                
-                pc.printf("NOT AUTHENTICATED: %8x : %8x\n", lockCode, t);                
+                pc.printf("NOT AUTHENTICATED: %8x\n", lockCode);                
 #endif
                 authenticated = false;
             }
         }      
     }
-
-#ifdef MAIN_FOTA_TEST
-    if (params->charHandle == microBitScrollTextCharacteristic.getValueHandle()) {
-#ifdef MICROBIT_DEBUG
-        pc.printf("ScrollText\n\n");    
-#endif        
-        updateScroll((char *)params->data, params->len);
-    }
-#endif
 }
 
 /**
@@ -256,8 +241,7 @@ void MicroBitDFUService::showNameHistogram()
     
     uBit.display.scrollString(ManagedString::EmptyString);
 
-    //int n = NRF_FICR->DEVICEID[1];
-    int n = 0xbabe;
+    int n = NRF_FICR->DEVICEID[1];
     int ld = 1;
     int d = MICROBIT_DFU_HISTOGRAM_HEIGHT;
     int h;
@@ -283,8 +267,7 @@ void MicroBitDFUService::releaseFlashCode()
 #ifdef MICROBIT_DEBUG
     pc.printf("MicroBitDFUService::releaseFlashCode: Called\n");       
 #endif    
-    //flashCode = NRF_FICR->DEVICEID[0];
-    flashCode = 0xcafe;
+    flashCode = NRF_FICR->DEVICEID[0];
     ble.updateCharacteristicValue(microBitDFUServiceFlashCodeCharacteristic.getValueHandle(), (uint8_t *)&flashCode, sizeof(uint32_t));
 }
 
@@ -302,8 +285,4 @@ const uint8_t              MicroBitDFUServiceControlCharacteristicUUID[] = {
 
 const uint8_t              MicroBitDFUServiceFlashCodeCharacteristicUUID[] = {
     0x94,0x7b,0x69,0x34,0x64,0xd1,0x4f,0xad,0x9b,0xd0,0xcc,0x9d,0x6e,0x9f,0x3e,0xa3
-};
-
-const uint8_t              MicroBitDFUServiceScrollTextCharacteristicUUID[] = {
-    0x94,0x7b,0x69,0x34,0x64,0xd1,0x4f,0xad,0x9b,0xd0,0xcc,0x9d,0x6e,0x9f,0x3e,0xa4
 };

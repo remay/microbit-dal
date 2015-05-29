@@ -94,7 +94,87 @@ MicroBitImage::MicroBitImage(const MicroBitImage &image)
   */
 MicroBitImage::MicroBitImage(const char *s)
 {
- 
+    int width = 0;
+    int height = 0;
+    int count = 0;
+    int digit = 0;
+
+    char parseBuf[10];
+
+    const char *parseReadPtr;
+    char *parseWritePtr;
+    uint8_t *bitmapPtr;
+
+    if (s == NULL)
+        return;
+
+    // First pass: Parse the string to determine the geometry of the image.
+    // We do this from first principles to avoid unecessary load of the strtok() libs etc.
+    parseReadPtr = s;
+
+    while (*parseReadPtr)
+    {
+        if (isdigit(*parseReadPtr))
+        {
+            // Ignore numbers.
+            digit = 1;
+        } 
+        else if (*parseReadPtr =='\n')
+        {
+            if (digit)
+            {
+                count++;
+                digit = 0;
+            }
+
+            height++;
+
+            width = count > width ? count : width;
+            count = 0;
+        } 
+        else
+        {
+            if (digit)
+            {
+                count++;
+                digit = 0;
+            }
+        }
+
+        parseReadPtr++;
+    }
+
+    // Store the geomtery.
+    this->width = width;
+    this->height = height;
+    this->bitmap = new uint8_t[width * height];
+
+
+    // Second pass: collect the data.
+    parseReadPtr = s;
+    parseWritePtr = parseBuf;
+    bitmapPtr = this->bitmap;
+
+    while (*parseReadPtr)
+    {
+        if (isdigit(*parseReadPtr))
+        {
+            *parseWritePtr = *parseReadPtr;     
+            parseWritePtr++;
+        } 
+        else
+        {
+            *parseWritePtr = 0;
+            if (parseWritePtr > parseBuf)
+            {
+                *bitmapPtr = atoi(parseBuf);
+                bitmapPtr++;
+                parseWritePtr = parseBuf;
+            }
+        }
+
+        parseReadPtr++;
+    }
 }
 
 /**
