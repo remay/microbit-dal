@@ -140,11 +140,12 @@ MicroBitDisplay::animationUpdate()
 
 void MicroBitDisplay::sendEvent(int eventCode)
 {
-    MicroBitEvent *evt = new MicroBitEvent();
-    evt->source = id;
-    evt->context = NULL;
-    evt->timestamp = ticks;
-    evt->value = eventCode;
+    MicroBitEvent evt;
+    
+    evt.source = id;
+    evt.context = NULL;
+    evt.timestamp = ticks;
+    evt.value = eventCode;
     
     uBit.MessageBus.send(evt);
 }

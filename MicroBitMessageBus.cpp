@@ -34,7 +34,7 @@ MicroBitMessageBus::MicroBitMessageBus()
   * @param The event to send. This structure is assumed to be heap allocated, and will 
   * be automatically freed once all recipients have been notified.
   */
-void MicroBitMessageBus::send(MicroBitEvent *evt)
+void MicroBitMessageBus::send(MicroBitEvent &evt)
 {
 	this->send(evt, NULL);
 }
@@ -51,7 +51,7 @@ void MicroBitMessageBus::send(MicroBitEvent *evt)
   * a different thread that empties the queue. This would perhaps provide greater opportunities
   * for aggregation.
   */
-void MicroBitMessageBus::send(MicroBitEvent *evt, MicroBitMessageBusCache *c)
+void MicroBitMessageBus::send(MicroBitEvent &evt, MicroBitMessageBusCache *c)
 {
 	MicroBitListener *l;
 	MicroBitListener *start;
@@ -65,16 +65,16 @@ void MicroBitMessageBus::send(MicroBitEvent *evt, MicroBitMessageBusCache *c)
 	else
 	{
 		l = listeners;
-		while (l != NULL && l->id != evt->source)
+		while (l != NULL && l->id != evt.source)
 			l = l->next;
 	}
 
 	start = l;
 
 	// Now, send the event to all listeners registered for this event.
-	while (l != NULL && l->id == evt->source)
+	while (l != NULL && l->id == evt.source)
 	{
-		if(l->value ==  MICROBIT_BUS_VALUE_ANY || l->value == evt->value)
+		if(l->value ==  MICROBIT_BUS_VALUE_ANY || l->value == evt.value)
 		{
 			create_fiber(l->cb);
 		}

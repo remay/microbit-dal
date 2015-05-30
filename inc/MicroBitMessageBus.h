@@ -72,7 +72,7 @@ class MicroBitMessageBus
 	  * @param The event to send. This structure is assumed to be heap allocated, and will 
 	  * be automatically freed once all recipients have been notified.
 	  */
-	void send(MicroBitEvent *evt);
+	void send(MicroBitEvent &evt);
 
 	/**
 	  * Send the given event to all regstered recipients, using a cached entry to minimize lookups.
@@ -82,7 +82,7 @@ class MicroBitMessageBus
 	  * be automatically freed once all recipients have been notified.
 	  * @param c Cache entry to reduce lookups for commonly used channels.
 	  */
-	void send(MicroBitEvent *evt, MicroBitMessageBusCache *c);
+	void send(MicroBitEvent &evt, MicroBitMessageBusCache *c);
 
 	/**
 	  * Register a listener function.

@@ -21,11 +21,11 @@ MicroBitButton::MicroBitButton(int id, PinName name) : pin(name), irq(name)
 void MicroBitButton::rising()
 {
     // TODO: FIX THIS. This many of the mbed libraries aren't re-entrant...
-    MicroBitEvent *evt = new MicroBitEvent();
-    evt->source = id;
-    evt->context = NULL;
-    evt->timestamp = ticks;
-    evt->value = MICROBIT_BUTTON_EVT_UP;
+    MicroBitEvent evt;
+    evt.source = id;
+    evt.context = NULL;
+    evt.timestamp = ticks;
+    evt.value = MICROBIT_BUTTON_EVT_UP;
     
     uBit.MessageBus.send(evt);        
 }
@@ -36,11 +36,11 @@ void MicroBitButton::rising()
 void MicroBitButton::falling()
 {
     // TODO: FIX THIS. This many of the mbed libraries aren't re-entrant...
-    MicroBitEvent *evt = new MicroBitEvent();
-    evt->source = id;
-    evt->context = NULL;
-    evt->timestamp = 0;
-    evt->value = MICROBIT_BUTTON_EVT_DOWN;
+    MicroBitEvent evt;
+    evt.source = id;
+    evt.context = NULL;
+    evt.timestamp = 0;
+    evt.value = MICROBIT_BUTTON_EVT_DOWN;
     
     uBit.MessageBus.send(evt);        
 }
