@@ -67,8 +67,8 @@ ManagedString::~ManagedString()
 {
     if(data != NULL && --(*ref) == 0)
     {
-        delete data;
-        delete ref;
+        free(data);
+        free(ref);
     }
 }
 
@@ -94,8 +94,8 @@ ManagedString& ManagedString::operator = (const ManagedString& s)
     {
         if(--(*ref) == 0)
         {
-            delete data;
-            delete ref;
+            free(data);
+            free(ref);
         }
     }
     
