@@ -37,6 +37,16 @@ class ManagedString
     ManagedString(const char *str);
     
     /**
+      * Constructor. 
+      * Create a managed string from a pointer to an 8-bit character buffer of a given length.
+      * The buffer is copied to ensure sane memory management (the supplied
+      * character buffer may be decalred on the stack for instance).
+      *
+      * @param str The character array on which to base the new ManagedString.
+      */    
+    ManagedString(const char *str, const int length);
+
+    /**
       * Copy constructor. 
       * Makes a new ManagedString identical to the one supplied. 
       * Shares the character buffer and reference count with the supplied ManagedString.
@@ -111,7 +121,7 @@ class ManagedString
       * @param length The number of characters to extract from the start position
       * @return a ManagedString representing the requested substring.
       */    
-    ManagedString& substring(int start, int length);
+    ManagedString substring(int start, int length);
     
     /**
       * Concatenates this string with the one provided.
@@ -119,7 +129,7 @@ class ManagedString
       * @param s The ManagedString to concatenate.
       * @return a new ManagedString representing the joined strings.
       */    
-    ManagedString& operator+ (ManagedString& s);
+    ManagedString operator+ (ManagedString& s);
 
     /**
       * Provides a character value at a given position in the string, indexed from zero.
@@ -148,6 +158,25 @@ class ManagedString
       * Empty String constant
       */    
     static ManagedString EmptyString;
+
+    private:
+
+    /**
+    * Internal constructor helper.
+    * Configures this ManagedString to refer to the static EmptyString
+    */
+    void initEmpty();
+
+    /**
+    * Private Constructor. 
+    * Create a managed string based on a concat of two strings.
+    * The buffer is copied to ensure sane memory management (the supplied
+    * character buffer may be decalred on the stack for instance).
+    *
+    * @param str1 The first string on which to base the new ManagedString
+    * @param str2 The second string on which to base the new ManagedString
+    */    
+    ManagedString(const ManagedString &s1, const ManagedString &s2);
 
 };
 
