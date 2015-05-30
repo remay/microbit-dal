@@ -191,6 +191,7 @@ class MicroBitImage
       * @return The height of this image.
       */
     int getHeight();
+
 };
 
 #endif

@@ -13,7 +13,6 @@
 #define MICROBIT_FONT_ASCII_END 126
 
 
-
 /*
  * The original MicroBug font, courtesy of Michael Sparks esq.
  * The font is 4x5, so we compress in into a linear nibble array to conserve memory.
@@ -77,13 +76,7 @@ MicroBitImage::MicroBitImage(const MicroBitImage &image)
     height = image.height;
     ref = image.ref;
 
-    (*ref)++;
-
-    if (*ref == 1)
-    {
-        (*ref)++;
-        delete &image;
-    }    
+    (*ref)++;  
 }
 
 /**
@@ -147,7 +140,7 @@ MicroBitImage::MicroBitImage(const char *s)
     // Store the geomtery.
     this->width = width;
     this->height = height;
-    this->bitmap = new uint8_t[width * height];
+    this->bitmap = (uint8_t *) malloc(width * height);
     this->ref = (int *) malloc(sizeof(int));
     *ref = 1;
 
@@ -196,8 +189,8 @@ MicroBitImage::~MicroBitImage()
 {
     if(--(*ref) == 0)
     {
-        delete[] bitmap;
-        delete ref;
+        free(bitmap);
+        free(ref);
     }
 }
 
@@ -210,7 +203,7 @@ void MicroBitImage::init(const int x, const int y, const uint8_t *bitmap)
     // create a linear buffer to represent the image. We could use a jagged/2D array here, but experimentation
     // showed this had a negative effect on memory management (heap fragmentation etc).
      
-    this->bitmap = new uint8_t[width*height];
+    this->bitmap = (uint8_t *) malloc(width*height);
 
     if (bitmap)
         this->printImage(x,y,bitmap);
@@ -237,21 +230,19 @@ MicroBitImage& MicroBitImage::operator = (const MicroBitImage& i)
 {
     if(this == &i)
         return *this;
-     
+
+    if(--(*ref) == 0)
+    {
+        free(bitmap);
+        free(ref);
+    }
+
     bitmap = i.bitmap;
     width = i.width;
     height = i.height;
     ref = i.ref;
     
     (*ref)++;
-
-    // Handle the case where our operand is actually generated soley for us to consume...
-    // Typically this is because it's been created by this class in a service function.
-    if (*ref == 1)
-    {
-        (*ref)++;
-        delete &i;
-    }
 
     return *this;
 }
@@ -572,3 +563,4 @@ int MicroBitImage::getHeight()
 {
     return height;
 }   
+
