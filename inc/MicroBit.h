@@ -36,6 +36,7 @@
 #define MICROBIT_FLAG_SCHEDULER_RUNNING         0x00000001
 #define MICROBIT_FLAG_ACCELEROMETER_RUNNING     0x00000002
 #define MICROBIT_FLAG_DISPLAY_RUNNING           0x00000004
+#define MICROBIT_FLAG_COMPASS_RUNNING           0x00000008
 
 // Random number generator
 #define NRF51822_RNG_ADDRESS            0x4000D000
@@ -46,7 +47,7 @@
 #define MICROBIT_ID_LEFT_BUTTON         1
 #define MICROBIT_ID_RIGHT_BUTTON        2
 #define MICROBIT_ID_ACCELEROMETER       3
-#define MICROBIT_ID_MAGNETOMETER        4
+#define MICROBIT_ID_COMPASS             4
 #define MICROBIT_ID_DISPLAY             5
 #define MICROBIT_ID_IO_1                6
 #define MICROBIT_ID_IO_2                7
@@ -85,6 +86,7 @@ class MicroBit
     MicroBitButton          leftButton;
     MicroBitButton          rightButton;
     MicroBitAccelerometer   accelerometer;
+    MicroBitCompass         compass;
     
 /*
 

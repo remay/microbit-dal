@@ -16,6 +16,11 @@
 #define MICROBIT_PIN_COMPASS_DATA_READY          P0_29
 
 /*
+ * I2C constants
+ */
+#define MAG3110_DEFAULT_ADDR    0x1D
+
+/*
  * MAG3110 Register map
  */
 #define MAG_DR_STATUS 0x00
@@ -25,7 +30,7 @@
 #define MAG_OUT_Y_LSB 0x04
 #define MAG_OUT_Z_MSB 0x05
 #define MAG_OUT_Z_LSB 0x06
-#define MAG_WHO_AM_I  0x07
+#define MAG_WHOAMI    0x07
 #define MAG_SYSMOD    0x08
 #define MAG_OFF_X_MSB 0x09
 #define MAG_OFF_X_LSB 0x0A
@@ -41,13 +46,13 @@
  * MAG3110 MAGIC ID value
  * Returned from the MAG_WHO_AM_I register for ID purposes.
  */
-#define MAG_3110_WHO_AM_I_VALUE 0xC4
+#define MAG3110_WHOAMI_VAL 0xC4
 
 struct CompassSample
 {
-    int16_t         x;
-    int16_t         y;
-    int16_t         z;
+    int         x;
+    int         y;
+    int         z;
 };
 
 class MicroBitCompass
@@ -59,12 +64,19 @@ class MicroBitCompass
       
     int id;             // Event Bus ID
     int address;        // I2C address of the magnetmometer.  
+
+    public:
     
+    CompassSample       minSample;      // Calibration sample.
+    CompassSample       maxSample;      // Calibration sample.
     CompassSample       average;        // Centre point of sample data.
     CompassSample       sample;         // The latest sample data recorded.
     DigitalIn           int1;           // Data ready interrupt.
-        
-    public:
+
+    int                 calibrating;     // flag.    
+            
+//    public:
+
     
     /**
       * Constructor. 
@@ -78,6 +90,11 @@ class MicroBitCompass
       * @return the current heading, in degrees.
       */
     int heading();
+    
+    /**
+      * Attempts to determine the 8 bit ID from the accelerometer. 
+      */
+    int whoAmI();
 
     /**
       * Reads the X axis value of the latest update from the compass.
@@ -96,6 +113,16 @@ class MicroBitCompass
       * @return The magnetic force measured in the Z axis, in no specific units.
       */    
     int getZ();    
+
+    /**
+      * Perform a calibration of the compass.
+      */
+    void calibrateStart();    
+
+    /**
+      * Complete the calibration of the compass.
+      */    
+    void calibrateEnd();    
 
     /**
       * periodic callback from MicroBit clock.
@@ -132,6 +159,17 @@ class MicroBitCompass
       * @return The register value, interpreted as a 16 but signed value.
       */
     int16_t read16(uint8_t reg);
+    
+    
+    /**
+      * Issues a read of a given address, and returns the value.
+      * Blocks the calling thread until complete.
+      *
+      * @param reg The based address of the 16 bit register to access.
+      * @return The register value, interpreted as a 8 bi signed value.
+      */
+    int16_t read8(uint8_t reg);
+
 };
 
 #endif

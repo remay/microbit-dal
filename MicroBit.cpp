@@ -20,7 +20,8 @@ MicroBit::MicroBit() :
     display(MICROBIT_ID_DISPLAY, 5, 5),
     leftButton(MICROBIT_ID_LEFT_BUTTON,MICROBIT_PIN_LEFT_BUTTON),
     rightButton(MICROBIT_ID_RIGHT_BUTTON,MICROBIT_PIN_RIGHT_BUTTON),
-    accelerometer(MICROBIT_ID_ACCELEROMETER, MMA8653_DEFAULT_ADDR)
+    accelerometer(MICROBIT_ID_ACCELEROMETER, MMA8653_DEFAULT_ADDR),
+    compass(MICROBIT_ID_COMPASS, MAG3110_DEFAULT_ADDR)
 {   
 }
 
@@ -119,6 +120,10 @@ void MicroBit::systemTick()
     // Update Accelerometer if needed.
     if (uBit.flags & MICROBIT_FLAG_ACCELEROMETER_RUNNING)
         uBit.accelerometer.tick();
+ 
+    // Update Accelerometer if needed.
+    if (uBit.flags & MICROBIT_FLAG_COMPASS_RUNNING)
+        uBit.compass.tick();
  
     // Scheduler callback. We do this here just as a single timer is more efficient. :-)
     if (uBit.flags & MICROBIT_FLAG_SCHEDULER_RUNNING)

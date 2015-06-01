@@ -10,12 +10,16 @@ MicroBitCompass::MicroBitCompass(int id, int address) : average(), sample(), int
 {
     this->id = id;
     this->address = address;
-
+    this->calibrating = 0;
+    
     // Enable automatic reset after each sample;
-    writeCommand(MAG_CTRL_REG2, 0x80);
+    writeCommand(MAG_CTRL_REG2, 0xA0);
     
     // Select 10Hz update rate, with oversampling. Also enables the device.
     writeCommand(MAG_CTRL_REG1, 0x61);    
+    
+    // Indicate that we're up and running.
+    uBit.flags |= MICROBIT_FLAG_COMPASS_RUNNING;
 }
 
 /**
@@ -67,8 +71,26 @@ int16_t MicroBitCompass::read16(uint8_t reg)
     cmd[1] = 0x00;
     
     uBit.i2c.read(address, (char *)cmd, 2);
-    return (int16_t)( (cmd[1]|(cmd[0] << 8))); //concatenate the MSB and LSB
+    return (int16_t) ((cmd[1] | (cmd[0] << 8))); //concatenate the MSB and LSB
 }
+
+/**
+  * Issues a read of a given address, and returns the value.
+  * Blocks the calling thread until complete.
+  *
+  * @param reg The based address of the 16 bit register to access.
+  * @return The register value, interpreted as a 8 bi signed value.
+  */
+int16_t MicroBitCompass::read8(uint8_t reg)
+{
+    int8_t data;
+
+    data = 0;
+    readCommand(reg, (uint8_t*) &data, 1);
+
+    return data;
+}
+
 
 /**
   * Gets the current heading of the device, relative to magnetic north.
@@ -76,7 +98,11 @@ int16_t MicroBitCompass::read16(uint8_t reg)
   */
 int MicroBitCompass::heading()
 {
-    return (atan2((double)(sample.y - average.y),(double)(sample.x - average.x)))*180/PI;
+    float bearing = (atan2((double)(sample.y - average.y),(double)(sample.x - average.x)))*180/PI;
+    if (bearing < 0)
+        bearing += 360.0;
+        
+    return (int) (360.0 - bearing);
 }
 
 
@@ -93,6 +119,17 @@ void MicroBitCompass::tick()
         sample.x = read16(MAG_OUT_X_MSB);
         sample.y = read16(MAG_OUT_Y_MSB);
         sample.z = read16(MAG_OUT_Z_MSB);
+
+        if (calibrating)
+        {
+            minSample.x = min(sample.x, minSample.x);
+            minSample.y = min(sample.y, minSample.y);
+            minSample.z = min(sample.z, minSample.z);
+
+            maxSample.x = max(sample.x, maxSample.x);
+            maxSample.y = max(sample.y, maxSample.y);
+            maxSample.z = max(sample.z, maxSample.z);
+        }
     }
 }
 
@@ -122,3 +159,35 @@ int MicroBitCompass::getZ()
 {
     return sample.z;
 }
+
+int MicroBitCompass::whoAmI()
+{
+    uint8_t data;
+
+    readCommand(MAG_WHOAMI, &data, 1);    
+    return (int)data;
+}
+
+/**
+  * Perform a calibration of the compass.
+  */
+void MicroBitCompass::calibrateStart()
+{
+    calibrating = 1;
+
+    // Take a sane snapshot to start with.
+    minSample = sample;
+    maxSample = sample;
+}    
+
+/**
+  * Complete the calibration of the compass.
+  */    
+void MicroBitCompass::calibrateEnd()
+{
+    calibrating = 0;
+    
+    average.x = (maxSample.x + minSample.x) / 2;
+    average.y = (maxSample.y + minSample.y) / 2;
+    average.z = (maxSample.z + minSample.z) / 2;
+}    
