@@ -18,6 +18,36 @@ void ManagedString::initEmpty()
 }
 
 /**
+  * Internal constructor helper.
+  * creates this ManagedString based on a given null terminated char array.
+  */
+void ManagedString::initString(const char *str)
+{
+    // Initialise this ManagedString as a new string, using the data provided.
+    // We assume the string is sane, and null terminated.
+    len = strlen(str);
+    data = (char *) malloc(len+1);
+    memcpy(data, str, len+1);
+    ref = (int *) malloc(sizeof(int));
+    *ref = 1;
+}
+
+
+/**
+  * Constructor. 
+  * Create a managed string from a given integer.
+  *
+  * @param value The integer from which to create the ManagedString
+  */    
+ManagedString::ManagedString(const int value)
+{
+    char str[12];
+        
+    itoa(value, str);
+    initString(str);    
+}
+
+/**
   * Constructor. 
   * Create a managed string from a pointer to an 8-bit character buffer.
   * The buffer is copied to ensure sane memory management (the supplied
@@ -33,14 +63,8 @@ ManagedString::ManagedString(const char *str)
         initEmpty();
         return;
     }
-
-    // Initialise this ManagedString as a new string, using the data provided.
-    // We assume the string is sane, and null terminated.
-    len = strlen(str);
-    data = (char *) malloc(len+1);
-    memcpy(data, str, len+1);
-    ref = (int *) malloc(sizeof(int));
-    *ref = 1;
+    
+    initString(str);
 }
 
 ManagedString::ManagedString(const ManagedString &s1, const ManagedString &s2)

@@ -1,5 +1,5 @@
 /**
-  * Compatibility setting for the MicroBit DAL.
+  * Compatibility / portability funcitons and constants for the MicroBit DAL.
   */
   
 #ifndef MICROBIT_COMPAT_H
@@ -33,5 +33,19 @@ inline bool isdigit(char c)
 {
     return (c > 47 && c < 58);
 }
+
+/**
+  * Performs an in buffer reverse of a given char array
+  */
+void string_reverse(char *s);
+
+/**
+  * Converts a given integer into a base 10 ASCII equivalent.
+  *
+  * @param n The number to convert.
+  * @param s Pointer to a buffer in which to store the resulting string.
+  */
+void itoa(int n, char *s);
+
 
 #endif

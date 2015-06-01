@@ -35,6 +35,15 @@ class ManagedString
       * @param str The character array on which to base the new ManagedString.
       */    
     ManagedString(const char *str);
+
+    /**
+      * Constructor. 
+      * Create a managed string from a given integer.
+      *
+      * @param value The integer from which to create the ManagedString
+      */    
+    ManagedString(const int value);
+
     
     /**
       * Constructor. 
@@ -166,6 +175,12 @@ class ManagedString
     * Configures this ManagedString to refer to the static EmptyString
     */
     void initEmpty();
+
+    /**
+    * Internal constructor helper.
+    * creates this ManagedString based on a given null terminated char array.
+    */
+    void initString(const char *str);
 
     /**
     * Private Constructor. 
