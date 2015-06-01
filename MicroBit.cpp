@@ -61,7 +61,7 @@ void MicroBit::init()
 #endif
 
     // Start refreshing the Matrix Display
-    display.startDisplay();        
+    systemTicker.attach(this, &MicroBit::systemTick, MICROBIT_DISPLAY_REFRESH_PERIOD);     
 }
 
 /**
@@ -103,6 +103,28 @@ int MicroBit::random(int max)
     // Set output according to the random value
     return ((int) NRF_RNG->VALUE) % (max+1);
 }
+
+
+/**
+  * Period callback. Used by MicroBitDisplay, FiberScheduler and I2C sensors to
+  * provide a power efficient sense of time.
+  *
+  */
+void MicroBit::systemTick()
+{
+    // Refresh the matric display, and update animations, if we need to.
+    if (uBit.flags & MICROBIT_FLAG_DISPLAY_RUNNING)
+        uBit.display.strobeUpdate();
+                
+    // Update Accelerometer if needed.
+    if (uBit.flags & MICROBIT_FLAG_ACCELEROMETER_RUNNING)
+        uBit.accelerometer.tick();
+ 
+    // Scheduler callback. We do this here just as a single timer is more efficient. :-)
+    if (uBit.flags & MICROBIT_FLAG_SCHEDULER_RUNNING)
+        scheduler_tick();  
+}
+
 
 /**
   * Determine the time since this MicroBit was last reset.

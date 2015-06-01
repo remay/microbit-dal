@@ -6,7 +6,6 @@
 #include "MicroBit.h"
 #include "MicroBitMatrixMaps.h"
 
- 
 /**
   * Constructor.
   * Create a Point representation of an LED on a matrix
@@ -19,11 +18,6 @@ MatrixPoint::MatrixPoint(int x, int y)
 }
 
 /**
-  * Empty String definitions
-  */
-static ManagedString EMPTY_STRING("");   
-
-/**
   * Constructor. 
   * Create a representation of a display of a given size.
   * The display is initially blank.
@@ -31,23 +25,25 @@ static ManagedString EMPTY_STRING("");
   * @param x the width of the display in pixels.
   * @param y the height of the display in pixels.     
   */
-MicroBitDisplay::MicroBitDisplay(int id, int x, int y) : strobe(), columnPins(MICROBIT_DISPLAY_COLUMN_PINS), rowPins(MICROBIT_DISPLAY_ROW_PINS), image(x*2,y)
+MicroBitDisplay::MicroBitDisplay(int id, int x, int y) : 
+    columnPins(MICROBIT_DISPLAY_COLUMN_PINS), 
+    rowDrive(rowPins[0]),
+    image(x*2,y)
 {
     this->id = id;
     this->width = x;
     this->height = y;
-    this->brightness = MICROBIT_DEFAULT_BRIGHTNESS;
     this->strobeRow = 0;
+    this->strobeCount = 0;
+    this->rowDrive.period_ms(1);
+    
     this->rotation = MICROBIT_DISPLAY_ROTATION_0;
+    this->setBrightness(MICROBIT_DEFAULT_BRIGHTNESS);
     
     animationMode = ANIMATION_MODE_NONE;
+    
+    uBit.flags |= MICROBIT_FLAG_DISPLAY_RUNNING;
 }
-
-void MicroBitDisplay::startDisplay()
-{
-    this->strobe.attach(this, &MicroBitDisplay::strobeUpdate, MICROBIT_DISPLAY_REFRESH_PERIOD);
-}
-
 
 /**
   * Internal frame update method, used to strobe the display.
@@ -57,15 +53,13 @@ void MicroBitDisplay::startDisplay()
   */   
 void MicroBitDisplay::strobeUpdate()
 {   
-    // TODO: Cache row data for future use, so we don't recompute so often?
-    int rowdata;
+    // TODO: Cache coldata for future use, so we don't recompute so often?
     int coldata;
-    
-    // move on to next row.
-    strobeRow = (strobeRow+1) % MICROBIT_DISPLAY_ROW_COUNT;
-    rowdata = 1 << strobeRow;
 
-    // Here we go. Calculate the data for this row.
+    // Move on to the next row.    
+    strobeRow = (strobeRow+1) % MICROBIT_DISPLAY_ROW_COUNT;
+        
+    // Calculate the bitpattern to write.
     coldata = 0;
     for (int i = 0; i<MICROBIT_DISPLAY_COLUMN_COUNT; i++)
     {
@@ -91,26 +85,19 @@ void MicroBitDisplay::strobeUpdate()
                 break;
         }
         
-        //if(image.getPixelValue(matrixMap[i][strobeRow].x, matrixMap[i][strobeRow].y))
         if(image.getPixelValue(x, y))
             coldata |= (1 << i);
     }
 
     // Write to the matrix display.
     columnPins.write(0xffff);    
-    rowPins.write(rowdata);
+
+    rowDrive.redirect(rowPins[strobeRow]);
+
     columnPins.write(~coldata);
 
     // Update text and image animations if we need to.
     this->animationUpdate();
-        
-    // Update Accelerometer if needed.
-    if (uBit.flags & MICROBIT_FLAG_ACCELEROMETER_RUNNING)
-        uBit.accelerometer.tick();
- 
-    // Scheduler callback. We do this here just as a single timer is more efficient. :-)
-    if (uBit.flags & MICROBIT_FLAG_SCHEDULER_RUNNING)
-        scheduler_tick();  
 }
 
 /**
@@ -359,7 +346,10 @@ void MicroBitDisplay::scrollImage(MicroBitImage image, int delay, int stride)
   */    
 void MicroBitDisplay::setBrightness(int b)
 {
+    float level = (float)b / float(MICROBIT_DISPLAY_MAX_BRIGHTNESS);
+    
     this->brightness = b;
+    this->rowDrive.write(level);
 }
 
  /**

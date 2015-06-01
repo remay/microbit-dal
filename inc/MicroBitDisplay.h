@@ -3,7 +3,7 @@
   *
   * An MicroBitDisplay represents the LED matrix array on the MicroBit device.
   */
-  
+
 #ifndef MICROBIT_DISPLAY_H
 #define MICROBIT_DISPLAY_H
 
@@ -21,7 +21,8 @@
   */
 
 #define MICROBIT_SB2
-#define MICROBIT_DISPLAY_REFRESH_PERIOD     0.002
+#define MICROBIT_DISPLAY_REFRESH_PERIOD     0.006
+
 
 /**
   * Default parameters.
@@ -29,7 +30,8 @@
 #define MICROBIT_DEFAULT_SCROLL_SPEED       50
 #define MICROBIT_DEFAULT_PRINT_SPEED        200
 #define MICROBIT_DEFAULT_SCROLL_STRIDE      -1
-#define MICROBIT_DEFAULT_BRIGHTNESS         128
+#define MICROBIT_DISPLAY_MAX_BRIGHTNESS     255
+#define MICROBIT_DEFAULT_BRIGHTNESS         (MICROBIT_DISPLAY_MAX_BRIGHTNESS/2)
 
 /**
   * MessageBus Event Codes
@@ -73,19 +75,17 @@
 #include "mbed.h"
 #include "MicroBit.h"
 
-enum AnimationMode
-{
+enum AnimationMode {
     ANIMATION_MODE_NONE,
     ANIMATION_MODE_SCROLL_TEXT,
     ANIMATION_MODE_PRINT_TEXT,
-    ANIMATION_MODE_SCROLL_IMAGE    
+    ANIMATION_MODE_SCROLL_IMAGE
 };
 
-struct MatrixPoint
-{
+struct MatrixPoint {
     int x;
     int y;
-    
+
     MatrixPoint(int x, int y);
 };
 
@@ -97,9 +97,9 @@ class MicroBitDisplay
     int brightness;
     int strobeRow;
     int rotation;
-    Ticker strobe;
     BusOut columnPins;
-    BusOut rowPins;
+    SmartPwm rowDrive;
+    int strobeCount;
     
     //
     // State used by all animation routines.
@@ -110,26 +110,26 @@ class MicroBitDisplay
 
     // The time (in ticks) between each frame update.
     int animationDelay;
-    
+
     // The time (in ticks) since the frame update.
     int animationTick;
 
     // Stop playback of any animations
     void stopAnimation(int delay);
-    
+
     //
     // State for scrollString() method.
-    // This is a surprisingly intricate method. 
+    // This is a surprisingly intricate method.
     //
-    // The text being displayed. 
-    ManagedString scrollingText;        
+    // The text being displayed.
+    ManagedString scrollingText;
 
     // The index of the character currently being displayed.
     int scrollingChar;
-    
+
     // The number of pixels the current character has been shifted on the display.
     int scrollingPosition;
-    
+
     //
     // State for printString() method.
     //
@@ -137,17 +137,17 @@ class MicroBitDisplay
     // We *could* get some reuse in here with the scroll* variables above,
     // but best to keep it clean in case kids try concurrent operation (they will!),
     // given the small RAM overhead needed to maintain orthogonality.
-    ManagedString printingText;        
-    
+    ManagedString printingText;
+
     // The index of the character currently being displayed.
     int printingChar;
 
     //
     // State for scrollImage() method.
     //
-    // The image being displayed. 
-    MicroBitImage scrollingImage;        
-    
+    // The image being displayed.
+    MicroBitImage scrollingImage;
+
     // The number of pixels the image has been shifted on the display.
     int scrollingImagePosition;
 
@@ -158,7 +158,7 @@ class MicroBitDisplay
     bool scrollingImageRendered;
 
     static const MatrixPoint matrixMap[MICROBIT_DISPLAY_COLUMN_COUNT][MICROBIT_DISPLAY_ROW_COUNT];
-    
+
     // Internal methods to handle animation.
     void resetAnimation(int delay);
     void animationUpdate();
@@ -166,32 +166,33 @@ class MicroBitDisplay
     void updatePrintText();
     void updateScrollImage();
     void sendEvent(int eventcode);
-    
-    
-    public:
+
+
+public:
     // The mutable bitmap buffer being rendered to the LED matrix.
     MicroBitImage image;
 
     /**
-      * Constructor. 
+      * Constructor.
       * Create a representation of a display of a given size.
       * The display is initially blank.
-      * 
+      *
       * @param x the width of the display in pixels.
-      * @param y the height of the display in pixels.     
+      * @param y the height of the display in pixels.
       */
     MicroBitDisplay(int id, int x, int y);
 
     /**
       * Frame update method, invoked periodically to strobe the display.
-      */   
+      */
     void strobeUpdate();
 
     /**
-      * Registers the strobeUpdate method with the IRQ handler.
-      * Display begins refreshing after this call.
-      */   
-    void startDisplay();
+      * Internal Display brighntess control call back.
+      *
+      * Simply turns the display off, until the next strobeUdate() interrupt.
+      */
+    void strobeClear();
 
     /**
       * Prints the given character to the display.
@@ -199,7 +200,7 @@ class MicroBitDisplay
       * @param c The character to display.
       */
     void print(char c);
-    
+
     /**
       * Prints the given string to the display, one character at a time.
       * Uses the given delay between characters.
@@ -262,23 +263,23 @@ class MicroBitDisplay
       */
     void scrollImageAsync(MicroBitImage image, int delay = MICROBIT_DEFAULT_SCROLL_SPEED, int stride = MICROBIT_DEFAULT_SCROLL_STRIDE);
 
-     /**
-      * Sets the display brightness to the specified level.
-      * @param b The brightness to set the brightness to, in the range 0..255.
-      */    
+    /**
+     * Sets the display brightness to the specified level.
+     * @param b The brightness to set the brightness to, in the range 0..255.
+     */
     void setBrightness(int b);
-    
-     /**
-      * Tests the brightness of this display.
-      * @return the brightness of this display, in the range 0..255.
-      */    
-    int getBrightness();    
-    
-     /**
-      * Rotates the display to the given position. 
-      * Axis aligned values only.
-      */    
-    void rotateTo(int position);    
+
+    /**
+     * Tests the brightness of this display.
+     * @return the brightness of this display, in the range 0..255.
+     */
+    int getBrightness();
+
+    /**
+     * Rotates the display to the given position.
+     * Axis aligned values only.
+     */
+    void rotateTo(int position);
 };
 
 #endif

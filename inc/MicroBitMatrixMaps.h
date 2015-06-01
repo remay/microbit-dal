@@ -66,6 +66,6 @@
     
 #endif
 
-
+const PinName rowPins[MICROBIT_DISPLAY_ROW_COUNT] = {MICROBIT_DISPLAY_ROW_PINS};
 
 #endif  

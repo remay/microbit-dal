@@ -21,6 +21,7 @@
 #include "ManagedString.h"
 #include "MicroBitImage.h"
 #include "MicroBitMessageBus.h"
+#include "SmartPwm.h"
 
 #include "MicroBitButton.h"
 #include "MicroBitDisplay.h"
@@ -34,6 +35,7 @@
 // MicroBit::flags values
 #define MICROBIT_FLAG_SCHEDULER_RUNNING         0x00000001
 #define MICROBIT_FLAG_ACCELEROMETER_RUNNING     0x00000002
+#define MICROBIT_FLAG_DISPLAY_RUNNING           0x00000004
 
 // Random number generator
 #define NRF51822_RNG_ADDRESS            0x4000D000
@@ -68,8 +70,12 @@ class MicroBit
     // Map of device state.
     uint32_t                flags;
 
+    // Periodic callback
+    Ticker                  systemTicker;
+
     // I2C Interface
     I2C                     i2c;   
+
 
     // Device level Message Bus abstraction
     MicroBitMessageBus      MessageBus;      
@@ -123,6 +129,13 @@ class MicroBit
       * @return A random, natural number between 0 and the the given maximum value.
       */
     int random(int max);
+
+    /**
+      * Period callback. Used by MicroBitDisplay, FiberScheduler and I2C sensors to
+      * provide a power efficient sense of time.
+      *
+      */
+    void systemTick();
 
     /**
       * Determine the time since this MicroBit was last reset.

@@ -24,7 +24,7 @@
 // stack for any long lived fibers with large stacks.
 //
 #define FIBER_STACK_SIZE        64
-#define FIBER_TICK_PERIOD_MS    2
+#define FIBER_TICK_PERIOD_MS    6
 #define CORTEX_M0_STACK_BASE    (0x20004000 - 4) 
 
 /**
