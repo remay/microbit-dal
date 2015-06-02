@@ -5,105 +5,29 @@
   * Create an LED representation with the given ID.
   * @param id the ID of the new LED object.
   */
-MicroBitIO::MicroBitIO(int id, PinName name) 
+MicroBitIO::MicroBitIO(int MICROBIT_ID_IO_P0,int MICROBIT_ID_IO_P1, int MICROBIT_ID_IO_P2) :
+    P0(MICROBIT_ID_IO_P0,MICROBIT_PIN_P0,PIN_CAPABILITY_BOTH),          //P0 is the left most pad (ANALOG/DIGITAL) 
+    P1(MICROBIT_ID_IO_P1,MICROBIT_PIN_P1,PIN_CAPABILITY_BOTH),          //P1 is the middle pad (ANALOG/DIGITAL)
+    P2(MICROBIT_ID_IO_P2,MICROBIT_PIN_P2,PIN_CAPABILITY_BOTH)           //P2 is the right most pad (ANALOG/DIGITAL)
+    /*
+    * THESE PINS AREN'T IN USE AS OF YET, BUT THIS WILL BE HOW THEY ARE PRESENTED!
+    
+    P3(MICROBIT_ID_IO_P3,MICROBIT_PIN_P3,PIN_CAPABILITY_BOTH),          //COL1 (ANALOG/DIGITAL) 
+    P4(MICROBIT_ID_IO_P4,MICROBIT_PIN_P4,PIN_CAPABILITY_DIGITAL),       //BTN_A 
+    P5(MICROBIT_ID_IO_P5,MICROBIT_PIN_P5,PIN_CAPABILITY_BOTH),          //COL2 (ANALOG/DIGITAL) 
+    P6(MICROBIT_ID_IO_P6,MICROBIT_PIN_P6,PIN_CAPABILITY_DIGITAL),       //ROW2
+    P7(MICROBIT_ID_IO_P7,MICROBIT_PIN_P7,PIN_CAPABILITY_DIGITAL),       //ROW1 
+    P8(MICROBIT_ID_IO_P8,MICROBIT_PIN_P8,PIN_CAPABILITY_DIGITAL),       //PIN 18
+    P9(MICROBIT_ID_IO_P9,MICROBIT_PIN_P9,PIN_CAPABILITY_DIGITAL),       //ROW3
+    P10(MICROBIT_ID_IO_P10,MICROBIT_PIN_P10,PIN_CAPABILITY_BOTH),       //COL3 (ANALOG/DIGITAL) 
+    P11(MICROBIT_ID_IO_P11,MICROBIT_PIN_P11,PIN_CAPABILITY_DIGITAL),    //BTN_B
+    P12(MICROBIT_ID_IO_P12,MICROBIT_PIN_P12,PIN_CAPABILITY_DIGITAL),    //PIN 20
+    P13(MICROBIT_ID_IO_P13,MICROBIT_PIN_P13,PIN_CAPABILITY_DIGITAL),    //SCK
+    P14(MICROBIT_ID_IO_P14,MICROBIT_PIN_P14,PIN_CAPABILITY_DIGITAL),    //MISO
+    P15(MICROBIT_ID_IO_P15,MICROBIT_PIN_P15,PIN_CAPABILITY_DIGITAL),    //MOSI
+    P16(MICROBIT_ID_IO_P16,MICROBIT_PIN_P16,PIN_CAPABILITY_DIGITAL),    //PIN 16
+    P17(MICROBIT_ID_IO_P17,MICROBIT_PIN_P17,PIN_CAPABILITY_DIGITAL),    //SCL
+    P18(MICROBIT_ID_IO_P18,MICROBIT_PIN_P18,PIN_CAPABILITY_DIGITAL),    //SDA
+    */                     
 {   
-    this->id = id;
-    this->name = name;
-    
-    // Power up in a disconnected, low power state.
-    // If we're unused, this is how it will stay...
-    this->status = 0x00;
-    this->pin = NULL;
-}
-
-/**
-  * Disconnect any attached mBed IO from this pin.
-  * Used only when pin changes mode (i.e. Input/Output/Analog/Digital)
-  */
-void MicroBitIO::disconnect()
-{
-    // This is a bit ugly, but rarely used code.
-    // It would be much better to use some polymorphism here, but the mBed I/O classes aren't arranged in an inheritance hierarchy.
-    // A shame, given they share some common method signatures... even delete! :-)
-    if (status & IO_STATUS_DIGITAL_IN)
-        delete ((DigitalIn *)pin);
-
-    if (status & IO_STATUS_DIGITAL_OUT)
-        delete ((DigitalOut *)pin);
-
-    if (status & IO_STATUS_ANALOG_IN)
-        delete ((AnalogIn *)pin);
-        
-    this->pin = NULL;
-    this->status = status & IO_STATUS_EVENTBUS_ENABLED;
-}
-
-/**
-  * Configures this IO pin as a digital output (if necessary) and sets the pin to the given value.
-  * @param value The new value for this digital output.
-  */
-void MicroBitIO::setDigitalValue(int value)
-{
-    // Move into a Digital input state if necessary.
-    if (!(status & IO_STATUS_DIGITAL_OUT)){
-        disconnect();  
-        pin = new DigitalOut(name);
-        status |= IO_STATUS_DIGITAL_OUT;
-    }
-    
-    ((DigitalOut *)pin)->write(value);
-}
-
-/**
-  * Configures this IO pin as a digital input (if necessary) and tests its current value.
-  * @return 1 if this input is high, 0 otherwise.
-  */
-int MicroBitIO::getDigitalValue()
-{
-    // Move into a Digital input state if necessary.
-    if (!(status & IO_STATUS_DIGITAL_IN)){
-        disconnect();  
-        pin = new DigitalIn(name);
-        status |= IO_STATUS_DIGITAL_IN;
-    }
-    
-    return ((DigitalIn *)pin)->read();
-}
-
-/**
-  * Configures this IO pin as an analogue output (if necessary and possible).
-  * Change the DAC value to the given level.
-  * @param value the level to set on the output pin, in the range 0..???
-  */
-void MicroBitIO::setAnalogValue(int value)
-{
-    // This platform doesn't actually have a DAC. :-)
-}
-
-
-/**
-  * Configures this IO pin as an analogue input (if necessary and possible).
-  * @return the current analogue level on the pin, in the range 0..???
-  */
-int MicroBitIO::getAnalogValue()
-{
-    return 0;
-}
-
- /**
-  * Enables asynchronous callback events from this button.
-  * When enabled, all state change updates will be propogated 
-  * along the MicroBitMessageBus using the device's ID.
-  */    
-void MicroBitIO::enableCallback()
-{
-}
-
- /**
-  * Disables asynchronous callback events from this button.
-  * When disabled no state change updates will be propogated 
-  * along the MicroBitMessageBus from this button.
-  */    
-void MicroBitIO::disableCallback()
-{
 }

@@ -30,7 +30,7 @@ void string_reverse(char *s)
 void itoa(int n, char *s)
 {
     int i = 0;
-    int sign = (n > 0);
+    int sign = (n >= 0);
 
     // Record the sign of the number,
     // Ensure our working value is positive.

@@ -41,24 +41,39 @@
 // Random number generator
 #define NRF51822_RNG_ADDRESS            0x4000D000
 
-#define MICROBIT_IO_PINS                8            // TODO: Need to know how many. :-)
+#define MICROBIT_IO_PINS                3            // TODO: Need to change for live, currently 3 for test
 
 // Enumeration of core components.
-#define MICROBIT_ID_LEFT_BUTTON         1
-#define MICROBIT_ID_RIGHT_BUTTON        2
+#define MICROBIT_ID_BUTTON_A            1
+#define MICROBIT_ID_BUTTON_B            2
 #define MICROBIT_ID_ACCELEROMETER       3
 #define MICROBIT_ID_COMPASS             4
 #define MICROBIT_ID_DISPLAY             5
-#define MICROBIT_ID_IO_1                6
-#define MICROBIT_ID_IO_2                7
-#define MICROBIT_ID_IO_3                8
-#define MICROBIT_ID_IO_4                9
-#define MICROBIT_ID_IO_5                10
-#define MICROBIT_ID_IO_6                11
-#define MICROBIT_ID_IO_7                12
-#define MICROBIT_ID_IO_8                13
+
+//EDGE connector events
+#define MICROBIT_ID_IO_P0               6           //P0 is the left most pad (ANALOG/DIGITAL) 
+#define MICROBIT_ID_IO_P1               7           //P1 is the middle pad (ANALOG/DIGITAL) 
+#define MICROBIT_ID_IO_P2               8           //P2 is the right most pad (ANALOG/DIGITAL) 
+#define MICROBIT_ID_IO_P3               9           //COL1 (ANALOG/DIGITAL) 
+#define MICROBIT_ID_IO_P4               10          //BTN_A        
+#define MICROBIT_ID_IO_P5               11          //COL2 (ANALOG/DIGITAL) 
+#define MICROBIT_ID_IO_P6               12          //ROW2
+#define MICROBIT_ID_IO_P7               13          //ROW1       
+#define MICROBIT_ID_IO_P8               14          //PIN 18
+#define MICROBIT_ID_IO_P9               15          //ROW3                  
+#define MICROBIT_ID_IO_P10              16          //COL3 (ANALOG/DIGITAL) 
+#define MICROBIT_ID_IO_P11              17          //BTN_B
+#define MICROBIT_ID_IO_P12              18          //PIN 20
+#define MICROBIT_ID_IO_P13              19          //SCK
+#define MICROBIT_ID_IO_P14              20          //MISO
+#define MICROBIT_ID_IO_P15              21          //MOSI
+#define MICROBIT_ID_IO_P16              22          //PIN 16
+#define MICROBIT_ID_IO_P17              23          //SCL
+#define MICROBIT_ID_IO_P18              24          //SDA
+
 
 // mBed pin assignments of core components.
+//TODO: When platform is built for MB2 - pins will be defined by default, these will change...
 #define MICROBIT_PIN_SDA                P0_30
 #define MICROBIT_PIN_SCL                P0_0
 
@@ -83,16 +98,14 @@ class MicroBit
     
     // Member variables to represent each of the core components on the device.
     MicroBitDisplay         display;
-    MicroBitButton          leftButton;
-    MicroBitButton          rightButton;
+    MicroBitButton          buttonA;
+    MicroBitButton          buttonB;
     MicroBitAccelerometer   accelerometer;
     MicroBitCompass         compass;
+
+    //An array of available IO pins on the device
+    MicroBitIO              io;
     
-/*
-
-
-    MicroBitIO          pins[MICROBIT_IO_PINS];
-*/    
     // Bluetooth related member variables.
     BLEDevice                   *ble;
     DeviceInformationService    *ble_device_information_service;

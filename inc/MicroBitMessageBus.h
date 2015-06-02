@@ -32,7 +32,7 @@
 
 struct MicroBitEvent
 {
-	int source;         // ID of the MicroBit Component that generated the event � e.g. MICROBIT_ID_LEFT_BUTTON. 
+	int source;         // ID of the MicroBit Component that generated the event � e.g. MICROBIT_ID_BUTTON_A. 
     int value;          // Component specific code indicating the cause of the event.
     int timestamp;		// Time at which the event was generated. ms since power on?
     void *context;		// context specfic data associated with the event. 

@@ -111,7 +111,7 @@ void MicroBitDFUService::pair()
                 uBit.display.scrollString(pairString);
                 for (int j=0; j<40; j++)
                 {          
-                    if (uBit.leftButton.isPressed())
+                    if (uBit.buttonA.isPressed())
                     {
                         i=100;
                         releaseFlashCode();

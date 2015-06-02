@@ -9,8 +9,9 @@
 
 #include "mbed.h"
 
-#define MICROBIT_PIN_LEFT_BUTTON          P0_17
-#define MICROBIT_PIN_RIGHT_BUTTON         P0_26
+//TODO: When platform is built for MB2 - pins will be defined by default, these will change...
+#define MICROBIT_PIN_BUTTON_A             P0_17
+#define MICROBIT_PIN_BUTTON_B             P0_26
 
 
 #define MICROBIT_BUTTON_EVT_DOWN          1
