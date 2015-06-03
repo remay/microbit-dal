@@ -49,6 +49,10 @@ SmartPwm::SmartPwm(PinName pin) : PwmOut(pin)
 {
 }
 
+SmartPwm::~SmartPwm(){
+    pwmout_free(&_pwm);   
+}
+
 void SmartPwm::redirect(PinName pin)
 {   
     gpiote_reinit(pin, _pwm.pin, (uint8_t) _pwm.pwm);  

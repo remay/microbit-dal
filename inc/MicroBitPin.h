@@ -9,10 +9,10 @@
 
 #include "mbed.h"
                                                      // Status Field flags...
-#define IO_STATUS_DIGITAL_IN             0x01        // Pin is configured as an input, with a weak internal pull up.
-#define IO_STATUS_DIGITAL_OUT            0x02        // Pin is configured as an output
-#define IO_STATUS_ANALOG_IN              0x04        // Pin is Digital I/O (analog otherwise)    
-#define IO_STATUS_ANALOG_OUT             0x08        // Pin is Analog I/O (analog otherwise)    
+#define IO_STATUS_DIGITAL_IN             0x01        // Pin is configured as a digital input, with no pull up.
+#define IO_STATUS_DIGITAL_OUT            0x02        // Pin is configured as a digital output
+#define IO_STATUS_ANALOG_IN              0x04        // Pin is Analog in 
+#define IO_STATUS_ANALOG_OUT             0x08        // Pin is Analog out (not currently possible)  
 #define IO_STATUS_EVENTBUS_ENABLED       0x10        // Pin is will generate events on change
 
 //#defines for each edge connector pin

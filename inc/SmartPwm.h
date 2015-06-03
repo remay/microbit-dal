@@ -11,6 +11,7 @@ class SmartPwm : public PwmOut
     
     void redirect(PinName pin);
     
+    ~SmartPwm();
 };
 
 #endif

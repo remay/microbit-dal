@@ -35,16 +35,19 @@ void MicroBitPin::disconnect()
     if (status & IO_STATUS_DIGITAL_OUT)
         delete ((DigitalOut *)pin);
 
-    if (status & IO_STATUS_ANALOG_IN)
+    if (status & IO_STATUS_ANALOG_IN){
+        NRF_ADC->ENABLE = ADC_ENABLE_ENABLE_Disabled; // forcibly disable the ADC - BUG IN EMBED....
         delete ((AnalogIn *)pin);
+    }
     
     /*
-    //REMOVED WHILE WE WORK OUT WHERE AnalogOut is...
-    if (status & IO_STATUS_ANALOG_OUT)
-        delete ((AnalogOut *)pin);*/
+     * Removed as AnalogOut iscurrently not implemented
+     *  if (status & IO_STATUS_ANALOG_OUT)
+     *      delete ((AnalogOut *)pin);
+     */
         
     this->pin = NULL;
-    this->status = status & IO_STATUS_EVENTBUS_ENABLED;
+    this->status = status & IO_STATUS_EVENTBUS_ENABLED; //retain event bus status
 }
 
 /**
@@ -54,8 +57,8 @@ void MicroBitPin::disconnect()
 void MicroBitPin::setDigitalValue(int value)
 {
     //check if this pin has a digital mode...
-    if(!(PIN_CAPABILITY_DIGITAL & capability))
-        return;
+    //if(!(PIN_CAPABILITY_DIGITAL & capability))
+        //return;
         
     // Move into a Digital input state if necessary.
     if (!(status & IO_STATUS_DIGITAL_OUT)){
@@ -81,7 +84,7 @@ int MicroBitPin::getDigitalValue()
     // Move into a Digital input state if necessary.
     if (!(status & IO_STATUS_DIGITAL_IN)){
         disconnect();  
-        pin = new DigitalIn(name);
+        pin = new DigitalIn(name,PullDown); //pull down!
         status |= IO_STATUS_DIGITAL_IN;
     }
     

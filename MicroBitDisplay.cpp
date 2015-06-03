@@ -5,6 +5,7 @@
   */
 #include "MicroBit.h"
 #include "MicroBitMatrixMaps.h"
+#include <new>
 
 /**
   * Constructor.
@@ -371,4 +372,28 @@ void MicroBitDisplay::rotateTo(int position)
         return;
         
     this->rotation = position;
+}
+
+ /**
+  * Enables the display, should only be called if the display is disabled. asd
+  */
+void MicroBitDisplay::enable()
+{
+    new(&columnPins) BusOut(MICROBIT_DISPLAY_COLUMN_PINS);  //bring columnPins back up
+    columnPins.write(0xFFFF);                               //write 0xFFFF to reset all column pins 
+    new(&rowDrive) SmartPwm(rowPins[0]);                    //bring rowDrive back up
+    rowDrive.period_ms(1);                                  
+    setBrightness(brightness);
+    uBit.flags |= MICROBIT_FLAG_DISPLAY_RUNNING;            //set the display running flag
+}
+    
+ /**
+  * Disables the display, should only be called if the display is enabled.
+  */
+void MicroBitDisplay::disable()
+{
+    uBit.flags &= ~MICROBIT_FLAG_DISPLAY_RUNNING;           //unset the display running flag
+    columnPins.~BusOut();
+    rowDrive.~SmartPwm();
+    
 }

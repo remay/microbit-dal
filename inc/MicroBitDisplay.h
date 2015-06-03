@@ -280,6 +280,16 @@ public:
      * Axis aligned values only.
      */
     void rotateTo(int position);
+    
+    /**
+     * Enables the display, should only be called if the display is disabled.
+     */
+    void enable();
+    
+    /**
+     * Disables the display, should only be called if the display is enabled.
+     */
+    void disable();
 };
 
 #endif
