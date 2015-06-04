@@ -74,7 +74,7 @@ void MicroBitMessageBus::send(MicroBitEvent &evt, MicroBitMessageBusCache *c)
 	// Now, send the event to all listeners registered for this event.
 	while (l != NULL && l->id == evt.source)
 	{
-		if(l->value ==  MICROBIT_BUS_VALUE_ANY || l->value == evt.value)
+		if(l->value ==  MICROBIT_EVT_ANY || l->value == evt.value)
 		{
 			create_fiber(l->cb);
 		}
@@ -84,7 +84,7 @@ void MicroBitMessageBus::send(MicroBitEvent &evt, MicroBitMessageBusCache *c)
 
 	// Next, send to any listeners registered for ALL event sources.
 	l = listeners;
-	while (l != NULL && l->id == MICROBIT_BUS_ID_ANY)
+	while (l != NULL && l->id == MICROBIT_ID_ANY)
 	{
 		create_fiber(l->cb);
 		l = l->next;	
@@ -130,7 +130,7 @@ void MicroBitMessageBus::listen(int id, int value, void (*handler)(void))
 
 	while (l != NULL && l->id <= id)
 	{
-		if (l->cb == handler && (l->id == id || l->id == MICROBIT_BUS_ID_ANY) && (l->value == value || l->value == MICROBIT_BUS_VALUE_ANY))
+		if (l->cb == handler && (l->id == id || l->id == MICROBIT_ID_ANY) && (l->value == value || l->value == MICROBIT_EVT_ANY))
 			return;
 
 		l = l->next;
