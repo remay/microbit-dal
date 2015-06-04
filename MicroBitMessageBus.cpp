@@ -117,6 +117,13 @@ void MicroBitMessageBus::listen(int id, int value, void (*handler)(void))
 	MicroBitListener *l, *p;
 	MicroBitListener *newListener = new MicroBitListener(id, value, handler);
 
+	//if listeners is null - we can automatically add this listener to the list at the beginning...
+	if (listeners == NULL)
+	{
+		listeners = newListener;
+		return;
+	}
+
 	// Firstly, we treat a listener as an idempotent operation. Ensure we don't already have this handler
 	// registered in a that will already capture these events. If we do, silently ignore.
 	l = listeners;
@@ -133,18 +140,25 @@ void MicroBitMessageBus::listen(int id, int value, void (*handler)(void))
 	// Chain is held stictly in increasing order of ID (first level), then value code (second level).
 	// Find the correct point in the chain for this event.
 	// Adding a listener is a rare occurance, so we just walk the list.
-	p = NULL;
+	p = listeners;
 	l = listeners;
 
-	while (l != NULL && l->id <= id && l->value <= value)
+	while (l != NULL && l->id < id && l->value <= value)
 	{
-		p=l;
+		p = l;
 		l = l->next;
 	}
 
-	// Add the listener at this point in the chain.
-	if (p == NULL)
+	//add in front of P
+	if (p->id > id || p->value > value)
+	{
+
+		newListener->next = p;
+
+		//this new listener is now the front!
 		listeners = newListener;
+	}
+	//add after p
 	else
 	{
 		newListener->next = p->next;

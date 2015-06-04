@@ -22,7 +22,13 @@ MicroBit::MicroBit() :
     buttonB(MICROBIT_ID_BUTTON_B,MICROBIT_PIN_BUTTON_B),
     accelerometer(MICROBIT_ID_ACCELEROMETER, MMA8653_DEFAULT_ADDR),
     compass(MICROBIT_ID_COMPASS, MAG3110_DEFAULT_ADDR),
-    io(MICROBIT_ID_IO_P2,MICROBIT_ID_IO_P7,MICROBIT_ID_IO_P13)
+    io(MICROBIT_ID_IO_P0,MICROBIT_ID_IO_P1,MICROBIT_ID_IO_P2,
+       MICROBIT_ID_IO_P3,MICROBIT_ID_IO_P4,MICROBIT_ID_IO_P5,
+       MICROBIT_ID_IO_P6,MICROBIT_ID_IO_P7,MICROBIT_ID_IO_P8,
+       MICROBIT_ID_IO_P9,MICROBIT_ID_IO_P10,MICROBIT_ID_IO_P11,
+       MICROBIT_ID_IO_P12,MICROBIT_ID_IO_P13,MICROBIT_ID_IO_P14,
+       MICROBIT_ID_IO_P15,MICROBIT_ID_IO_P16,MICROBIT_ID_IO_P17,
+       MICROBIT_ID_IO_P18)
 {   
 }
 
@@ -129,6 +135,10 @@ void MicroBit::systemTick()
     // Scheduler callback. We do this here just as a single timer is more efficient. :-)
     if (uBit.flags & MICROBIT_FLAG_SCHEDULER_RUNNING)
         scheduler_tick();  
+        
+    //update the buttons if required.
+    uBit.buttonA.tick();
+    uBit.buttonB.tick();
 }
 
 
