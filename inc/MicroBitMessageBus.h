@@ -25,8 +25,8 @@
 // Enumeration of core components.
 #define MICROBIT_CONTROL_BUS_ID         0
 
-#define MICROBIT_BUS_ID_ANY				0
-#define MICROBIT_BUS_VALUE_ANY			0
+#define MICROBIT_ID_ANY					0
+#define MICROBIT_EVT_ANY				0
 
 
 
@@ -91,7 +91,7 @@ class MicroBitMessageBus
 	  * Use MICROBIT_ID_ANY to receive events from all components.
 	  *
 	  * @param value The value of messages to listen for. Events with any other values will be filtered. 
-	  * Use MICROBIT_VALUE_ANY to receive events of any value.
+	  * Use MICROBIT_EVT_ANY to receive events of any value.
 	  *
 	  * @param hander The function to call when an event is received.
 	  */

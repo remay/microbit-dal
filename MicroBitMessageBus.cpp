@@ -1,7 +1,7 @@
 /**
-  * Class definition for a MicroBitImage.
+  * Class definition for a MicroBitMessageBus.
   *
-  * An MicroBitImage is a simple bitmap representation of an image.
+  * The MicroBitMessageBus handles all messages passed between components.
   */
 
 #include "MicroBit.h"

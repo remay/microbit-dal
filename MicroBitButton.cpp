@@ -8,55 +8,17 @@
   * @param id the ID of the new LED object.
   * @param name the physical pin on the processor that this butotn is connected to.
   */
-MicroBitButton::MicroBitButton(int id, PinName name) : pin(name), irq(name)
+MicroBitButton::MicroBitButton(int id, PinName name) : pin(name)
 {
     this->id = id;
     this->name = name;
     this->eventStartTime = 0;
     this->downStartTime = 0;
-    
-    irq.rise(this, &MicroBitButton::risingFalling);
-    irq.fall(this, &MicroBitButton::risingFalling);
 }
-
-void MicroBitButton::risingFalling()
-{   
-    eventStartTime = ticks;
-}
-#ifdef NOB
-/**
-  * Interrupt on change handler for this button.
-  * Button up
-  */
-void MicroBitButton::rising()
-{   
-    //if the debounce up flag is already set, we ignore this button release
-    if(!(status & MICROBIT_BUTTON_DEBOUNCE_UP))
-    {
-        //else begin the debounceUpTimeout and set the status
-        debounceUpTimeout.attach(this, &MicroBitButton::debounceUp, MICROBIT_BUTTON_DEBOUNCE_PERIOD);
-        status |= MICROBIT_BUTTON_DEBOUNCE_UP;       
-    }
-}
-
 
 /**
-  * Interrupt on change handler for this button.
-  * Button down
+  * Handles when a the state of the button has been changed to pressed, after a debounce.
   */
-void MicroBitButton::falling()
-{
-    //if the debounce down flag is already set, we ignore this button press
-    if(!(status & MICROBIT_BUTTON_DEBOUNCE_DOWN))
-    {
-        //else begin the debounceDownTimeout and set the status
-        debounceDownTimeout.attach(this, &MicroBitButton::debounceDown, MICROBIT_BUTTON_DEBOUNCE_PERIOD);
-        status |= MICROBIT_BUTTON_DEBOUNCE_DOWN;       
-    }
-}
-
-#endif
-
 void MicroBitButton::debounceDown()
 {
     //send a button down event
@@ -72,30 +34,8 @@ void MicroBitButton::debounceDown()
 }
 
 /**
-  * Debounce handler called by debounceDownTimeout, triggered by falling() interrupt
-  
-void MicroBitButton::debounceDown()
-{
-    if(eventStartTime == 0)
-    {
-        //send a button down event
-        MicroBitEvent evt;
-        evt.source = id;
-        evt.context = NULL;
-        evt.timestamp = ticks;
-        evt.value = MICROBIT_BUTTON_EVT_DOWN;
-        uBit.MessageBus.send(evt);
-        
-        //set the eventStartTime,
-        eventStartTime=ticks;        
-    } 
-    
-    //if still pressed, call me back!
-    if(isPressed() && (status & MICROBIT_BUTTON_DEBOUNCE_DOWN))
-        debounceDownTimeout.attach(this, &MicroBitButton::debounceDown, MICROBIT_BUTTON_DEBOUNCE_PERIOD);   
-}
-*/
-
+  * Handles when a the state of the button has been changed to released, after a debounce.
+  */
 void MicroBitButton::debounceUp()
 {
     //create an Event object
@@ -119,14 +59,25 @@ void MicroBitButton::debounceUp()
 }
 
 /**
-  * debounceUp() handler called by debounceUpTimeout, triggered by rising() interrupt
-  * The logic behind having a debounce up method is to protect against an accidental release
-  
-void MicroBitButton::debounceUp()
+  * periodic callback from MicroBit clock.
+  * Check for state change for this button, and fires a hold event if button is pressed.
+  */  
+void MicroBitButton::tick()
 {
-    // check if the button is still no longer pressed, if it is fire events, otherwise, call me back!
-    if(!isPressed())
+
+    //if the status button state is different from the pin state, and we haven't set the button state before...
+    if((status & MICROBIT_BUTTON_STATE) == pin && !(status & MICROBIT_BUTTON_STATE_SET))
     {
+        status |= MICROBIT_BUTTON_STATE_SET;
+        eventStartTime = ticks;    
+    }
+
+    //if button is pressed and the hold triggered event state is not triggered AND we are greater than the button debounce value
+    if((status & MICROBIT_BUTTON_STATE) && !(status & MICROBIT_BUTTON_STATE_HOLD_TRIGGERED) && (ticks - downStartTime) >= MICROBIT_BUTTON_DEBOUNCE_HOLD)
+    {
+        //set the hold triggered event flag
+        status |= MICROBIT_BUTTON_STATE_HOLD_TRIGGERED;
+        
         //create an Event object
         MicroBitEvent evt;
     
@@ -134,40 +85,25 @@ void MicroBitButton::debounceUp()
         evt.source = id;
         evt.context = NULL;
         evt.timestamp = ticks;
-        evt.value = MICROBIT_BUTTON_EVT_UP;
+        evt.value = MICROBIT_BUTTON_EVT_HOLD;
         uBit.MessageBus.send(evt);
-        
-        //determine if this is a long click or a normal click and update the previous used evt value
-        if((ticks-eventStartTime)>=MICROBIT_BUTTON_DEBOUNCE_LONG)    
-            evt.value = MICROBIT_BUTTON_EVT_LONG_CLICK;
-        else
-            evt.value = MICROBIT_BUTTON_EVT_CLICK;
-            
-        //send long click or normal click events
-        uBit.MessageBus.send(evt);
-        
-        //reset status and eventStartTime.
-        status = 0x00;
-        eventStartTime = 0; 
     }
-    else
-        debounceUpTimeout.attach(this, &MicroBitButton::debounceUp, MICROBIT_BUTTON_DEBOUNCE_PERIOD); // button is pressed again 
-}*/
-
-
-void MicroBitButton::tick(){
-    if(eventStartTime == 0)
-        return;
-        
-    if(ticks > eventStartTime + MICROBIT_BUTTON_DEBOUNCE_PERIOD){
+    
+    //handle button debounce, this ensure we don't get multiple button events for a single press
+    //due to hardware.
+    if(eventStartTime && ticks > eventStartTime + MICROBIT_BUTTON_DEBOUNCE_PERIOD)
+    {
+        //reset
         eventStartTime = 0;
+        
+        //set the new status and reset the STATE_SET flag
         status = !pin;
- 
+        
+        //if pressed...
         if(status)
             debounceDown(); 
         else 
             debounceUp();
-            
     }
 }
 
