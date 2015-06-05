@@ -63,12 +63,12 @@ MicroBitImage::MicroBitImage(const int x, const int y)
     this->init(x,y,NULL);
 }
 
-/**
-    * Copy Constructor. 
-    * Add ourselves as a reference to an existing MicroBitImage.
-    * 
-    * @param image The MicroBitImage to reference.
-    */
+ /**
+   * Copy Constructor. 
+   * Add ourselves as a reference to an existing MicroBitImage.
+   * 
+   * @param image The MicroBitImage to reference.
+   */
 MicroBitImage::MicroBitImage(const MicroBitImage &image)
 {
     bitmap = image.bitmap;
@@ -339,7 +339,7 @@ void MicroBitImage::printImage(int width, int height, const uint8_t *bitmap)
   * @param alpha set to 1 if transparency clear pixels in given image should be treated as transparent. Set to 0 otherwise.
   * @return The number of pixels written.
   */
-int MicroBitImage::paste(MicroBitImage &image, int x, int y, int alpha)
+int MicroBitImage::paste(const MicroBitImage &image, int x, int y, int alpha)
 {
     uint8_t *pIn, *pOut;
     int cx, cy;

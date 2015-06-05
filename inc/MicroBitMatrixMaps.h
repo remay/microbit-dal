@@ -67,5 +67,7 @@
 #endif
 
 const PinName rowPins[MICROBIT_DISPLAY_ROW_COUNT] = {MICROBIT_DISPLAY_ROW_PINS};
+const MicroBitImage panicFace("1 1 0 1 1\n1 1 0 1 1\n0 0 0 0 0\n0 1 1 1 0\n1 0 0 0 1\n");
 
 #endif  
+

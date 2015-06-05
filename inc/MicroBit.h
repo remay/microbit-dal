@@ -20,6 +20,7 @@
 #include "MicroBitFiber.h"
 #include "ManagedString.h"
 #include "MicroBitImage.h"
+#include "MicroBitEvent.h"
 #include "MicroBitMessageBus.h"
 #include "SmartPwm.h"
 
@@ -158,6 +159,13 @@ class MicroBit
       * @return The time since the last reset, in milliseconds.
       */
     unsigned long systemTime();
+    
+    /**
+      * Triggers a microbit panic where an infinite loop will occur swapping between the panicFace and statusCode if provided.
+      * TODO: refactor this so that it doesn't rely on instantiating new variables as memory will not be available.
+      * @param statusCode the status code of the associated error - TBD
+      */
+    void panic(int statusCode = 0);
 
 };
 

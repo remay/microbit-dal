@@ -141,6 +141,17 @@ void MicroBit::systemTick()
     uBit.buttonB.tick();
 }
 
+/**
+  * Triggers a microbit panic where an infinite loop will occur swapping between the panicFace and statusCode if provided.
+  * TODO: refactor this so that it doesn't rely on instantiating new variables as memory will not be available.
+  * @param statusCode the status code of the associated error - TBD
+  */
+void MicroBit::panic(int statusCode)
+{
+    //show error and enter infinite while
+    uBit.display.error(statusCode);
+}
+
 
 /**
   * Determine the time since this MicroBit was last reset.

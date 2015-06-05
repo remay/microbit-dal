@@ -139,7 +139,7 @@ class MicroBitImage
       * @param alpha set to 1 if transparency clear pixels in given image should be treated as transparent. Set to 0 otherwise.
       * @return The number of pixels written.
       */
-    int paste(MicroBitImage &image, int x, int y, int alpha);
+    int paste(const MicroBitImage &image, int x, int y, int alpha);
  
      /**
       * Prints a character to the display at the given location

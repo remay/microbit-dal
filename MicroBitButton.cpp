@@ -22,12 +22,7 @@ MicroBitButton::MicroBitButton(int id, PinName name) : pin(name)
 void MicroBitButton::debounceDown()
 {
     //send a button down event
-    MicroBitEvent evt;
-    evt.source = id;
-    evt.context = NULL;
-    evt.timestamp = ticks;
-    evt.value = MICROBIT_BUTTON_EVT_DOWN;
-    uBit.MessageBus.send(evt);
+    MicroBitEvent evt(id,MICROBIT_BUTTON_EVT_DOWN,ticks,NULL,true);
     
     //set the downStartTime,
     downStartTime=ticks;        
@@ -38,24 +33,14 @@ void MicroBitButton::debounceDown()
   */
 void MicroBitButton::debounceUp()
 {
-    //create an Event object
-    MicroBitEvent evt;
-
     //send button up event
-    evt.source = id;
-    evt.context = NULL;
-    evt.timestamp = ticks;
-    evt.value = MICROBIT_BUTTON_EVT_UP;
-    uBit.MessageBus.send(evt);
+    MicroBitEvent evt(id,MICROBIT_BUTTON_EVT_UP,ticks,NULL,true);
     
-    //determine if this is a long click or a normal click and update the previous used evt value
-    if((ticks-downStartTime)>=MICROBIT_BUTTON_DEBOUNCE_LONG)    
-        evt.value = MICROBIT_BUTTON_EVT_LONG_CLICK;
+    //determine if this is a long click or a normal click and send event
+    if((ticks-downStartTime)>=MICROBIT_BUTTON_DEBOUNCE_LONG)
+        MicroBitEvent evt(id,MICROBIT_BUTTON_EVT_LONG_CLICK,ticks,NULL,true);    
     else
-        evt.value = MICROBIT_BUTTON_EVT_CLICK;
-        
-    //send long click or normal click events
-    uBit.MessageBus.send(evt);
+        MicroBitEvent evt(id,MICROBIT_BUTTON_EVT_CLICK,ticks,NULL,true);
 }
 
 /**
@@ -78,15 +63,8 @@ void MicroBitButton::tick()
         //set the hold triggered event flag
         status |= MICROBIT_BUTTON_STATE_HOLD_TRIGGERED;
         
-        //create an Event object
-        MicroBitEvent evt;
-    
-        //send button up event
-        evt.source = id;
-        evt.context = NULL;
-        evt.timestamp = ticks;
-        evt.value = MICROBIT_BUTTON_EVT_HOLD;
-        uBit.MessageBus.send(evt);
+        //fire hold event
+        MicroBitEvent evt(id,MICROBIT_BUTTON_EVT_HOLD,ticks,NULL,true);
     }
     
     //handle button debounce, this ensure we don't get multiple button events for a single press

@@ -21,22 +21,20 @@
 #define MICROBIT_MESSAGE_BUS_H
 
 #include "mbed.h"
-
+#include "inc/MicroBitEvent.h"
 // Enumeration of core components.
 #define MICROBIT_CONTROL_BUS_ID         0
 
 #define MICROBIT_ID_ANY					0
 #define MICROBIT_EVT_ANY				0
-
-
-
+/*
 struct MicroBitEvent
 {
 	int source;         // ID of the MicroBit Component that generated the event � e.g. MICROBIT_ID_BUTTON_A. 
     int value;          // Component specific code indicating the cause of the event.
     int timestamp;		// Time at which the event was generated. ms since power on?
     void *context;		// context specfic data associated with the event. 
-};
+};*/
 
 struct MicroBitListener
 {

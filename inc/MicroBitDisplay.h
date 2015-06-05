@@ -290,6 +290,13 @@ public:
      * Disables the display, should only be called if the display is enabled.
      */
     void disable();
+    
+     /**
+      * Displays "=(" and an accompanying status code 
+      * TODO: refactor this so that it doesn't rely on instantiating new variables as memory will not be available.
+      * @param statusCode the appropriate status code - 0 means no code will be displayed.
+      */
+    void error(int statusCode);
 };
 
 #endif

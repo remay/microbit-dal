@@ -397,3 +397,25 @@ void MicroBitDisplay::disable()
     rowDrive.~SmartPwm();
     
 }
+ /**
+  * Displays "=(" and an accompanying status code 
+  * TODO: refactor this so that it doesn't rely on instantiating new variables as memory will not be available.
+  * @param statusCode the appropriate status code - 0 means no code will be displayed.
+  */
+void MicroBitDisplay::error(int statusCode)
+{   
+    //enter infinite loop.
+    while(1)
+    {
+        //display unhappy face.
+        image.paste(panicFace,0,0,0);
+        
+        uBit.sleep(1000);
+        //this->resetAnimation(1000);
+        //if statuscode is non-zero...
+        if(statusCode)
+            scrollString(statusCode);
+            
+        uBit.sleep(100);
+    }
+}
