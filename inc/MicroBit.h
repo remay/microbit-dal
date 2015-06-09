@@ -12,9 +12,13 @@
 
 //#define MICROBIT_BLE
 
+
 #include "mbed.h"
 #include "BLEDevice.h"
 #include "DeviceInformationService.h"
+
+//error number enumeration
+#include "ErrorNo.h"
 
 #include "MicroBitCompat.h"
 #include "MicroBitFiber.h"
@@ -69,8 +73,8 @@
 #define MICROBIT_ID_IO_P14              20          //MISO
 #define MICROBIT_ID_IO_P15              21          //MOSI
 #define MICROBIT_ID_IO_P16              22          //PIN 16
-#define MICROBIT_ID_IO_P17              23          //SCL
-#define MICROBIT_ID_IO_P18              24          //SDA
+#define MICROBIT_ID_IO_P19              23          //SCL
+#define MICROBIT_ID_IO_P20              24          //SDA
 
 
 // mBed pin assignments of core components.

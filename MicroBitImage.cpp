@@ -278,17 +278,25 @@ void MicroBitImage::clear()
   * @param y The co-ordinate of the pixel to change w.r.t. top left origin.
   * @param value The new value of the pixel.
   */
-void MicroBitImage::setPixelValue(int x , int y, uint8_t value)
+void MicroBitImage::setPixelValue(int x , int y, int value)
 {
+    //sanity check
+    if(x > width || y > height || x < 0 || y < 0 || value < 0)
+        return;
+    
     this->bitmap[y*width+x] = value;
 }
 
 /**
   * Determined the value of a given pixel.
-  * @return The value assigned to the givne pixel location
+  * @return The value assigned to the given pixel location
   */
-uint8_t MicroBitImage::getPixelValue(int x , int y)
+int MicroBitImage::getPixelValue(int x , int y)
 {
+    //sanity check
+    if(x > width || y > height || x < 0 || y < 0)
+        return MICROBIT_INVALID_VALUE;
+    
     return this->bitmap[y*width+x];
 }
 
@@ -304,7 +312,7 @@ uint8_t MicroBitImage::getPixelValue(int x , int y)
   *     
   */
 void MicroBitImage::printImage(int width, int height, const uint8_t *bitmap)
-{
+{   
     const uint8_t *pIn;
     uint8_t *pOut;
     int pixelsToCopyX, pixelsToCopyY;
@@ -348,7 +356,7 @@ int MicroBitImage::paste(const MicroBitImage &image, int x, int y, int alpha)
     // Sanity check.
     // We permit writes that overlap us, but ones that are clearly out of scope we can filter early.
     if (x >= width || y >= height || x+image.width <= 0 || y+image.height <= 0)
-        return 0;
+        return MICROBIT_IMG_OOB;
 
     //Calculate the number of byte we need to copy in each dimension.
     cx = x < 0 ? min(image.width + x, width) : min(image.width, width - x);

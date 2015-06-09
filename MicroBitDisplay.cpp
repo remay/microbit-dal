@@ -6,7 +6,7 @@
 #include "MicroBit.h"
 #include "MicroBitMatrixMaps.h"
 #include <new>
-
+#include "nrf_gpio.h"
 /**
   * Constructor.
   * Create a Point representation of an LED on a matrix
@@ -204,6 +204,10 @@ void MicroBitDisplay::updateScrollImage()
 
 void MicroBitDisplay::resetAnimation(int delay)
 {
+    //sanitise this value
+    if(delay <= 0 )
+        delay = MICROBIT_DEFAULT_SCROLL_SPEED;
+        
     // Reset any ongoing animation.
     // Clear the display and setup the animation timers.
     animationMode = ANIMATION_MODE_NONE;
@@ -234,6 +238,10 @@ void MicroBitDisplay::print(char c)
 */
 void MicroBitDisplay::printStringAsync(ManagedString s, int delay)
 {
+    //sanitise this value
+    if(delay <= 0 )
+        delay = MICROBIT_DEFAULT_SCROLL_SPEED;
+    
     this->resetAnimation(delay);
     
     this->printingChar = 0;
@@ -252,6 +260,10 @@ void MicroBitDisplay::printStringAsync(ManagedString s, int delay)
   */
 void MicroBitDisplay::printString(ManagedString s, int delay)
 {
+    //sanitise this value
+    if(delay <= 0 )
+        delay = MICROBIT_DEFAULT_SCROLL_SPEED;
+    
     // Start the effect.
     this->printStringAsync(s, delay);
     
@@ -272,6 +284,10 @@ void MicroBitDisplay::printString(ManagedString s, int delay)
   */
 void MicroBitDisplay::scrollStringAsync(ManagedString s, int delay)
 {
+    //sanitise this value
+    if(delay <= 0 )
+        delay = MICROBIT_DEFAULT_SCROLL_SPEED;
+    
     this->resetAnimation(delay);
     
     this->scrollingPosition = width-1;
@@ -291,6 +307,10 @@ void MicroBitDisplay::scrollStringAsync(ManagedString s, int delay)
   */
 void MicroBitDisplay::scrollString(ManagedString s, int delay)
 {
+    //sanitise this value
+    if(delay <= 0 )
+        delay = MICROBIT_DEFAULT_SCROLL_SPEED;
+    
     // Start the effect.
     this->scrollStringAsync(s, delay);
     
@@ -311,6 +331,15 @@ void MicroBitDisplay::scrollString(ManagedString s, int delay)
   */
 void MicroBitDisplay::scrollImageAsync(MicroBitImage image, int delay, int stride)
 {
+    
+    //sanitise the delay value
+    if(delay <= 0 )
+        delay = MICROBIT_DEFAULT_SCROLL_SPEED;
+        
+    //sanitise the stride value
+    if(stride >= width )
+        stride = MICROBIT_DEFAULT_SCROLL_STRIDE;
+    
     this->resetAnimation(delay);
 
     this->scrollingImagePosition = stride < 0 ? width : -image.getWidth();
@@ -331,6 +360,14 @@ void MicroBitDisplay::scrollImageAsync(MicroBitImage image, int delay, int strid
   */
 void MicroBitDisplay::scrollImage(MicroBitImage image, int delay, int stride)
 {
+    //sanitise the delay value
+    if(delay <= 0 )
+        delay = MICROBIT_DEFAULT_SCROLL_SPEED;
+        
+    //sanitise the stride value
+    if(stride >= width )
+        stride = MICROBIT_DEFAULT_SCROLL_STRIDE;
+    
     // Start the effect.
     this->scrollImageAsync(image, delay, stride);
     
@@ -347,6 +384,10 @@ void MicroBitDisplay::scrollImage(MicroBitImage image, int delay, int stride)
   */    
 void MicroBitDisplay::setBrightness(int b)
 {
+    //sanitise the brightness level
+    if(b < 0 || b > 255)
+        return;
+    
     float level = (float)b / float(MICROBIT_DISPLAY_MAX_BRIGHTNESS);
     
     this->brightness = b;
@@ -368,10 +409,21 @@ int MicroBitDisplay::getBrightness()
   */    
 void MicroBitDisplay::rotateTo(int position)
 {
-    if (position < MICROBIT_DISPLAY_ROTATION_0 || position > MICROBIT_DISPLAY_ROTATION_270)
-        return;
-        
-    this->rotation = position;
+    //perform a switch on position to restrict range to distinct values
+    switch(position){
+        case MICROBIT_DISPLAY_ROTATION_0:
+            this->rotation = MICROBIT_DISPLAY_ROTATION_0;
+            break;   
+        case MICROBIT_DISPLAY_ROTATION_90:
+            this->rotation = MICROBIT_DISPLAY_ROTATION_90;
+            break;
+        case MICROBIT_DISPLAY_ROTATION_180:
+            this->rotation = MICROBIT_DISPLAY_ROTATION_180;
+            break;
+        case MICROBIT_DISPLAY_ROTATION_270:
+            this->rotation = MICROBIT_DISPLAY_ROTATION_270;
+            break;
+    }
 }
 
  /**
@@ -397,25 +449,66 @@ void MicroBitDisplay::disable()
     rowDrive.~SmartPwm();
     
 }
+
+ /**
+  * Clears the current image on the display.
+  */ 
+void MicroBitDisplay::clear()
+{
+    image.clear();  
+}
+
  /**
   * Displays "=(" and an accompanying status code 
   * TODO: refactor this so that it doesn't rely on instantiating new variables as memory will not be available.
-  * @param statusCode the appropriate status code - 0 means no code will be displayed.
+  * @param statusCode the appropriate status code - 0 means no code will be displayed. No values less than zero are allowed
   */
 void MicroBitDisplay::error(int statusCode)
 {   
+    if(statusCode < 0)
+        statusCode = 0;
+
+    /*disable();
+    
+    nrf_gpio_port_clear(NRF_GPIO_PORT_SELECT_PORT1,0xFF);
+    nrf_gpio_port_clear(NRF_GPIO_PORT_SELECT_PORT0,0xFF);
+    
+    nrf_gpio_port_dir_set(NRF_GPIO_PORT_SELECT_PORT0,NRF_GPIO_PORT_DIR_OUTPUT);
+    nrf_gpio_port_dir_set(NRF_GPIO_PORT_SELECT_PORT1,NRF_GPIO_PORT_DIR_OUTPUT);
+    */
     //enter infinite loop.
     while(1)
     {
+        
         //display unhappy face.
         image.paste(panicFace,0,0,0);
         
         uBit.sleep(1000);
-        //this->resetAnimation(1000);
+
         //if statuscode is non-zero...
         if(statusCode)
-            scrollString(statusCode);
-            
-        uBit.sleep(100);
+            scrollString(statusCode);   
+        /*
+        Planned manual switch off pins so that an OOM bug doesn't disable the panic function.
+        
+        ** IGNORE **
+        
+        nrf_gpio_pin_set();
+        nrf_gpio_pin_set(P0_15);
+        nrf_gpio_pin_set(P0_14);
+        nrf_gpio_pin_set(P0_13);
+        nrf_gpio_port_set(NRF_GPIO_PORT_SELECT_PORT1, 0x40); // port 1 8-15
+        nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT0, 0x00); // port 0 0-7
+        nrf_gpio_word_byte_write(&NRF_GPIO->OUTSET,1, 0x80); // port 1 8-15
+        nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT1, 0x20); // port 0 0-7
+        
+        nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT1, 0x40); // port 0 0-7
+        wait(1000);
+        nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT1, 0x80); // port 0 0-7
+        wait(1000);
+        nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT1, 0xE0); // port 0 0-7
+        wait(1000);
+        nrf_gpio_pin_set(P0_13);
+        */
     }
 }

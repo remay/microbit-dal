@@ -38,8 +38,8 @@ class MicroBitIO
     MicroBitPin          P14;
     MicroBitPin          P15;
     MicroBitPin          P16;
-    MicroBitPin          P17;
-    MicroBitPin          P18;
+    MicroBitPin          P19;
+    MicroBitPin          P20;
     
     /**
       * Constructor. 
@@ -51,8 +51,8 @@ class MicroBitIO
                int MICROBIT_ID_IO_P6, int MICROBIT_ID_IO_P7, int MICROBIT_ID_IO_P8,
                int MICROBIT_ID_IO_P9, int MICROBIT_ID_IO_P10,int MICROBIT_ID_IO_P11,
                int MICROBIT_ID_IO_P12,int MICROBIT_ID_IO_P13,int MICROBIT_ID_IO_P14,
-               int MICROBIT_ID_IO_P15,int MICROBIT_ID_IO_P16,int MICROBIT_ID_IO_P17,
-               int MICROBIT_ID_IO_P18);
+               int MICROBIT_ID_IO_P15,int MICROBIT_ID_IO_P16,int MICROBIT_ID_IO_P19,
+               int MICROBIT_ID_IO_P20);
     
     
 };

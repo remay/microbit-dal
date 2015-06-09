@@ -114,6 +114,10 @@ void MicroBitMessageBus::send(MicroBitEvent &evt, MicroBitMessageBusCache *c)
 
 void MicroBitMessageBus::listen(int id, int value, void (*handler)(void))
 {
+	//handler can't be NULL!
+	if(handler == NULL)
+		return;
+	
 	MicroBitListener *l, *p;
 	MicroBitListener *newListener = new MicroBitListener(id, value, handler);
 

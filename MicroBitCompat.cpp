@@ -8,6 +8,10 @@
   */
 void string_reverse(char *s) 
 {
+    //sanity check...
+    if(s == NULL)
+        return;
+    
     char *j;
     int c;
  

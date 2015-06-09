@@ -1,3 +1,4 @@
+#include "MicroBit.h"
 #include "inc/MicroBitPin.h"
 
 /**
@@ -57,8 +58,8 @@ void MicroBitPin::disconnect()
 void MicroBitPin::setDigitalValue(int value)
 {
     //check if this pin has a digital mode...
-    //if(!(PIN_CAPABILITY_DIGITAL & capability))
-        //return;
+    if(!(PIN_CAPABILITY_DIGITAL & capability) || value < 0 || value > 1)
+        return;
         
     // Move into a Digital input state if necessary.
     if (!(status & IO_STATUS_DIGITAL_OUT)){
@@ -79,7 +80,7 @@ int MicroBitPin::getDigitalValue()
 {
     //check if this pin has a digital mode...
     if(!(PIN_CAPABILITY_DIGITAL & capability))
-        return 0;
+        return MICROBIT_IO_OP_NA;
     
     // Move into a Digital input state if necessary.
     if (!(status & IO_STATUS_DIGITAL_IN)){
@@ -109,14 +110,14 @@ void MicroBitPin::setAnalogValue(int value)
 
 /**
   * Configures this IO pin as an analogue input (if necessary and possible).
-  * @return the current analogue level on the pin as a float, in the range 0.0-1.0 
+  * @return the current analogue level on the pin as a float, in the range 0.0-1.0 or MICROBIT_IO_OP_NA if transition not allowed!
   */
 int MicroBitPin::getAnalogValue()
 {
     
     //check if this pin has an analogue mode...
     if(!(PIN_CAPABILITY_ANALOG & capability))
-        return 0.0;
+        return MICROBIT_IO_OP_NA;
         
     // Move into an analogue input state if necessary.
     if (!(status & IO_STATUS_ANALOG_IN)){

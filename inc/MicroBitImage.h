@@ -109,13 +109,13 @@ class MicroBitImage
       * @param y The co-ordinate of the pixel to change w.r.t. top left origin.
       * @param value The new value of the pixel.
       */
-    void setPixelValue(int x , int y, uint8_t value);
+    void setPixelValue(int x , int y, int value);
 
     /**
       * Determined the value of a given pixel.
       * @return The value assigned to the givne pixel location
       */
-    uint8_t getPixelValue(int x , int y);
+    int getPixelValue(int x , int y);
 
     /**
       * Replaces the content of this image with that of a given 

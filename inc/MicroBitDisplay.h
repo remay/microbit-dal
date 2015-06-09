@@ -291,6 +291,11 @@ public:
      */
     void disable();
     
+    /**
+     * Clears the current image on the display.
+     */ 
+    void clear();
+    
      /**
       * Displays "=(" and an accompanying status code 
       * TODO: refactor this so that it doesn't rely on instantiating new variables as memory will not be available.

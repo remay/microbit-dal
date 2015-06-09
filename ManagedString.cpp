@@ -22,7 +22,7 @@ void ManagedString::initEmpty()
   * creates this ManagedString based on a given null terminated char array.
   */
 void ManagedString::initString(const char *str)
-{
+{   
     // Initialise this ManagedString as a new string, using the data provided.
     // We assume the string is sane, and null terminated.
     len = strlen(str);
@@ -69,6 +69,7 @@ ManagedString::ManagedString(const char *str)
 
 ManagedString::ManagedString(const ManagedString &s1, const ManagedString &s2)
 {
+    
     // Calculate length of new string.
     len = s1.len + s2.len;
 
@@ -97,7 +98,7 @@ ManagedString::ManagedString(const ManagedString &s1, const ManagedString &s2)
 ManagedString::ManagedString(const char *str, const int length)
 {
     // Sanity check. Return EmptyString for anything distasteful
-    if (str == NULL || *str == 0)
+    if (str == NULL || *str == 0 || strlen(str) != length)
     {
         initEmpty();
         return;

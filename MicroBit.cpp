@@ -27,8 +27,8 @@ MicroBit::MicroBit() :
        MICROBIT_ID_IO_P6,MICROBIT_ID_IO_P7,MICROBIT_ID_IO_P8,
        MICROBIT_ID_IO_P9,MICROBIT_ID_IO_P10,MICROBIT_ID_IO_P11,
        MICROBIT_ID_IO_P12,MICROBIT_ID_IO_P13,MICROBIT_ID_IO_P14,
-       MICROBIT_ID_IO_P15,MICROBIT_ID_IO_P16,MICROBIT_ID_IO_P17,
-       MICROBIT_ID_IO_P18)
+       MICROBIT_ID_IO_P15,MICROBIT_ID_IO_P16,MICROBIT_ID_IO_P19,
+       MICROBIT_ID_IO_P20)
 {   
 }
 
@@ -73,7 +73,7 @@ void MicroBit::init()
 }
 
 /**
-  * Delay for the givne amount of time.
+  * Delay for the given amount of time.
   * If the scheduler is running, this will deschedule the current fiber and perform
   * a power efficent, concurrent sleep operation.
   * If the scheduler is disabled or we're running in an interrupt context, this
@@ -81,6 +81,10 @@ void MicroBit::init()
   */
 void MicroBit::sleep(int milliseconds)
 {
+    //sanity check, we can't time travel... (yet?)
+    if(milliseconds < 0)
+        return;
+        
     if (flags & MICROBIT_FLAG_SCHEDULER_RUNNING)
         fiber_sleep(milliseconds);
     else
@@ -88,14 +92,19 @@ void MicroBit::sleep(int milliseconds)
 }
 
 /**
-  * Generate a randoim number in the given range.
+  * Generate a random number in the given range.
   * We use the NRF51822 in built random number generator here
   * TODO: Determine if we want to, given its relatively high power consumption!
   *
-  * @return A random, natural number between 0 and the the given maximum value.
+  * @return A random, natural number between 0 and the the given maximum value. 
+  * Or if the max value is less than zero - return error code
   */
 int MicroBit::random(int max)
 {
+    //return -1000 if max is <= 0...
+    if(max <= 0)
+        return MICROBIT_INVALID_VALUE;
+        
     // Start the Random number generator. No need to leave it running... I hope. :-)
     NRF_RNG->TASKS_START = 1;
     
@@ -148,6 +157,7 @@ void MicroBit::systemTick()
   */
 void MicroBit::panic(int statusCode)
 {
+    //systemTicker.detach(); this will disable the system ticker in future - right now it is required to display the error message and unhappy face.
     //show error and enter infinite while
     uBit.display.error(statusCode);
 }

@@ -21,6 +21,10 @@ pin(name)
   */    
 void MicroBitLED::setBrightness(int b)
 {
+    //sanity check
+    if(b < 0 || b > 255)
+        return;
+        
     pin.write(b > 0);
 }
 

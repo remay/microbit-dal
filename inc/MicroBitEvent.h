@@ -40,11 +40,17 @@ class MicroBitEvent
       * @param value Component specific code indicating the cause of the event.
       * @param timestamp Time at which the event was generated. ms since power on.
       * @param context context specfic data associated with the event.
+      * @param fire whether the event should be fire immediately upon construction
       */
     
-    MicroBitEvent(int source, int value, int timestamp, void *context, bool fire=false);   
+    MicroBitEvent(int source, int value, int timestamp, void *context, bool fire=false);  
+    
+    //empty constructor. 
     MicroBitEvent(); 
 
+    /**
+      * Fires the represented event onto the message bus!
+      */
     void fire();
 };
 
