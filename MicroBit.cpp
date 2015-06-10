@@ -101,24 +101,30 @@ void MicroBit::sleep(int milliseconds)
   */
 int MicroBit::random(int max)
 {
-    //return -1000 if max is <= 0...
+    //return MICROBIT_INVALID_VALUE if max is <= 0...
     if(max <= 0)
         return MICROBIT_INVALID_VALUE;
+        
+    int retVal = 0;
         
     // Start the Random number generator. No need to leave it running... I hope. :-)
     NRF_RNG->TASKS_START = 1;
     
-    // Clear the VALRDY EVENT
-    NRF_RNG->EVENTS_VALRDY = 0;
-    
-    // Wait for a number ot be generated.
-    while ( NRF_RNG->EVENTS_VALRDY == 0);
-    
+    for(int i = 0; i< 4 ;i++)
+    {
+        // Clear the VALRDY EVENT
+        NRF_RNG->EVENTS_VALRDY = 0;
+        
+        // Wait for a number ot be generated.
+        while ( NRF_RNG->EVENTS_VALRDY == 0);
+        
+        retVal += (int) NRF_RNG->VALUE;
+    }
     // Disable the generator to save power.
     NRF_RNG->TASKS_STOP = 1;
     
     // Set output according to the random value
-    return ((int) NRF_RNG->VALUE) % (max+1);
+    return (retVal) % ((max + 1) == 0 ? max : max + 1);
 }
 
 
@@ -171,4 +177,13 @@ void MicroBit::panic(int statusCode)
 unsigned long MicroBit::systemTime()
 {
     return ticks;
+}
+
+/**
+  * custom function for panic for malloc & new due to scoping issue.
+  * uBit.panic() will eventually point to here... rather than pointing to uBit.panic();
+  */
+void panic(int statusCode)
+{
+    uBit.panic(statusCode);   
 }

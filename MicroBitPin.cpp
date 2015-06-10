@@ -110,7 +110,7 @@ void MicroBitPin::setAnalogValue(int value)
 
 /**
   * Configures this IO pin as an analogue input (if necessary and possible).
-  * @return the current analogue level on the pin as a float, in the range 0.0-1.0 or MICROBIT_IO_OP_NA if transition not allowed!
+  * @return the current analogue level on the pin as an int and is in the range 0x0 - 0xFFFF, or MICROBIT_IO_OP_NA if transition not allowed!
   */
 int MicroBitPin::getAnalogValue()
 {

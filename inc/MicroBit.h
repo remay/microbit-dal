@@ -20,6 +20,9 @@
 //error number enumeration
 #include "ErrorNo.h"
 
+void panic(int statusCode); //custom function for panic for malloc & new due to scoping issue.
+
+#include "MicroBitMalloc.h"
 #include "MicroBitCompat.h"
 #include "MicroBitFiber.h"
 #include "ManagedString.h"
@@ -31,7 +34,6 @@
 #include "MicroBitButton.h"
 #include "MicroBitDisplay.h"
 #include "MicroBitIO.h"
-#include "MicroBitLED.h"
 #include "MicroBitCompass.h"
 #include "MicroBitAccelerometer.h"
 

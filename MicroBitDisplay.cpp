@@ -109,8 +109,10 @@ MicroBitDisplay::animationUpdate()
 {   
     if (animationMode == ANIMATION_MODE_NONE)
         return;
-        
-    if(++animationTick == animationDelay)
+    
+    animationTick += FIBER_TICK_PERIOD_MS; 
+    
+    if(animationTick >= animationDelay)
     {
         animationTick = 0;
         
@@ -335,11 +337,7 @@ void MicroBitDisplay::scrollImageAsync(MicroBitImage image, int delay, int strid
     //sanitise the delay value
     if(delay <= 0 )
         delay = MICROBIT_DEFAULT_SCROLL_SPEED;
-        
-    //sanitise the stride value
-    if(stride >= width )
-        stride = MICROBIT_DEFAULT_SCROLL_STRIDE;
-    
+            
     this->resetAnimation(delay);
 
     this->scrollingImagePosition = stride < 0 ? width : -image.getWidth();
@@ -363,10 +361,6 @@ void MicroBitDisplay::scrollImage(MicroBitImage image, int delay, int stride)
     //sanitise the delay value
     if(delay <= 0 )
         delay = MICROBIT_DEFAULT_SCROLL_SPEED;
-        
-    //sanitise the stride value
-    if(stride >= width )
-        stride = MICROBIT_DEFAULT_SCROLL_STRIDE;
     
     // Start the effect.
     this->scrollImageAsync(image, delay, stride);
