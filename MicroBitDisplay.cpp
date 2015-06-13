@@ -333,6 +333,8 @@ void MicroBitDisplay::scrollString(ManagedString s, int delay)
   */
 void MicroBitDisplay::scrollImageAsync(MicroBitImage image, int delay, int stride)
 {
+    // Assume right to left functionality, to align with scrollString()
+    stride = -stride;
     
     //sanitise the delay value
     if(delay <= 0 )

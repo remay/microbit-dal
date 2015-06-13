@@ -36,7 +36,7 @@ MicroBitImage MicroBitImage::EmptyImage(1,1);
 MicroBitImage::MicroBitImage()
 {
     // Create new reference to the EmptyImage and we're done.
-    *this = MicroBitImage::EmptyImage;
+    init_empty();
 }
 
 
@@ -100,7 +100,7 @@ MicroBitImage::MicroBitImage(const char *s)
 
     if (s == NULL)
     {
-        *this = MicroBitImage::EmptyImage;
+        init_empty();
         return;
     }
     // First pass: Parse the string to determine the geometry of the image.
@@ -196,12 +196,23 @@ MicroBitImage::~MicroBitImage()
     }
 }
 
+void MicroBitImage::init_empty()
+{   
+    bitmap = MicroBitImage::EmptyImage.bitmap;
+    width = MicroBitImage::EmptyImage.width;
+    height = MicroBitImage::EmptyImage.height;
+    ref = MicroBitImage::EmptyImage.ref;
+    
+    (*ref)++;
+}
+
+
 void MicroBitImage::init(const int x, const int y, const uint8_t *bitmap)
 {
     //sanity check size of image - you cannot have a negative sizes
     if(x < 0 || y < 0)
     {
-        *this = MicroBitImage::EmptyImage;
+        init_empty();
         return; 
     }    
     

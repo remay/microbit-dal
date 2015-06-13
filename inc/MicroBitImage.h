@@ -20,6 +20,7 @@ class MicroBitImage
       * Internal constructor support function. 
       */
     void init(const int x, const int y, const uint8_t *bitmap);
+    void init_empty();
     
     public:
     static MicroBitImage EmptyImage;    // Shared representation of a null image.

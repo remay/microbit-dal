@@ -90,6 +90,10 @@ void MicroBitAccelerometer::update()
     sample.y *= 16;
     sample.z *= 16;
 
+    // Invert the x and y axes, so that the reference frame aligns with micro:bit expectations
+    sample.x = -sample.x;
+    sample.y = -sample.y;
+
     // We ignore the LSB bits for now, as they're just noise...
     // TODO: Revist this when we have working samples to see if additional resolution is needed.
 
