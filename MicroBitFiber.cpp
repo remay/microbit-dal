@@ -193,13 +193,15 @@ Fiber *getFiberContext()
  * Creates a new Fiber, and launches it.
   *
   * @param entry_fn The function the new Fiber will begin execution in.
+  * @param forkever restart the function of exit if value is non zero.
   * @return The new Fiber.
   */
-Fiber *create_fiber(void (*entry_fn)(void))
+Fiber *create_fiber(void (*entry_fn)(void), int forkever)
 {
     Fiber *newFiber = getFiberContext();
     *((uint32_t *)newFiber->stack_bottom) = (uint32_t) entry_fn;
-
+    *((uint32_t *)(newFiber->stack_bottom+4)) = (uint32_t) forkever;
+    
     // Use cache fiber state if we have it. This is faster, and safer if we're called from
     // an interrupt context.
     if (emptyContext != NULL)
@@ -228,10 +230,22 @@ Fiber *create_fiber(void (*entry_fn)(void))
 LAUNCH_NEW_FIBER:     
  
     // Launch into the entry point, now we're in the correct context. 
-    (*(void(*)())(*((uint32_t *)currentFiber->stack_bottom)))();
-    
-    // Garbage collect the fiber once it exits.    
-    release_fiber();
+    uint32_t ep = currentFiber->stack_bottom;
+    uint32_t fk = *((uint32_t *)(currentFiber->stack_bottom + 4));
+
+    if(fk)
+    {
+        while(1)
+        {
+            (*(void(*)())(*((uint32_t *)ep)))();
+        }
+    } 
+    else
+    {
+        (*(void(*)())(*((uint32_t *)ep)))();
+        release_fiber();
+    }
+
         
     return NULL;
 }

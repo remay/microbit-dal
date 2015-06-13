@@ -82,7 +82,7 @@ void scheduler_init();
   * @param entry_fn The function the new Fiber will begin execution in.
   * @return The new Fiber.
   */
-Fiber *create_fiber(void (*entry_fn)(void));
+Fiber *create_fiber(void (*entry_fn)(void), int forkever = 0);
 
 /**
   * Exit point for all fibers.
