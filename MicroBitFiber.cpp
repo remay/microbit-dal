@@ -182,8 +182,18 @@ Fiber *getFiberContext()
         __enable_irq();
         
         f = new Fiber();
+        
+        if (f == NULL)
+            return NULL;
+
         f->stack_bottom = (uint32_t) malloc(FIBER_STACK_SIZE);
         f->stack_top = f->stack_bottom + FIBER_STACK_SIZE;
+    
+        if (f->stack_bottom == NULL)
+        {
+            delete f;
+            return NULL;
+        }
     }    
     
     return f;
@@ -193,14 +203,25 @@ Fiber *getFiberContext()
  * Creates a new Fiber, and launches it.
   *
   * @param entry_fn The function the new Fiber will begin execution in.
-  * @param forkever restart the function of exit if value is non zero.
+  * @param completion_fn The function called when the thread completes execution of entry_fn.  
   * @return The new Fiber.
   */
-Fiber *create_fiber(void (*entry_fn)(void), int forkever)
+Fiber *create_fiber(void (*entry_fn)(void), void (*completion_fn)(void))
 {
+    // Validate our parameters.
+    if (entry_fn == NULL || completion_fn == NULL)
+        return NULL;
+    
+    // Allocate a TCB from the new fiber. This will come from the tread pool if availiable,
+    // else a new one will be allocated on the heap.
     Fiber *newFiber = getFiberContext();
+    
+    // If we're out of memory, there's nothing we can do.
+    if (newFiber == NULL)
+        return NULL;
+    
     *((uint32_t *)newFiber->stack_bottom) = (uint32_t) entry_fn;
-    *((uint32_t *)(newFiber->stack_bottom+4)) = (uint32_t) forkever;
+    *((uint32_t *)(newFiber->stack_bottom+4)) = (uint32_t) completion_fn;
     
     // Use cache fiber state if we have it. This is faster, and safer if we're called from
     // an interrupt context.
@@ -230,32 +251,94 @@ Fiber *create_fiber(void (*entry_fn)(void), int forkever)
 LAUNCH_NEW_FIBER:     
  
     // Launch into the entry point, now we're in the correct context. 
-    uint32_t ep = currentFiber->stack_bottom;
-    uint32_t fk = *((uint32_t *)(currentFiber->stack_bottom + 4));
+    //uint32_t ep = currentFiber->stack_bottom;
+    uint32_t ep = *((uint32_t *)(currentFiber->stack_bottom + 0));
+    uint32_t cp = *((uint32_t *)(currentFiber->stack_bottom + 4));
 
-    if(fk)
-    {
-        while(1)
-        {
-            (*(void(*)())(*((uint32_t *)ep)))();
-        }
-    } 
-    else
-    {
-        (*(void(*)())(*((uint32_t *)ep)))();
-        release_fiber();
-    }
+    // Execute the thread's entrypoint
+    (*(void(*)())(ep))();
 
-        
+    // Execute the thread's completion routine;
+    (*(void(*)())(cp))();
+    
+    // If we get here, then the completion routine didn't recycle the fiber
+    // so do it anyway. :-)
+    release_fiber();
+    
     return NULL;
+}
+
+/**
+  * Creates a new parameterised Fiber, and launches it.
+  *
+  * @param entry_fn The function the new Fiber will begin execution in.
+  * @param param an untyped parameter passed into the entry_fn anf completion_fn.
+  * @param completion_fn The function called when the thread completes execution of entry_fn.  
+  * @return The new Fiber.
+  */
+Fiber *create_parameterised_fiber(void (*entry_fn)(void *), void *param, void (*completion_fn)(void *))
+{
+    // Validate our parameters.
+    if (entry_fn == NULL || completion_fn == NULL)
+        return NULL;
+    
+    // Allocate a TCB from the new fiber. This will come from the tread pool if availiable,
+    // else a new one will be allocated on the heap.
+    Fiber *newFiber = getFiberContext();
+    
+    // If we're out of memory, there's nothing we can do.
+    if (newFiber == NULL)
+        return NULL;
+    
+    *((uint32_t *)newFiber->stack_bottom) = (uint32_t) entry_fn;
+    *((uint32_t *)(newFiber->stack_bottom+4)) = (uint32_t) param;
+    *((uint32_t *)(newFiber->stack_bottom+8)) = (uint32_t) completion_fn;
+    
+    // Use cache fiber state. This is safe, as the empty context is always created in the non-paramterised
+    // version of create_fiber before we're ever called.
+    memcpy(&newFiber->tcb, emptyContext, sizeof(Cortex_M0_TCB));
+
+    // Assign the link register to refer to the thread entry point in THIS function.
+    newFiber->tcb.LR = (uint32_t) &&LAUNCH_NEW_FIBER;
+    
+    // Add new fiber to the run queue.
+    queue_fiber(newFiber, &runQueue);
+        
+    return newFiber;
+
+LAUNCH_NEW_FIBER:     
+ 
+    // Launch into the entry point, now we're in the correct context. 
+    uint32_t ep = *((uint32_t *)(currentFiber->stack_bottom + 0));
+    uint32_t pm = *((uint32_t *)(currentFiber->stack_bottom + 4));
+    uint32_t cp = *((uint32_t *)(currentFiber->stack_bottom + 8));
+
+    // Execute the thread's entry routine.
+    (*(void(*)(void *))(ep))((void *)pm);
+
+    // Execute the thread's completion routine.
+    // Execute the thread's entry routine.
+    (*(void(*)(void *))(cp))((void *)pm);
+    
+    // If we get here, then recycle the fiber context.
+    release_parameterised_fiber((void *)pm);
+    
+    return NULL;
+}
+
+/**
+  * Exit point for parameterised fibers.
+  * A wrapper around release_fiber() to enable transparent operaiton.
+  */
+void release_parameterised_fiber(void *param)
+{  
+    release_fiber();
 }
 
 
 /**
   * Exit point for all fibers.
   * Any fiber reaching the end of its entry function will return here  for recycling.
-  *
-  * TODO: Build a Fiber Pool, rather than just leak memory here. :-)
   */
 void release_fiber(void)
 {  

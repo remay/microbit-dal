@@ -77,19 +77,35 @@ struct Fiber
 void scheduler_init();
 
 /**
-  * Creates a new Fiber, and launches it.
-  *
-  * @param entry_fn The function the new Fiber will begin execution in.
-  * @return The new Fiber.
-  */
-Fiber *create_fiber(void (*entry_fn)(void), int forkever = 0);
-
-/**
   * Exit point for all fibers.
   * Any fiber reaching the end of its entry function will return here  for recycling.
   */
 void release_fiber(void);
 
+/**
+  * Exit point for parameterised fibers.
+  * A wrapper around release_fiber() to enable transparent operaiton.
+  */
+void release_parameterised_fiber(void *param);
+
+/**
+ * Creates a new Fiber, and launches it.
+  *
+  * @param entry_fn The function the new Fiber will begin execution in.
+  * @param completion_fn The function called when the thread completes execution of entry_fn.  
+  * @return The new Fiber.
+  */
+Fiber *create_fiber(void (*entry_fn)(void), void (*completion_fn)(void) = release_fiber);
+
+/**
+ * Creates a new parameterised Fiber, and launches it.
+  *
+  * @param entry_fn The function the new Fiber will begin execution in.
+  * @param param an untyped parameter passed into the entry_fn anf completion_fn.
+  * @param completion_fn The function called when the thread completes execution of entry_fn.  
+  * @return The new Fiber.
+  */
+Fiber *create_parameterised_fiber(void (*entry_fn)(void *), void *param, void (*completion_fn)(void *) = release_parameterised_fiber);
 
 /**
   * Calls the Fiber scheduler.
