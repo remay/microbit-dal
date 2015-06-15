@@ -86,7 +86,7 @@ void release_fiber(void);
   * Exit point for parameterised fibers.
   * A wrapper around release_fiber() to enable transparent operaiton.
   */
-void release_parameterised_fiber(void *param);
+void release_fiber(void *param);
 
 /**
  * Creates a new Fiber, and launches it.
@@ -105,7 +105,7 @@ Fiber *create_fiber(void (*entry_fn)(void), void (*completion_fn)(void) = releas
   * @param completion_fn The function called when the thread completes execution of entry_fn.  
   * @return The new Fiber.
   */
-Fiber *create_parameterised_fiber(void (*entry_fn)(void *), void *param, void (*completion_fn)(void *) = release_parameterised_fiber);
+Fiber *create_fiber(void (*entry_fn)(void *), void *param, void (*completion_fn)(void *) = release_fiber);
 
 /**
   * Calls the Fiber scheduler.

@@ -276,7 +276,7 @@ LAUNCH_NEW_FIBER:
   * @param completion_fn The function called when the thread completes execution of entry_fn.  
   * @return The new Fiber.
   */
-Fiber *create_parameterised_fiber(void (*entry_fn)(void *), void *param, void (*completion_fn)(void *))
+Fiber *create_fiber(void (*entry_fn)(void *), void *param, void (*completion_fn)(void *))
 {
     // Validate our parameters.
     if (entry_fn == NULL || completion_fn == NULL)
@@ -321,7 +321,7 @@ LAUNCH_NEW_FIBER:
     (*(void(*)(void *))(cp))((void *)pm);
     
     // If we get here, then recycle the fiber context.
-    release_parameterised_fiber((void *)pm);
+    release_fiber((void *)pm);
     
     return NULL;
 }
@@ -330,7 +330,7 @@ LAUNCH_NEW_FIBER:
   * Exit point for parameterised fibers.
   * A wrapper around release_fiber() to enable transparent operaiton.
   */
-void release_parameterised_fiber(void *param)
+void release_fiber(void *param)
 {  
     release_fiber();
 }
