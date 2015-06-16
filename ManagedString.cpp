@@ -38,7 +38,12 @@ void ManagedString::initString(const char *str)
   * Create a managed string from a given integer.
   *
   * @param value The integer from which to create the ManagedString
-  */    
+  * 
+  * Example:
+  * @code 
+  * ManagedString s(20);
+  * @endcode
+  */      
 ManagedString::ManagedString(const int value)
 {
     char str[12];
@@ -46,6 +51,24 @@ ManagedString::ManagedString(const int value)
     itoa(value, str);
     initString(str);    
 }
+
+/**
+  * Constructor. 
+  * Create a managed string from a given char.
+  *
+  * @param value The char from which to create the ManagedString
+  * 
+  * Example:
+  * @code 
+  * ManagedString s('a');
+  * @endcode
+  */      
+ManagedString::ManagedString(const char value)
+{
+    const char *str = &value;
+    initString(str);    
+}
+
 
 /**
   * Constructor. 
@@ -91,14 +114,20 @@ ManagedString::ManagedString(const ManagedString &s1, const ManagedString &s2)
   * Constructor. 
   * Create a managed string from a pointer to an 8-bit character buffer of a given length.
   * The buffer is copied to ensure sane memory management (the supplied
-  * character buffer may be decalred on the stack for instance).
+  * character buffer may be declared on the stack for instance).
   *
   * @param str The character array on which to base the new ManagedString.
-  */    
+  * @param length The length of the character array
+  *
+  * Example:
+  * @code 
+  * ManagedString s("abcdefg",7); // this is generally used for substring... why not use a normal char * constructor?
+  * @endcode
+  */  
 ManagedString::ManagedString(const char *str, const int length)
 {
     // Sanity check. Return EmptyString for anything distasteful
-    if (str == NULL || *str == 0 || strlen(str) != length)
+    if (str == NULL || *str == 0 || length > strlen(str))
     {
         initEmpty();
         return;
@@ -123,8 +152,13 @@ ManagedString::ManagedString(const char *str, const int length)
   * Shares the character buffer and reference count with the supplied ManagedString.
   *
   * @param s The ManagedString to copy.
+  * 
+  * Example:
+  * @code 
+  * ManagedString s("abcdefg");
+  * ManagedString p(s);
+  * @endcode
   */
-
 ManagedString::ManagedString(const ManagedString &s)
 {
     data = s.data;
@@ -139,6 +173,11 @@ ManagedString::ManagedString(const ManagedString &s)
   * Default constructor. 
   *
   * Create an empty ManagedString. 
+  *
+  * Example:
+  * @code 
+  * ManagedString s();
+  * @endcode
   */
 ManagedString::ManagedString()
 {
@@ -171,9 +210,14 @@ ManagedString::~ManagedString()
   * and increase its reference count.
   *
   * @param s The ManagedString to copy.
+  *
+  * Example:
+  * @code 
+  * ManagedString s("abcd");
+  * ManagedString p("efgh");
+  * p = s   // p now points to s, s' ref is incremented 
+  * @endcode
   */
-
-  
 ManagedString& ManagedString::operator = (const ManagedString& s)
 {
     if(this == &s)
@@ -200,6 +244,17 @@ ManagedString& ManagedString::operator = (const ManagedString& s)
   *
   * @param s The ManagedString to test ourselves against.
   * @return true if this ManagedString is identical to the one supplied, false otherwise.
+  *
+  * Example:
+  * @code 
+  * ManagedString s("abcd");
+  * ManagedString p("efgh");
+  * 
+  * if(p==s)
+  *     print("We are the same!");
+  * else
+  *     print("We are different!"); //p is not equal to s - this will be called
+  * @endcode
   */
 bool ManagedString::operator== (const ManagedString& s)
 {
@@ -213,6 +268,17 @@ bool ManagedString::operator== (const ManagedString& s)
   *
   * @param s The ManagedString to test ourselves against.
   * @return true if this ManagedString is alphabetically less than to the one supplied, false otherwise.
+  *
+  * Example:
+  * @code 
+  * ManagedString s("a");
+  * ManagedString p("b");
+  * 
+  * if(s<p)
+  *     print("a is before b!"); //a is before b
+  * else
+  *     print("b is before a!"); 
+  * @endcode
   */
 bool ManagedString::operator< (const ManagedString& s)
 {
@@ -226,6 +292,17 @@ bool ManagedString::operator< (const ManagedString& s)
   *
   * @param s The ManagedString to test ourselves against.
   * @return true if this ManagedString is alphabetically greater than to the one supplied, false otherwise.
+  *
+  * Example:
+  * @code 
+  * ManagedString s("a");
+  * ManagedString p("b");
+  * 
+  * if(p>a)
+  *     print("b is after a!"); //b is after a
+  * else
+  *     print("a is after b!"); 
+  * @endcode
   */
 bool ManagedString::operator> (const ManagedString& s)
 {
@@ -238,7 +315,14 @@ bool ManagedString::operator> (const ManagedString& s)
   * @param start The index of the first character to extract, indexed from zero.
   * @param length The number of characters to extract from the start position
   * @return a ManagedString representing the requested substring.
-  */
+  *
+  * Example:
+  * @code 
+  * ManagedString s("abcdefg");
+  *
+  * print(s.substring(0,2)) // prints "ab"
+  * @endcode
+  */ 
 ManagedString ManagedString::substring(int start, int length)
 {
     // If the parameters are illegal, just return a reference to the empty string.
@@ -257,7 +341,15 @@ ManagedString ManagedString::substring(int start, int length)
   *
   * @param s The ManagedString to concatenate.
   * @return a new ManagedString representing the joined strings.
-  */    
+  *
+  * Example:
+  * @code 
+  * ManagedString s("abcd");
+  * ManagedString p("efgh")
+  *
+  * print(s + p) // prints "abcdefgh"
+  * @endcode
+  */     
 ManagedString ManagedString::operator+ (ManagedString& s)
 {
     // If the other string is empty, nothing to do!
@@ -276,7 +368,14 @@ ManagedString ManagedString::operator+ (ManagedString& s)
   *
   * @param index The position of the character to return.
   * @return the character at posisiton index, zero if index is invalid.
-  */    
+  *
+  * Example:
+  * @code 
+  * ManagedString s("abcd");
+  *
+  * print(s.charAt(1)) // prints "b"
+  * @endcode
+  */     
 char ManagedString::charAt(int index)
 {
     return (index >=0 && index < len) ? data[index] : 0;
@@ -296,6 +395,13 @@ const char *ManagedString::toCharArray()
   * Determines the length of this ManagedString in characters.
   *
   * @return the length of the string in characters.
+  *
+  * Example:
+  * @code 
+  * ManagedString s("abcd");
+  *
+  * print(s.length()) // prints "4"
+  * @endcode
   */ 
 int ManagedString::length()
 {

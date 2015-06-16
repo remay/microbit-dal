@@ -64,41 +64,72 @@ class MicroBitAccelerometer
       * Constructor. 
       * Create an accelerometer representation with the given ID.
       * @param id the ID of the new object.
+      * @param address the default base address of the accelerometer. 
+      *
+      * Example:
+      * @code 
+      * accelerometer(MICROBIT_ID_ACCELEROMETER, MMA8653_DEFAULT_ADDR)
+      * @endcode
       */
     MicroBitAccelerometer(int id, int address);
     
     /**
       * Reads the acceleration data from the accelerometer, and stores it in our buffer.
+      * This is called by the tick() member function, if the interrupt is set!
       */
     void update();
     
     
     /**
       * Attempts to determine the 8 bit ID from the accelerometer. 
+      * @return the 8 bit ID returned by the accelerometer
+      *
+      * Example:
+      * @code 
+      * uBit.accelerometer.whoAmI();
+      * @endcode
       */
     int whoAmI();
 
     /**
       * Reads the X axis value of the latest update from the accelerometer.
+      * Currently limited to +/- 2g
       * @return The force measured in the X axis, in milli-g.
+      *
+      * Example:
+      * @code 
+      * uBit.accelerometer.getX();
+      * @endcode
       */
     int getX();
     
     /**
       * Reads the Y axis value of the latest update from the accelerometer.
+      * Currently limited to +/- 2g
       * @return The force measured in the Y axis, in milli-g.
+      *
+      * Example:
+      * @code 
+      * uBit.accelerometer.getY();
+      * @endcode
       */    
     int getY();
     
     /**
       * Reads the Z axis value of the latest update from the accelerometer.
+      * Currently limited to +/- 2g
       * @return The force measured in the Z axis, in milli-g.
+      *
+      * Example:
+      * @code 
+      * uBit.accelerometer.getZ();
+      * @endcode
       */    
     int getZ();
 
     /**
       * periodic callback from MicroBit clock.
-      * Check if any data is ready for reading...
+      * Check if any data is ready for reading by checking the interrupt flag on the accelerometer
       */    
     void tick();
     

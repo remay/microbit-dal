@@ -75,59 +75,90 @@ class MicroBitCompass
 
     int                 calibrating;     // flag.    
             
-//    public:
-
-    
     /**
       * Constructor. 
       * Create a compass representation with the given ID.
-      * @param id the ID of the new object.
+      * @param id the event ID of the compass object.
+      * @param address the default address for the compass register
+      *
+      * Example:
+      * @code
+      * compass(MICROBIT_ID_COMPASS, MAG3110_DEFAULT_ADDR);
+      * @endcode
       */
     MicroBitCompass(int id, int address);
     
     /**
       * Gets the current heading of the device, relative to magnetic north.
       * @return the current heading, in degrees.
+      *
+      * Example:
+      * @code
+      * uBit.compass.heading();
+      * @endcode
       */
     int heading();
     
     /**
-      * Attempts to determine the 8 bit ID from the accelerometer. 
+      * Attempts to determine the 8 bit ID from the magnetometer. 
+      * @return the id of the compass (magnetometer)
+      *
+      * Example:
+      * @code
+      * uBit.compass.whoAmI();
+      * @endcode
       */
     int whoAmI();
 
     /**
       * Reads the X axis value of the latest update from the compass.
       * @return The magnetic force measured in the X axis, in no specific units.
+      *
+      * Example:
+      * @code
+      * uBit.compass.getX();
+      * @endcode
       */
     int getX();
     
     /**
       * Reads the Y axis value of the latest update from the compass.
       * @return The magnetic force measured in the Y axis, in no specific units.
+      *
+      * Example:
+      * @code
+      * uBit.compass.getY();
+      * @endcode
       */    
     int getY();
     
     /**
       * Reads the Z axis value of the latest update from the compass.
       * @return The magnetic force measured in the Z axis, in no specific units.
+      *
+      * Example:
+      * @code
+      * uBit.compass.getZ();
+      * @endcode
       */    
     int getZ();    
 
     /**
       * Perform a calibration of the compass.
+      * **THIS MUST BE CALLED TO GAIN RELIABLE VALUES FROM THE COMPASS**
       */
     void calibrateStart();    
 
     /**
       * Complete the calibration of the compass.
+      * **THIS MUST BE CALLED TO GAIN RELIABLE VALUES FROM THE COMPASS**
       */    
     void calibrateEnd();    
 
     /**
-      * periodic callback from MicroBit clock.
-      * Check if any data is ready for reading...
-      */    
+      * Periodic callback from MicroBit clock.
+      * Check if any data is ready for reading by checking the interrupt.
+      */  
     void tick();
     
     private:

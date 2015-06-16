@@ -3,8 +3,11 @@
   */
 #include "MicroBit.h"
 
+
 /**
   * Performs an in buffer reverse of a given char array
+  * @param s the char* to reverse.
+  * @return the reversed char*
   */
 void string_reverse(char *s) 
 {

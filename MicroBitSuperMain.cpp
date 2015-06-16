@@ -38,6 +38,7 @@ int main()
 
     scheduler_init();
     uBit.init();
+    uBit.MessageBus.listen(MICROBIT_ID_BUTTON_RESET, MICROBIT_BUTTON_EVT_CLICK, NVIC_SystemReset);
     app_main();
     
     while(1)

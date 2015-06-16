@@ -12,6 +12,19 @@ char MICROBIT_BLE_SOFTWARE_VERSION[] = "1.0";
   * Constructor. 
   * Create a representation of a MicroBit device.
   * @param messageBus callback function to receive MicroBitMessageBus events.
+  *
+  * Exposed objects:
+  * @code 
+  * uBit.systemTicker; //the Ticker callback that performs routines like updating the display.
+  * uBit.MessageBus; //The message bus where events are fired.
+  * uBit.display; //The display object for the LED matrix.
+  * uBit.buttonA; //The buttonA object for button a.
+  * uBit.buttonB; //The buttonB object for button b.
+  * uBit.resetButton; //The resetButton used for soft resets.
+  * uBit.accelerometer; //The object that represents the inbuilt accelerometer
+  * uBit.compass; //The object that represents the inbuilt compass(magnetometer)
+  * uBit.io.P*; //Where P* is P0 to P16, P19 & P20 on the edge connector
+  * @endcode
   */
 MicroBit::MicroBit() : 
     flags(0x00),
@@ -20,6 +33,7 @@ MicroBit::MicroBit() :
     display(MICROBIT_ID_DISPLAY, 5, 5),
     buttonA(MICROBIT_ID_BUTTON_A,MICROBIT_PIN_BUTTON_A),
     buttonB(MICROBIT_ID_BUTTON_B,MICROBIT_PIN_BUTTON_B),
+    resetButton(MICROBIT_ID_BUTTON_RESET,MICROBIT_PIN_BUTTON_RESET),
     accelerometer(MICROBIT_ID_ACCELEROMETER, MMA8653_DEFAULT_ADDR),
     compass(MICROBIT_ID_COMPASS, MAG3110_DEFAULT_ADDR),
     io(MICROBIT_ID_IO_P0,MICROBIT_ID_IO_P1,MICROBIT_ID_IO_P2,
@@ -37,6 +51,11 @@ MicroBit::MicroBit() :
   * After *MUCH* pain, it's noted that the BLE stack can't be brought up in a 
   * static context, so we bring it up here rather than in the constructor.
   * n.b. This method *must* be called in main() or later, not before.
+  *
+  * Example:
+  * @code 
+  * uBit.init();
+  * @endcode
   */
 void MicroBit::init()
 {   
@@ -78,6 +97,13 @@ void MicroBit::init()
   * a power efficent, concurrent sleep operation.
   * If the scheduler is disabled or we're running in an interrupt context, this
   * will revert to a busy wait. 
+  * 
+  * @param milliseconds the amount of time, in ms, to wait for. This number cannot be negative.
+  *
+  * Example:
+  * @code 
+  * uBit.sleep(20); //sleep for 20ms
+  * @endcode
   */
 void MicroBit::sleep(int milliseconds)
 {
@@ -96,8 +122,13 @@ void MicroBit::sleep(int milliseconds)
   * We use the NRF51822 in built random number generator here
   * TODO: Determine if we want to, given its relatively high power consumption!
   *
-  * @return A random, natural number between 0 and the the given maximum value. 
-  * Or if the max value is less than zero - return error code
+  * @param max the upper range to generate a number for. This number cannot be negative
+  * @return A random, natural number between 0 and the the given maximum value. Or MICROBIT_INVALID_VALUE (defined in ErrorNo.h) if max is <= 0.
+  *
+  * Example:
+  * @code 
+  * uBit.random(200); //a number between 0 and 200 inclusive
+  * @endcode
   */
 int MicroBit::random(int max)
 {
@@ -157,22 +188,10 @@ void MicroBit::systemTick()
 }
 
 /**
-  * Triggers a microbit panic where an infinite loop will occur swapping between the panicFace and statusCode if provided.
-  * TODO: refactor this so that it doesn't rely on instantiating new variables as memory will not be available.
-  * @param statusCode the status code of the associated error - TBD
-  */
-void MicroBit::panic(int statusCode)
-{
-    //systemTicker.detach(); this will disable the system ticker in future - right now it is required to display the error message and unhappy face.
-    //show error and enter infinite while
-    uBit.display.error(statusCode);
-}
-
-
-/**
   * Determine the time since this MicroBit was last reset.
   *
-  * @return The time since the last reset, in milliseconds.
+  * @return The time since the last reset, in milliseconds. This will result in overflow after 1.6 months.
+  * TODO: handle overflow case.
   */
 unsigned long MicroBit::systemTime()
 {
@@ -180,8 +199,20 @@ unsigned long MicroBit::systemTime()
 }
 
 /**
+  * Triggers a microbit panic where an infinite loop will occur swapping between the panicFace and statusCode if provided.
+  * TODO: use the statusCode variable
+  * @param statusCode the status code of the associated error - TBD
+  *
+  */
+void MicroBit::panic(int statusCode)
+{
+    __disable_irq(); //this will disable the system ticker in future - right now it is required to display the error message and unhappy face.
+    //show error and enter infinite while
+    uBit.display.error(statusCode);
+}
+
+/**
   * custom function for panic for malloc & new due to scoping issue.
-  * uBit.panic() will eventually point to here... rather than pointing to uBit.panic();
   */
 void panic(int statusCode)
 {

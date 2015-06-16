@@ -3,8 +3,13 @@
 /**
   * Constructor. 
   * Create a compass representation with the given ID.
-  * @param id the ID of the new object.
-  * @param address the I2C address of the device.
+  * @param id the event ID of the compass object.
+  * @param address the default address for the compass register
+  *
+  * Example:
+  * @code
+  * compass(MICROBIT_ID_COMPASS, MAG3110_DEFAULT_ADDR);
+  * @endcode
   */
 MicroBitCompass::MicroBitCompass(int id, int address) : average(), sample(), int1(MICROBIT_PIN_COMPASS_DATA_READY)
 {
@@ -95,6 +100,11 @@ int16_t MicroBitCompass::read8(uint8_t reg)
 /**
   * Gets the current heading of the device, relative to magnetic north.
   * @return the current heading, in degrees.
+  *
+  * Example:
+  * @code
+  * uBit.compass.heading();
+  * @endcode
   */
 int MicroBitCompass::heading()
 {
@@ -108,7 +118,7 @@ int MicroBitCompass::heading()
 
 /**
   * Periodic callback from MicroBit clock.
-  * Check if any data is ready for reading...
+  * Check if any data is ready for reading by checking the interrupt.
   */
 void MicroBitCompass::tick()
 {
@@ -134,8 +144,13 @@ void MicroBitCompass::tick()
 }
 
 /**
-  * Reads the X axis value of the latest update from the accelerometer.
-  * @return The force measured in the X axis, in milli-g.
+  * Reads the X axis value of the latest update from the compass.
+  * @return The magnetic force measured in the X axis, in no specific units.
+  *
+  * Example:
+  * @code
+  * uBit.compass.getX();
+  * @endcode
   */
 int MicroBitCompass::getX()
 {
@@ -143,23 +158,42 @@ int MicroBitCompass::getX()
 }
 
 /**
-  * Reads the Y axis value of the latest update from the accelerometer.
-  * @return The force measured in the Y axis, in milli-g.
-  */    
+  * Reads the Y axis value of the latest update from the compass.
+  * @return The magnetic force measured in the Y axis, in no specific units.
+  *
+  * Example:
+  * @code
+  * uBit.compass.getY();
+  * @endcode
+  */     
 int MicroBitCompass::getY()
 {
     return sample.y;
 }
 
 /**
-  * Reads the Z axis value of the latest update from the accelerometer.
-  * @return The force measured in the Z axis, in milli-g.
-  */    
+  * Reads the Z axis value of the latest update from the compass.
+  * @return The magnetic force measured in the Z axis, in no specific units.
+  *
+  * Example:
+  * @code
+  * uBit.compass.getZ();
+  * @endcode
+  */     
 int MicroBitCompass::getZ()
 {
     return sample.z;
 }
 
+/**
+  * Attempts to determine the 8 bit ID from the magnetometer. 
+  * @return the id of the compass (magnetometer)
+  *
+  * Example:
+  * @code
+  * uBit.compass.whoAmI();
+  * @endcode
+  */
 int MicroBitCompass::whoAmI()
 {
     uint8_t data;
@@ -170,6 +204,7 @@ int MicroBitCompass::whoAmI()
 
 /**
   * Perform a calibration of the compass.
+  * **THIS MUST BE CALLED TO GAIN RELIABLE VALUES FROM THE COMPASS**
   */
 void MicroBitCompass::calibrateStart()
 {
@@ -182,7 +217,8 @@ void MicroBitCompass::calibrateStart()
 
 /**
   * Complete the calibration of the compass.
-  */    
+  * **THIS MUST BE CALLED TO GAIN RELIABLE VALUES FROM THE COMPASS**
+  */ 
 void MicroBitCompass::calibrateEnd()
 {
     calibrating = 0;

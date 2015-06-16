@@ -37,6 +37,17 @@ void MicroBitAccelerometer::readCommand(uint8_t reg, uint8_t* buffer, int length
     uBit.i2c.read(address, (char *)buffer, length);
 }
 
+/**
+  * Constructor. 
+  * Create an accelerometer representation with the given ID.
+  * @param id the ID of the new object.
+  * @param address the default base address of the accelerometer. 
+  *
+  * Example:
+  * @code 
+  * accelerometer(MICROBIT_ID_ACCELEROMETER, MMA8653_DEFAULT_ADDR)
+  * @endcode
+  */
 MicroBitAccelerometer::MicroBitAccelerometer(int id, int address) : sample(), int1(MICROBIT_PIN_ACCEL_DATA_READY)
 {
     // Store our identifiers.
@@ -63,6 +74,15 @@ MicroBitAccelerometer::MicroBitAccelerometer(int id, int address) : sample(), in
     uBit.flags |= MICROBIT_FLAG_ACCELEROMETER_RUNNING;
 }
 
+/**
+  * Attempts to determine the 8 bit ID from the accelerometer. 
+  * @return the 8 bit ID returned by the accelerometer
+  *
+  * Example:
+  * @code 
+  * uBit.accelerometer.whoAmI();
+  * @endcode
+  */
 int MicroBitAccelerometer::whoAmI()
 {
     uint8_t data;
@@ -73,6 +93,7 @@ int MicroBitAccelerometer::whoAmI()
 
 /**
   * Reads the acceleration data from the accelerometer, and stores it in our buffer.
+  * This is called by the tick() member function, if the interrupt is set!
   */
 void MicroBitAccelerometer::update()
 {
@@ -109,7 +130,13 @@ void MicroBitAccelerometer::update()
 
 /**
   * Reads the X axis value of the latest update from the accelerometer.
+  * Currently limited to +/- 2g
   * @return The force measured in the X axis, in milli-g.
+  *
+  * Example:
+  * @code 
+  * uBit.accelerometer.getX();
+  * @endcode
   */
 int MicroBitAccelerometer::getX()
 {
@@ -118,8 +145,14 @@ int MicroBitAccelerometer::getX()
 
 /**
   * Reads the Y axis value of the latest update from the accelerometer.
+  * Currently limited to +/- 2g
   * @return The force measured in the Y axis, in milli-g.
-  */    
+  *
+  * Example:
+  * @code 
+  * uBit.accelerometer.getY();
+  * @endcode
+  */  
 int MicroBitAccelerometer::getY()
 {
     return sample.y;
@@ -127,8 +160,14 @@ int MicroBitAccelerometer::getY()
 
 /**
   * Reads the Z axis value of the latest update from the accelerometer.
+  * Currently limited to +/- 2g
   * @return The force measured in the Z axis, in milli-g.
-  */    
+  *
+  * Example:
+  * @code 
+  * uBit.accelerometer.getZ();
+  * @endcode
+  */       
 int MicroBitAccelerometer::getZ()
 {
     return sample.z;
@@ -137,8 +176,8 @@ int MicroBitAccelerometer::getZ()
 
 /**
   * periodic callback from MicroBit clock.
-  * Check if any data is ready for reading...
-  */    
+  * Check if any data is ready for reading by checking the interrupt flag on the accelerometer
+  */  
 void MicroBitAccelerometer::tick()
 {
     // Poll interrupt line from accelerometer.

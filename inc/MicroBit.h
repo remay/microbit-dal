@@ -20,11 +20,17 @@
 //error number enumeration
 #include "ErrorNo.h"
 
-void panic(int statusCode); //custom function for panic for malloc & new due to scoping issue.
+/**
+  * Displays "=(" and an accompanying status code 
+  * TODO: utilise statusCode
+  * @param statusCode the appropriate status code - 0 means no code will be displayed.
+  */
+void panic(int statusCode);
 
 #include "MicroBitMalloc.h"
 #include "MicroBitCompat.h"
 #include "MicroBitFiber.h"
+#include "ManagedType.h"
 #include "ManagedString.h"
 #include "MicroBitImage.h"
 #include "MicroBitEvent.h"
@@ -53,30 +59,31 @@ void panic(int statusCode); //custom function for panic for malloc & new due to 
 // Enumeration of core components.
 #define MICROBIT_ID_BUTTON_A            1
 #define MICROBIT_ID_BUTTON_B            2
-#define MICROBIT_ID_ACCELEROMETER       3
-#define MICROBIT_ID_COMPASS             4
-#define MICROBIT_ID_DISPLAY             5
+#define MICROBIT_ID_BUTTON_RESET        3
+#define MICROBIT_ID_ACCELEROMETER       4
+#define MICROBIT_ID_COMPASS             5
+#define MICROBIT_ID_DISPLAY             6
 
 //EDGE connector events
-#define MICROBIT_ID_IO_P0               6           //P0 is the left most pad (ANALOG/DIGITAL) 
-#define MICROBIT_ID_IO_P1               7           //P1 is the middle pad (ANALOG/DIGITAL) 
-#define MICROBIT_ID_IO_P2               8           //P2 is the right most pad (ANALOG/DIGITAL) 
-#define MICROBIT_ID_IO_P3               9           //COL1 (ANALOG/DIGITAL) 
-#define MICROBIT_ID_IO_P4               10          //BTN_A        
-#define MICROBIT_ID_IO_P5               11          //COL2 (ANALOG/DIGITAL) 
-#define MICROBIT_ID_IO_P6               12          //ROW2
-#define MICROBIT_ID_IO_P7               13          //ROW1       
-#define MICROBIT_ID_IO_P8               14          //PIN 18
-#define MICROBIT_ID_IO_P9               15          //ROW3                  
-#define MICROBIT_ID_IO_P10              16          //COL3 (ANALOG/DIGITAL) 
-#define MICROBIT_ID_IO_P11              17          //BTN_B
-#define MICROBIT_ID_IO_P12              18          //PIN 20
-#define MICROBIT_ID_IO_P13              19          //SCK
-#define MICROBIT_ID_IO_P14              20          //MISO
-#define MICROBIT_ID_IO_P15              21          //MOSI
-#define MICROBIT_ID_IO_P16              22          //PIN 16
-#define MICROBIT_ID_IO_P19              23          //SCL
-#define MICROBIT_ID_IO_P20              24          //SDA
+#define MICROBIT_ID_IO_P0               7           //P0 is the left most pad (ANALOG/DIGITAL) 
+#define MICROBIT_ID_IO_P1               8           //P1 is the middle pad (ANALOG/DIGITAL) 
+#define MICROBIT_ID_IO_P2               9           //P2 is the right most pad (ANALOG/DIGITAL) 
+#define MICROBIT_ID_IO_P3               10           //COL1 (ANALOG/DIGITAL) 
+#define MICROBIT_ID_IO_P4               11          //BTN_A        
+#define MICROBIT_ID_IO_P5               12          //COL2 (ANALOG/DIGITAL) 
+#define MICROBIT_ID_IO_P6               13          //ROW2
+#define MICROBIT_ID_IO_P7               14          //ROW1       
+#define MICROBIT_ID_IO_P8               15          //PIN 18
+#define MICROBIT_ID_IO_P9               16          //ROW3                  
+#define MICROBIT_ID_IO_P10              17          //COL3 (ANALOG/DIGITAL) 
+#define MICROBIT_ID_IO_P11              18          //BTN_B
+#define MICROBIT_ID_IO_P12              19          //PIN 20
+#define MICROBIT_ID_IO_P13              20          //SCK
+#define MICROBIT_ID_IO_P14              21          //MISO
+#define MICROBIT_ID_IO_P15              22          //MOSI
+#define MICROBIT_ID_IO_P16              23          //PIN 16
+#define MICROBIT_ID_IO_P19              24          //SCL
+#define MICROBIT_ID_IO_P20              25          //SDA
 
 
 // mBed pin assignments of core components.
@@ -107,10 +114,11 @@ class MicroBit
     MicroBitDisplay         display;
     MicroBitButton          buttonA;
     MicroBitButton          buttonB;
+    MicroBitButton          resetButton;
     MicroBitAccelerometer   accelerometer;
     MicroBitCompass         compass;
 
-    //An array of available IO pins on the device
+    //An object of available IO pins on the device
     MicroBitIO              io;
     
     // Bluetooth related member variables.
@@ -121,8 +129,21 @@ class MicroBit
     
     /**
       * Constructor. 
-      * Create a representation of a MicroBit device.
+      * Create a representation of a MicroBit device as a global singleton.
       * @param messageBus callback function to receive MicroBitMessageBus events.
+      *
+      * Exposed objects:
+      * @code 
+      * uBit.systemTicker; //the Ticker callback that performs routines like updating the display.
+      * uBit.MessageBus; //The message bus where events are fired.
+      * uBit.display; //The display object for the LED matrix.
+      * uBit.buttonA; //The buttonA object for button a.
+      * uBit.buttonB; //The buttonB object for button b.
+      * uBit.resetButton; //The resetButton used for soft resets.
+      * uBit.accelerometer; //The object that represents the inbuilt accelerometer
+      * uBit.compass; //The object that represents the inbuilt compass(magnetometer)
+      * uBit.io.P*; //Where P* is P0 to P16, P19 & P20 on the edge connector
+      * @endcode
       */
     MicroBit();  
 
@@ -131,6 +152,11 @@ class MicroBit
       * After *MUCH* pain, it's noted that the BLE stack can't be brought up in a 
       * static context, so we bring it up here rather than in the constructor.
       * n.b. This method *must* be called in main() or later, not before.
+      *
+      * Example:
+      * @code 
+      * uBit.init();
+      * @endcode
       */
     void init();
 
@@ -140,36 +166,51 @@ class MicroBit
       * a power efficent, concurrent sleep operation.
       * If the scheduler is disabled or we're running in an interrupt context, this
       * will revert to a busy wait. 
+      * 
+      * @param milliseconds the amount of time, in ms, to wait for. This number cannot be negative.
+      *
+      * Example:
+      * @code 
+      * uBit.sleep(20); //sleep for 20ms
+      * @endcode
       */
     void sleep(int milliseconds);
 
     /**
-      * Generate a randoim number in the given range.
+      * Generate a random number in the given range.
       * We use the NRF51822 in built random number generator here
       * TODO: Determine if we want to, given its relatively high power consumption!
       *
-      * @return A random, natural number between 0 and the the given maximum value.
+      * @param max the upper range to generate a number for. This number cannot be negative
+      * @return A random, natural number between 0 and the the given maximum value. Or MICROBIT_INVALID_VALUE (defined in ErrorNo.h) if max is <= 0.
+      *
+      * Example:
+      * @code 
+      * uBit.random(200); //a number between 0 and 200 inclusive
+      * @endcode
       */
     int random(int max);
 
     /**
       * Period callback. Used by MicroBitDisplay, FiberScheduler and I2C sensors to
       * provide a power efficient sense of time.
-      *
       */
     void systemTick();
 
     /**
       * Determine the time since this MicroBit was last reset.
       *
-      * @return The time since the last reset, in milliseconds.
+      * @return The time since the last reset, in milliseconds. This will result in overflow after 1.6 months.
+      * TODO: handle overflow case.
       */
     unsigned long systemTime();
     
     /**
       * Triggers a microbit panic where an infinite loop will occur swapping between the panicFace and statusCode if provided.
+      * This will be refactored to call the global panic function.
       * TODO: refactor this so that it doesn't rely on instantiating new variables as memory will not be available.
       * @param statusCode the status code of the associated error - TBD
+      *
       */
     void panic(int statusCode = 0);
 
@@ -177,7 +218,7 @@ class MicroBit
 
 // Definition of the global instance of the MicroBit class.
 // Using this as a variation on the singleton pattern, just to make
-// code integration a littl bit easier for 3rd parties.
+// code integration a little bit easier for 3rd parties.
 extern MicroBit uBit;
 
 // Entry point for application programs. Called after the super-main function

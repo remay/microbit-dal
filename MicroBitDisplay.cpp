@@ -7,6 +7,7 @@
 #include "MicroBitMatrixMaps.h"
 #include <new>
 #include "nrf_gpio.h"
+#include "mbed.h"
 /**
   * Constructor.
   * Create a Point representation of an LED on a matrix
@@ -194,7 +195,7 @@ void MicroBitDisplay::updateScrollImage()
     if ((image.paste(scrollingImage, scrollingImagePosition, 0, 0) == 0) && scrollingImageRendered)
     {
         animationMode = ANIMATION_MODE_NONE;  
-        this->sendEvent(MICROBIT_DISPLAY_EVT_SCROLLIMAGE_COMPLETE);        
+        this->sendEvent(MICROBIT_DISPLAY_EVT_SCROLLIMAGE_COMPLETE);     
         return;
     }
 
@@ -456,7 +457,7 @@ void MicroBitDisplay::clear()
 
  /**
   * Displays "=(" and an accompanying status code 
-  * TODO: refactor this so that it doesn't rely on instantiating new variables as memory will not be available.
+  * TODO: use statusCode
   * @param statusCode the appropriate status code - 0 means no code will be displayed. No values less than zero are allowed
   */
 void MicroBitDisplay::error(int statusCode)
@@ -464,47 +465,53 @@ void MicroBitDisplay::error(int statusCode)
     if(statusCode < 0)
         statusCode = 0;
 
-    /*disable();
+    disable();
     
-    nrf_gpio_port_clear(NRF_GPIO_PORT_SELECT_PORT1,0xFF);
-    nrf_gpio_port_clear(NRF_GPIO_PORT_SELECT_PORT0,0xFF);
+    uint8_t strobeRow = 0;
+    uint8_t strobeBitMsk = 0x20;
     
-    nrf_gpio_port_dir_set(NRF_GPIO_PORT_SELECT_PORT0,NRF_GPIO_PORT_DIR_OUTPUT);
-    nrf_gpio_port_dir_set(NRF_GPIO_PORT_SELECT_PORT1,NRF_GPIO_PORT_DIR_OUTPUT);
-    */
     //enter infinite loop.
     while(1)
     {
         
-        //display unhappy face.
-        image.paste(panicFace,0,0,0);
-        
-        uBit.sleep(1000);
+        int coldata = 0;
 
-        //if statuscode is non-zero...
-        if(statusCode)
-            scrollString(statusCode);   
-        /*
-        Planned manual switch off pins so that an OOM bug doesn't disable the panic function.
+        int i = 0;
+
+        //if we have hit the row limit - reset both the bit mask and the row variable
+        if(strobeRow == 3)
+        {
+            strobeRow = 0; 
+            strobeBitMsk = 0x20;
+        }    
+
+        // Calculate the bitpattern to write.
+        for (i = 0; i<MICROBIT_DISPLAY_COLUMN_COUNT; i++)
+        {
+            
+            int bitMsk = 0x10 >> matrixMap[i][strobeRow].x; //chars are right aligned but read left to right
+            int y = matrixMap[i][strobeRow].y;
+                 
+            if(panicFace[y] & bitMsk)
+                coldata |= (1 << i);
+        }
         
-        ** IGNORE **
+        nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT0, 0xF0); //clear port 0 4-7
+        nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT1, strobeBitMsk | 0x1F); // clear port 1 8-12
         
-        nrf_gpio_pin_set();
-        nrf_gpio_pin_set(P0_15);
-        nrf_gpio_pin_set(P0_14);
-        nrf_gpio_pin_set(P0_13);
-        nrf_gpio_port_set(NRF_GPIO_PORT_SELECT_PORT1, 0x40); // port 1 8-15
-        nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT0, 0x00); // port 0 0-7
-        nrf_gpio_word_byte_write(&NRF_GPIO->OUTSET,1, 0x80); // port 1 8-15
-        nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT1, 0x20); // port 0 0-7
+        //write the new bit pattern
+        nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT0, ~coldata<<4 & 0xF0); //set port 0 4-7
+        nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT1, strobeBitMsk | (~coldata>>4 & 0x1F)); //set port 1 8-12
+    
+        //set i to an obscene number.
+        i = 100000;
         
-        nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT1, 0x40); // port 0 0-7
-        wait(1000);
-        nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT1, 0x80); // port 0 0-7
-        wait(1000);
-        nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT1, 0xE0); // port 0 0-7
-        wait(1000);
-        nrf_gpio_pin_set(P0_13);
-        */
+        //burn cycles
+        while(i>0)
+            i--;
+        
+        //update the bit mask and row count
+        strobeBitMsk <<= 1;    
+        strobeRow++;
     }
 }

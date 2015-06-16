@@ -4,9 +4,22 @@
 
 /**
   * Constructor. 
-  * Create a button representation with the given ID.
+  * Create a pin representation with the given ID.
   * @param id the ID of the new LED object.
   * @param name the physical pin on the processor that this butotn is connected to.
+  *
+  * Example:
+  * @code 
+  * buttonA(MICROBIT_ID_BUTTON_A,MICROBIT_PIN_BUTTON_A); //a number between 0 and 200 inclusive
+  * @endcode
+  *
+  * Possible Events:
+  * @code 
+  * MICROBIT_BUTTON_EVT_DOWN
+  * MICROBIT_BUTTON_EVT_UP
+  * MICROBIT_BUTTON_EVT_CLICK
+  * MICROBIT_BUTTON_EVT_LONG_CLICK
+  * @endcode
   */
 MicroBitButton::MicroBitButton(int id, PinName name) : pin(name)
 {
