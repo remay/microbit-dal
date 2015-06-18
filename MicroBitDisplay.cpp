@@ -1,13 +1,14 @@
 /**
-  * Class implementation for the MicroBitDisplay.
+  * Class definition for a MicroBitDisplay.
   *
-  * An MicroBitDisplay represents the LED matrix array on the MicroBit device.
+  * A MicroBitDisplay represents the LED matrix array on the MicroBit device.
   */
 #include "MicroBit.h"
 #include "MicroBitMatrixMaps.h"
 #include <new>
 #include "nrf_gpio.h"
 #include "mbed.h"
+
 /**
   * Constructor.
   * Create a Point representation of an LED on a matrix
@@ -20,24 +21,30 @@ MatrixPoint::MatrixPoint(int x, int y)
 }
 
 /**
-  * Constructor. 
+  * Constructor.
   * Create a representation of a display of a given size.
   * The display is initially blank.
-  * 
+  *
   * @param x the width of the display in pixels.
-  * @param y the height of the display in pixels.     
+  * @param y the height of the display in pixels.
+  * 
+  * Example:
+  * @code 
+  * MicroBitDisplay display(MICROBIT_ID_DISPLAY, 5, 5),
+  * @endcode
   */
 MicroBitDisplay::MicroBitDisplay(int id, int x, int y) : 
     columnPins(MICROBIT_DISPLAY_COLUMN_PINS), 
-    rowDrive(rowPins[0]),
+    font(),
     image(x*2,y)
 {
+    this->rowDrive = DynamicPwm::allocate(rowPins[0],PWM_PERSISTENCE_PERSISTENT);
     this->id = id;
     this->width = x;
     this->height = y;
     this->strobeRow = 0;
     this->strobeCount = 0;
-    this->rowDrive.period_ms(1);
+    this->rowDrive->period_ms(1);
     
     this->rotation = MICROBIT_DISPLAY_ROTATION_0;
     this->setBrightness(MICROBIT_DEFAULT_BRIGHTNESS);
@@ -94,7 +101,7 @@ void MicroBitDisplay::strobeUpdate()
     // Write to the matrix display.
     columnPins.write(0xffff);    
 
-    rowDrive.redirect(rowPins[strobeRow]);
+    rowDrive->redirect(rowPins[strobeRow]);
 
     columnPins.write(~coldata);
 
@@ -103,7 +110,7 @@ void MicroBitDisplay::strobeUpdate()
 }
 
 /**
-  * Periodic callback, that we use to performs any animations we have running.
+  * Periodic callback, that we use to perform any animations we have running.
   */
 void
 MicroBitDisplay::animationUpdate()
@@ -129,6 +136,10 @@ MicroBitDisplay::animationUpdate()
     }
 }
 
+/**
+  * Broadcasts an event onto the shared MessageBus
+  * @param eventCode The ID of the event that has occurred.
+  */
 void MicroBitDisplay::sendEvent(int eventCode)
 {
     MicroBitEvent evt;
@@ -150,7 +161,7 @@ void MicroBitDisplay::updateScrollText()
     image.shiftLeft(1);
     scrollingPosition++;
     
-    if (scrollingPosition == width)
+    if (scrollingPosition == width + SPACING)
     {        
         scrollingPosition = 0;
         
@@ -204,7 +215,10 @@ void MicroBitDisplay::updateScrollImage()
 }
 
 
-
+/**
+  * Resets the current given animation.
+  * @param delay the delay after which the animation is reset.
+  */
 void MicroBitDisplay::resetAnimation(int delay)
 {
     //sanitise this value
@@ -225,6 +239,11 @@ void MicroBitDisplay::resetAnimation(int delay)
   * Prints the given character to the display.
   *
   * @param c The character to display.
+  * 
+  * Example:
+  * @code 
+  * uBit.display.print('p');
+  * @endcode
   */
 void MicroBitDisplay::print(char c)
 {
@@ -238,7 +257,12 @@ void MicroBitDisplay::print(char c)
   *
   * @param s The string to display.
   * @param delay The time to delay between characters, in timer ticks.
-*/
+  * 
+  * Example:
+  * @code 
+  * uBit.display.printStringAsync("abc123",400);
+  * @endcode
+  */
 void MicroBitDisplay::printStringAsync(ManagedString s, int delay)
 {
     //sanitise this value
@@ -260,6 +284,11 @@ void MicroBitDisplay::printStringAsync(ManagedString s, int delay)
   *
   * @param s The string to display.
   * @param delay The time to delay between characters, in timer ticks.
+  * 
+  * Example:
+  * @code 
+  * uBit.display.printString("abc123",400);
+  * @endcode
   */
 void MicroBitDisplay::printString(ManagedString s, int delay)
 {
@@ -284,6 +313,11 @@ void MicroBitDisplay::printString(ManagedString s, int delay)
   *
   * @param s The string to display.
   * @param delay The time to delay between characters, in timer ticks.
+  * 
+  * Example:
+  * @code 
+  * uBit.display.scrollStringAsync("abc123",100);
+  * @endcode
   */
 void MicroBitDisplay::scrollStringAsync(ManagedString s, int delay)
 {
@@ -307,6 +341,11 @@ void MicroBitDisplay::scrollStringAsync(ManagedString s, int delay)
   *
   * @param s The string to display.
   * @param delay The time to delay between characters, in timer ticks.
+  * 
+  * Example:
+  * @code 
+  * uBit.display.scrollString("abc123",100);
+  * @endcode
   */
 void MicroBitDisplay::scrollString(ManagedString s, int delay)
 {
@@ -326,11 +365,16 @@ void MicroBitDisplay::scrollString(ManagedString s, int delay)
 
 /**
   * Scrolls the given image across the display, from right to left.
-  * Returns immediately, and executes the animation asynchronously.      
-  *
+  * Returns immediately, and executes the animation asynchronously.
   * @param image The image to display.
-  * @param delay The time to delay between each scroll update, in timer ticks.
-  * @param stride The number of pixels to move in each quantum.
+  * @param delay The time to delay between each scroll update, in timer ticks. Has a default.
+  * @param stride The number of pixels to move in each quantum. Has a default.
+  * 
+  * Example:
+  * @code 
+  * MicrobitImage i("1,1,1,1,1\n1,1,1,1,1\n"); 
+  * uBit.display.scrollImageAsync(i,100,1);
+  * @endcode
   */
 void MicroBitDisplay::scrollImageAsync(MicroBitImage image, int delay, int stride)
 {
@@ -356,8 +400,14 @@ void MicroBitDisplay::scrollImageAsync(MicroBitImage image, int delay, int strid
   * Blocks the calling thread until all the text has been displayed.
   *
   * @param image The image to display.
-  * @param delay The time to delay between each scroll update, in timer ticks.
-  * @param stride The number of pixels to move in each quantum.
+  * @param delay The time to delay between each scroll update, in timer ticks. Has a default.
+  * @param stride The number of pixels to move in each quantum. Has a default. 
+  * 
+  * Example:
+  * @code 
+  * MicrobitImage i("1,1,1,1,1\n1,1,1,1,1\n"); 
+  * uBit.display.scrollImage(i,100,1);
+  * @endcode
   */
 void MicroBitDisplay::scrollImage(MicroBitImage image, int delay, int stride)
 {
@@ -375,10 +425,15 @@ void MicroBitDisplay::scrollImage(MicroBitImage image, int delay, int stride)
 }
 
 
- /**
+/**
   * Sets the display brightness to the specified level.
   * @param b The brightness to set the brightness to, in the range 0..255.
-  */    
+  * 
+  * Example:
+  * @code 
+  * uBit.display.setBrightness(255); //max brightness
+  * @endcode
+  */  
 void MicroBitDisplay::setBrightness(int b)
 {
     //sanitise the brightness level
@@ -388,22 +443,32 @@ void MicroBitDisplay::setBrightness(int b)
     float level = (float)b / float(MICROBIT_DISPLAY_MAX_BRIGHTNESS);
     
     this->brightness = b;
-    this->rowDrive.write(level);
+    this->rowDrive->write(level);
 }
 
- /**
-  * Tests the brightness of this display.
+/**
+  * Fetches the current brightness of this display.
   * @return the brightness of this display, in the range 0..255.
-  */    
+  * 
+  * Example:
+  * @code 
+  * uBit.display.getBrightness(); //the current brightness
+  * @endcode
+  */  
 int MicroBitDisplay::getBrightness()
 {
     return this->brightness;
 }
 
- /**
-  * Rotates the display to the given position. 
+/**
+  * Rotates the display to the given position.
   * Axis aligned values only.
-  */    
+  *
+  * Example:
+  * @code 
+  * uBit.display.rotateTo(MICROBIT_DISPLAY_ROTATION_180); //rotates 180 degrees from original orientation
+  * @endcode
+  */   
 void MicroBitDisplay::rotateTo(int position)
 {
     //perform a switch on position to restrict range to distinct values
@@ -423,49 +488,72 @@ void MicroBitDisplay::rotateTo(int position)
     }
 }
 
- /**
-  * Enables the display, should only be called if the display is disabled. asd
+/**
+  * Enables the display, should only be called if the display is disabled.
+  *
+  * Example:
+  * @code 
+  * uBit.display.enable(); //reenables the display mechanics
+  * @endcode
   */
 void MicroBitDisplay::enable()
 {
     new(&columnPins) BusOut(MICROBIT_DISPLAY_COLUMN_PINS);  //bring columnPins back up
     columnPins.write(0xFFFF);                               //write 0xFFFF to reset all column pins 
-    new(&rowDrive) SmartPwm(rowPins[0]);                    //bring rowDrive back up
-    rowDrive.period_ms(1);                                  
+    rowDrive = DynamicPwm::allocate(rowPins[0],PWM_PERSISTENCE_PERSISTENT); //bring rowDrive back up
+    rowDrive->period_ms(1);                                  
     setBrightness(brightness);
     uBit.flags |= MICROBIT_FLAG_DISPLAY_RUNNING;            //set the display running flag
 }
     
- /**
+/**
   * Disables the display, should only be called if the display is enabled.
+  * Display must be disabled to avoid MUXing of edge connector pins.
+  *
+  * Example:
+  * @code 
+  * uBit.display.disable(); //disables the display
+  * @endcode
   */
 void MicroBitDisplay::disable()
 {
     uBit.flags &= ~MICROBIT_FLAG_DISPLAY_RUNNING;           //unset the display running flag
     columnPins.~BusOut();
-    rowDrive.~SmartPwm();
+    rowDrive->free();
     
 }
 
- /**
+/**
   * Clears the current image on the display.
+  * Simplifies the process, you can also use uBit.display.image.clear
+  *
+  * Example:
+  * @code 
+  * uBit.display.clear(); //clears the display
+  * @endcode
   */ 
 void MicroBitDisplay::clear()
 {
     image.clear();  
 }
 
- /**
-  * Displays "=(" and an accompanying status code 
-  * TODO: use statusCode
-  * @param statusCode the appropriate status code - 0 means no code will be displayed. No values less than zero are allowed
+/**
+  * Displays "=(" and an accompanying status code infinitely.
+  * @param statusCode the appropriate status code - 0 means no code will be displayed.
+  *
+  * Example:
+  * @code 
+  * uBit.display.error(20);
+  * @endcode
   */
 void MicroBitDisplay::error(int statusCode)
 {   
+    __disable_irq(); //stop ALL interrupts
+
     if(statusCode < 0)
         statusCode = 0;
 
-    disable();
+    disable(); //relinquish PWMOut's control
     
     uint8_t strobeRow = 0;
     uint8_t strobeBitMsk = 0x20;
@@ -514,4 +602,21 @@ void MicroBitDisplay::error(int statusCode)
         strobeBitMsk <<= 1;    
         strobeRow++;
     }
+}
+
+/**
+  * Updates the font property of this object with the new font.
+  * @param font the new font that will be used to render characters..
+  */
+void MicroBitDisplay::setFont(MicroBitFont font)
+{
+    this->font = font;
+}
+
+/**
+  * Retreives the font object used for rendering characters on the display.
+  */
+MicroBitFont MicroBitDisplay::getFont()
+{
+    return this->font;
 }

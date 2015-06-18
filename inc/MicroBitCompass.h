@@ -1,10 +1,3 @@
-/**
-  * Class definition for MicroBit Compass.
-  *
-  * Represents an implementation of the Freescale MAG3110 I2C Magnetmometer.
-  * Also includes basic caching, calibration and on demand activation.
-  */
-  
 #ifndef MICROBIT_COMPASS_H
 #define MICROBIT_COMPASS_H
 
@@ -55,6 +48,12 @@ struct CompassSample
     int         z;
 };
 
+/**
+  * Class definition for MicroBit Compass.
+  *
+  * Represents an implementation of the Freescale MAG3110 I2C Magnetmometer.
+  * Also includes basic caching, calibration and on demand activation.
+  */
 class MicroBitCompass
 {
     /**

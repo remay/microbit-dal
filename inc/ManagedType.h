@@ -1,11 +1,13 @@
-/**
-* Class definition for a Generic Managed Type.
-*
-* Represents a ref counted type passed through by TD.
-*/
-
 #ifndef MICROBIT_MANAGED_TYPE
 #define MICROBIT_MANAGED_TYPE
+
+/**
+  * Class definition for a Generic Managed Type.
+  *
+  * Represents a reference counted object.
+  *
+  * @info When the destructor is called delete is called on the object - implicitly calling the given objects destructor.
+  */
 template <class T>
 class ManagedType
 {
@@ -18,32 +20,63 @@ public:
     T *object;
 
     /**
-    * Constructor for the managed type, given a class space.
+    * Constructor for the managed type, given a class space T.
+    * @param object the object that you would like to be ref counted - of class T
+    *
+    * Example:
+    * @code 
+    * T object = new T();
+    * ManagedType<T> mt(t);
+    * @endcode
     */
     ManagedType(T* object);
     
-    /**
-    * Default constructor for the managed type, given a class space.
+  /**
+    * Default constructor for the managed type, given a class space T.
     */
     ManagedType();
 
-    /**
-    * Copy constructor for the managed type, given a class space.
+  /**
+    * Copy constructor for the managed type, given a class space T.
+    * @param t another managed type instance of class type T.
+    *
+    * Example:
+    * @code 
+    * T* object = new T();
+    * ManagedType<T> mt(t);
+    * ManagedType<T> mt1(mt);
+    * @endcode
     */
     ManagedType(const ManagedType<T> &t);
 
-    /**
-    * Destructor for the managed type, given a class space.
+  /**
+    * Destructor for the managed type, given a class space T.
     */
     ~ManagedType();
 
-    /**
+  /**
     * Copy-assign member function for the managed type, given a class space.
+    *
+    * Example:
+    * @code 
+    * T* object = new T();
+    * ManagedType<T> mt(t);
+    * ManagedType<T> mt1 = mt;
+    * @endcode
     */
     ManagedType<T>& operator = (const ManagedType<T>&i);
     
-    /**
+  /**
     * Returns the references to this ManagedType
+    *
+    * Example:
+    * @code 
+    * T* object = new T();
+    * ManagedType<T> mt(t);
+    * ManagedType<T> mt1(mt);
+    *
+    * mt.getReferences // this will be 2!
+    * @endcode
     */
     int getReferences();
 

@@ -1,9 +1,3 @@
-/**
-  * Class definition for MicroBit Button.
-  *
-  * Represents a single button on the device.
-  */
-  
 #ifndef MICROBIT_BUTTON_H
 #define MICROBIT_BUTTON_H
 
@@ -29,7 +23,11 @@
 #define MICROBIT_BUTTON_STATE_HOLD_TRIGGERED    4
 
 
-
+/**
+  * Class definition for MicroBit Button.
+  *
+  * Represents a single, generic button on the device.
+  */
 class MicroBitButton
 {
     /**

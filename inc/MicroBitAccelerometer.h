@@ -1,10 +1,3 @@
-/**
-  * Class definition for MicroBit Accelerometer.
-  *
-  * Represents an implementation of the Freescale MMA8653 3 axis accelerometer
-  * Also includes basic data caching and on demand activation.
-  */
-  
 #ifndef MICROBIT_ACCELEROMETER_H
 #define MICROBIT_ACCELEROMETER_H
 
@@ -46,6 +39,12 @@ struct MMA8653Sample
     int16_t         z;
 };
 
+/**
+  * Class definition for MicroBit Accelerometer.
+  *
+  * Represents an implementation of the Freescale MMA8653 3 axis accelerometer
+  * Also includes basic data caching and on demand activation.
+  */
 class MicroBitAccelerometer
 {
     /**

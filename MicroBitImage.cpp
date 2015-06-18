@@ -7,22 +7,6 @@
 
 #include "MicroBit.h"
 
-#define MICROBIT_FONT_WIDTH 5
-#define MICROBIT_FONT_HEIGHT 5
-#define MICROBIT_FONT_ASCII_START 32
-#define MICROBIT_FONT_ASCII_END 126
-
-
-/*
- * The original MicroBug font, courtesy of Michael Sparks esq.
- * The font is 4x5, so we compress in into a linear nibble array to conserve memory.
- *
- * Format: {0xR1:R2, 0xR3:R4, 0xR5:0....}
- *
- * We could compress further, but the complexity of decode would likely outweigh the gains.
- */
-const unsigned char font[475] = {0x0, 0x0, 0x0, 0x0, 0x0, 0x8, 0x8, 0x8, 0x0, 0x8, 0xa, 0x4a, 0x40, 0x0, 0x0, 0xa, 0x5f, 0xea, 0x5f, 0xea, 0xe, 0xd9, 0x2e, 0xd3, 0x6e, 0x19, 0x32, 0x44, 0x89, 0x33, 0xc, 0x92, 0x4c, 0x92, 0x4d, 0x8, 0x8, 0x0, 0x0, 0x0, 0x4, 0x88, 0x8, 0x8, 0x4, 0x8, 0x4, 0x84, 0x84, 0x88, 0x0, 0xa, 0x44, 0x8a, 0x40, 0x0, 0x4, 0x8e, 0xc4, 0x80, 0x0, 0x0, 0x0, 0x4, 0x88, 0x0, 0x0, 0xe, 0xc0, 0x0, 0x0, 0x0, 0x0, 0x8, 0x0, 0x1, 0x22, 0x44, 0x88, 0x10, 0xc, 0x92, 0x52, 0x52, 0x4c, 0x4, 0x8c, 0x84, 0x84, 0x84, 0x1c, 0x82, 0x4c, 0x90, 0x1e, 0x1e, 0xc2, 0x44, 0x92, 0x4c, 0x6, 0xca, 0x52, 0x5f, 0xe2, 0x1f, 0xf0, 0x1e, 0xc1, 0x3e, 0x2, 0x44, 0x8e, 0xd1, 0x2e, 0x1f, 0xe2, 0x44, 0x88, 0x10, 0xe, 0xd1, 0x2e, 0xd1, 0x2e, 0xe, 0xd1, 0x2e, 0xc4, 0x88, 0x0, 0x8, 0x0, 0x8, 0x0, 0x0, 0x4, 0x80, 0x4, 0x88, 0x2, 0x44, 0x88, 0x4, 0x82, 0x0, 0xe, 0xc0, 0xe, 0xc0, 0x8, 0x4, 0x82, 0x44, 0x88, 0xe, 0xd1, 0x26, 0xc0, 0x4, 0xe, 0xd1, 0x35, 0xb3, 0x6c, 0xc, 0x92, 0x5e, 0xd2, 0x52, 0x1c, 0x92, 0x5c, 0x92, 0x5c, 0xe, 0xd0, 0x10, 0x10, 0xe, 0x1c, 0x92, 0x52, 0x52, 0x5c, 0x1e, 0xd0, 0x1c, 0x90, 0x1e, 0x1e, 0xd0, 0x1c, 0x90, 0x10, 0xe, 0xd0, 0x13, 0x71, 0x2e, 0x12, 0x52, 0x5e, 0xd2, 0x52, 0x1c, 0x88, 0x8, 0x8, 0x1c, 0x1f, 0xe2, 0x42, 0x52, 0x4c, 0x12, 0x54, 0x98, 0x14, 0x92, 0x10, 0x10, 0x10, 0x10, 0x1e, 0x11, 0x3b, 0x75, 0xb1, 0x31, 0x11, 0x39, 0x35, 0xb3, 0x71, 0xc, 0x92, 0x52, 0x52, 0x4c, 0x1c, 0x92, 0x5c, 0x90, 0x10, 0xc, 0x92, 0x52, 0x4c, 0x86, 0x1c, 0x92, 0x5c, 0x92, 0x51, 0xe, 0xd0, 0xc, 0x82, 0x5c, 0x1f, 0xe4, 0x84, 0x84, 0x84, 0x12, 0x52, 0x52, 0x52, 0x4c, 0x11, 0x31, 0x31, 0x2a, 0x44, 0x11, 0x31, 0x35, 0xbb, 0x71, 0x12, 0x52, 0x4c, 0x92, 0x52, 0x11, 0x2a, 0x44, 0x84, 0x84, 0x1e, 0xc4, 0x88, 0x10, 0x1e, 0xe, 0xc8, 0x8, 0x8, 0xe, 0x10, 0x8, 0x4, 0x82, 0x41, 0xe, 0xc2, 0x42, 0x42, 0x4e, 0x4, 0x8a, 0x40, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1f, 0x8, 0x4, 0x80, 0x0, 0x0, 0x0, 0x0, 0xe, 0xd2, 0x4f, 0x10, 0x10, 0x1c, 0x92, 0x5c, 0x0, 0x0, 0xe, 0xd0, 0xe, 0x2, 0x42, 0x4e, 0xd2, 0x4e, 0x0, 0xc, 0x92, 0x5c, 0x8f, 0x6, 0xc8, 0x1c, 0x88, 0x8, 0xe, 0xd2, 0x4e, 0xc2, 0x4c, 0x10, 0x10, 0x1c, 0x92, 0x52, 0x8, 0x0, 0x8, 0x8, 0x8, 0x2, 0x40, 0x2, 0x42, 0x4c, 0x10, 0x14, 0x98, 0x14, 0x92, 0x8, 0x8, 0x8, 0x8, 0x6, 0x0, 0x0, 0x1b, 0x75, 0xb1, 0x0, 0x0, 0x1c, 0x92, 0x52, 0x0, 0x0, 0xc, 0x92, 0x4c, 0x0, 0x1c, 0x92, 0x5c, 0x90, 0x0, 0xe, 0xd2, 0x4e, 0xc2, 0x0, 0x0, 0x6, 0xc8, 0x8, 0x0, 0x6, 0xc8, 0x4, 0x98, 0x8, 0x8, 0xe, 0xc8, 0x6, 0x0, 0x0, 0x12, 0x52, 0x4f, 0x0, 0x0, 0x11, 0x2a, 0x44, 0x0, 0x0, 0x11, 0x35, 0xbb, 0x0, 0x0, 0x12, 0x4c, 0x92, 0x0, 0x11, 0x2a, 0x44, 0x98, 0x0, 0x1e, 0xc4, 0x88, 0x1e, 0x6, 0xc4, 0x8c, 0x84, 0x86, 0x8, 0x8, 0x8, 0x8, 0x8, 0x18, 0x8, 0xc, 0x88, 0x18, 0x0, 0x0, 0xc, 0x83, 0x60};
-
 /*
  * The null image. We actally create a small one byte buffer here, just to keep NULL pointers out of the equation.
  */
@@ -30,8 +14,12 @@ MicroBitImage MicroBitImage::EmptyImage(1,1);
 
 /**
   * Default Constructor. 
-  * Creates a new reference to the empty MicroBitImage.
-  * 
+  * Creates a new reference to the empty MicroBitImage bitmap 
+  *
+  * Example:
+  * @code
+  * MicroBitImage i(); //an empty image
+  * @endcode
   */
 MicroBitImage::MicroBitImage()
 {
@@ -63,12 +51,18 @@ MicroBitImage::MicroBitImage(const int x, const int y)
     this->init(x,y,NULL);
 }
 
- /**
-   * Copy Constructor. 
-   * Add ourselves as a reference to an existing MicroBitImage.
-   * 
-   * @param image The MicroBitImage to reference.
-   */
+/**
+  * Copy Constructor. 
+  * Add ourselves as a reference to an existing MicroBitImage.
+  * 
+  * @param image The MicroBitImage to reference.
+  *
+  * Example:
+  * @code
+  * MicroBitImage i("0,1,0,1,0\n");
+  * MicroBitImage i2(i); //points to i
+  * @endcode
+  */
 MicroBitImage::MicroBitImage(const MicroBitImage &image)
 {
     bitmap = image.bitmap;
@@ -84,6 +78,11 @@ MicroBitImage::MicroBitImage(const MicroBitImage &image)
   * Create a blank bitmap representation of a given size.
   * 
   * @param s A text based representation of the image given whitespace delimited numeric values.
+  *
+  * Example:
+  * @code
+  * MicroBitImage i("0,1,0,1,0\n1,0,1,0,1\n0,1,0,1,0\n1,0,1,0,1\n0,1,0,1,0\n"); // 5x5 image
+  * @endcode
   */
 MicroBitImage::MicroBitImage(const char *s)
 {
@@ -175,18 +174,27 @@ MicroBitImage::MicroBitImage(const char *s)
 
 /**
   * Constructor. 
-  * Create a new bitmap representation of a given size.
+  * Create a bitmap representation of a given size, based on a given buffer.
   * 
   * @param x the width of the image.
   * @param y the height of the image.
-  * @param the bitmap buffer to copy. 
-  *
+  * @param bitmap a 2D array representing the image.
+  * 
+  * Example:
+  * @code
+  * const uint8_t bitmap0[] = { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, }; // a cute heart
+  * MicroBitImage i(10,5,bitmap0); 
+  * @endcode     
   */
 MicroBitImage::MicroBitImage(const int x, const int y, const uint8_t *bitmap)
 {
     this->init(x,y,bitmap);
 }
 
+/**
+  * Destructor. 
+  * Removes buffer resources held by the instance.
+  */
 MicroBitImage::~MicroBitImage()
 {
     if(--(*ref) == 0)
@@ -196,6 +204,9 @@ MicroBitImage::~MicroBitImage()
     }
 }
 
+/**
+  * Internal constructor which defaults to the EmptyImage instance variable
+  */
 void MicroBitImage::init_empty()
 {   
     bitmap = MicroBitImage::EmptyImage.bitmap;
@@ -206,7 +217,13 @@ void MicroBitImage::init_empty()
     (*ref)++;
 }
 
-
+/**
+  * Internal constructor which provides sanity checking and initialises class properties.
+  *
+  * @param x the width of the image
+  * @param y the height of the image
+  * @param bitmap an array of integers that make up an image.
+  */
 void MicroBitImage::init(const int x, const int y, const uint8_t *bitmap)
 {
     //sanity check size of image - you cannot have a negative sizes
@@ -243,6 +260,14 @@ void MicroBitImage::init(const int x, const int y, const uint8_t *bitmap)
   * and increase its reference count.
   *
   * @param s The MicroBitImage to reference.
+  * 
+  * Example:
+  * @code
+  * const uint8_t bitmap0[] = { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, }; // a cute heart
+  * MicroBitImage i(10,5,bitmap0); 
+  * MicroBitImage i1();
+  * i1 = 1; // i1 now references i 
+  * @endcode
   */
 MicroBitImage& MicroBitImage::operator = (const MicroBitImage& i)
 {
@@ -272,6 +297,15 @@ MicroBitImage& MicroBitImage::operator = (const MicroBitImage& i)
   *
   * @param i The MicroBitImage to test ourselves against.
   * @return true if this MicroBitImage is identical to the one supplied, false otherwise.
+  * 
+  * Example:
+  * @code
+  * MicroBitImage i(); 
+  * MicroBitImage i1();
+  *
+  * if(i == i1) //will be true
+  *     print("true"); 
+  * @endcode
   */
 bool MicroBitImage::operator== (const MicroBitImage& i)
 {
@@ -284,6 +318,12 @@ bool MicroBitImage::operator== (const MicroBitImage& i)
 
 /**
   * Clears all pixels in this image
+  *
+  * Example:
+  * @code
+  * MicroBitImage i("0,1,0,1,0\n1,0,1,0,1\n0,1,0,1,0\n1,0,1,0,1\n0,1,0,1,0\n"); // 5x5 image
+  * i.clear();
+  * @endcode
   */
 void MicroBitImage::clear()
 {
@@ -294,7 +334,13 @@ void MicroBitImage::clear()
   * Sets the pixel at the given co-ordinates to a given value.
   * @param x The co-ordinate of the pixel to change w.r.t. top left origin.
   * @param y The co-ordinate of the pixel to change w.r.t. top left origin.
-  * @param value The new value of the pixel.
+  * @param value The new value of the pixel (the brightness level 0-255)
+  *
+  * Example:
+  * @code
+  * MicroBitImage i("0,1,0,1,0\n1,0,1,0,1\n0,1,0,1,0\n1,0,1,0,1\n0,1,0,1,0\n"); // 5x5 image
+  * i.setPixelValue(0,0,255);
+  * @endcode
   */
 void MicroBitImage::setPixelValue(int x , int y, int value)
 {
@@ -306,8 +352,14 @@ void MicroBitImage::setPixelValue(int x , int y, int value)
 }
 
 /**
-  * Determined the value of a given pixel.
-  * @return The value assigned to the given pixel location
+  * Determines the value of a given pixel.
+  * @return The value assigned to the given pixel location (the brightness level 0-255)
+  *
+  * Example:
+  * @code
+  * MicroBitImage i("0,1,0,1,0\n1,0,1,0,1\n0,1,0,1,0\n1,0,1,0,1\n0,1,0,1,0\n"); // 5x5 image
+  * i.getPixelValue(0,0); //should be 0;
+  * @endcode
   */
 int MicroBitImage::getPixelValue(int x , int y)
 {
@@ -320,14 +372,19 @@ int MicroBitImage::getPixelValue(int x , int y)
 
 /**
   * Replaces the content of this image with that of a given 
-  * bitmap representation of an image.
-  *
-  * Data is copied. Any out of range data is safely ignored.
+  * 2D array representing the image.
+  * Origin is in the top left corner of the image.
   *
   * @param x the width of the image.
   * @param y the height of the image.
-  * @param linear bitmap representing the image.
-  *     
+  * @param bitmap a 2D array representing the image.
+  * 
+  * Example:
+  * @code
+  * const uint8_t bitmap0[] = { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, }; // a cute heart
+  * MicroBitImage i(); 
+  * i.printImage(0,0,bitmap0); 
+  * @endcode
   */
 void MicroBitImage::printImage(int width, int height, const uint8_t *bitmap)
 {   
@@ -364,6 +421,13 @@ void MicroBitImage::printImage(int width, int height, const uint8_t *bitmap)
   * @param y The uppermost Y co-ordinate in this image where the given image should be pasted.
   * @param alpha set to 1 if transparency clear pixels in given image should be treated as transparent. Set to 0 otherwise.
   * @return The number of pixels written.
+  * 
+  * Example:
+  * @code
+  * const uint8_t bitmap0[] = { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, }; // a cute heart
+  * MicroBitImage i(10,5,bitmap0); //if you show this image - you will see a big heart
+  * i.paste(-5,0,i); //displays a small heart :) 
+  * @endcode
   */
 int MicroBitImage::paste(const MicroBitImage &image, int x, int y, int alpha)
 {
@@ -425,20 +489,28 @@ int MicroBitImage::paste(const MicroBitImage &image, int x, int y, int alpha)
     return pxWritten;
 }
 
- /**
+/**
   * Prints a character to the display at the given location
   *
   * @param c The character to display.
   * @param x The x co-ordinate of on the image to place the top left of the character
   * @param y The y co-ordinate of on the image to place the top left of the character
+  * 
+  * Example:
+  * @code
+  * MicroBitImage i(5,5); 
+  * i.print('a',0,0);
+  * @endcode
   */
 void MicroBitImage::print(char c, int x, int y)
 {
     unsigned char v;
     int x1, y1;
     
+    MicroBitFont font = uBit.display.getFont();
+    
     // Sanity check. Silently ignore anything out of bounds.
-    if (x >= width || y >= height || c < MICROBIT_FONT_ASCII_START || c > MICROBIT_FONT_ASCII_END)
+    if (x >= width || y >= height || c < MICROBIT_FONT_ASCII_START || c > font.asciiEnd)
         return;
     
     // Paste.
@@ -446,7 +518,7 @@ void MicroBitImage::print(char c, int x, int y)
     
     for (int row=0; row<MICROBIT_FONT_HEIGHT; row++)
     {
-        v = font[offset];
+        v = (char)*(font.characters + offset);
         
         offset++;
         
@@ -469,6 +541,13 @@ void MicroBitImage::print(char c, int x, int y)
   * Shifts the pixels in this Image a given number of pixels to the Left.
   *
   * @param n The number of pixels to shift.
+  * 
+  * Example:
+  * @code
+  * const uint8_t bitmap0[] = { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, }; // a cute heart
+  * MicroBitImage i(10,5,bitmap0); //if you show this image - you will see a big heart
+  * i.shiftLeft(5); //displays a small heart :) 
+  * @endcode
   */
 void MicroBitImage::shiftLeft(int n)
 {
@@ -497,6 +576,14 @@ void MicroBitImage::shiftLeft(int n)
   * Shifts the pixels in this Image a given number of pixels to the Right.
   *
   * @param n The number of pixels to shift.
+  * 
+  * Example:
+  * @code
+  * const uint8_t bitmap0[] = { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, }; // a cute heart
+  * MicroBitImage i(10,5,bitmap0);
+  * i.shiftLeft(5); //displays a small heart :) 
+  * i.shiftRight(5); //displays a big heart :) 
+  * @endcode
   */
 void MicroBitImage::shiftRight(int n)
 {
@@ -526,6 +613,13 @@ void MicroBitImage::shiftRight(int n)
   * Shifts the pixels in this Image a given number of pixels to Upward.
   *
   * @param n The number of pixels to shift.
+  * 
+  * Example:
+  * @code
+  * const uint8_t bitmap0[] = { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, }; // a cute heart
+  * MicroBitImage i(10,5,bitmap0);
+  * i.shiftUp(1);
+  * @endcode
   */
 void MicroBitImage::shiftUp(int n)
 {
@@ -561,6 +655,13 @@ void MicroBitImage::shiftUp(int n)
   * Shifts the pixels in this Image a given number of pixels to Downward.
   *
   * @param n The number of pixels to shift.
+  * 
+  * Example:
+  * @code
+  * const uint8_t bitmap0[] = { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, }; // a cute heart
+  * MicroBitImage i(10,5,bitmap0);
+  * i.shiftDown(1);
+  * @endcode
   */
 void MicroBitImage::shiftDown(int n)
 {
@@ -590,10 +691,18 @@ void MicroBitImage::shiftDown(int n)
         pOut -= width;
     }        
 }
+
 /**
   * Gets the width of this image.
   *
   * @return The width of this image.
+  * 
+  * Example:
+  * @code
+  * const uint8_t bitmap0[] = { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, }; // a cute heart
+  * MicroBitImage i(10,5,bitmap0);
+  * i.getWidth(); //equals 10...
+  * @endcode
   */
 int MicroBitImage::getWidth()
 {
@@ -604,6 +713,13 @@ int MicroBitImage::getWidth()
   * Gets the height of this image.
   *
   * @return The height of this image.
+  * 
+  * Example:
+  * @code
+  * const uint8_t bitmap0[] = { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, }; // a cute heart
+  * MicroBitImage i(10,5,bitmap0);
+  * i.getHeight(); //equals 5...
+  * @endcode
   */
 int MicroBitImage::getHeight()
 {

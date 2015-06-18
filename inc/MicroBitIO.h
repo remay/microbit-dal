@@ -1,9 +1,3 @@
-/**
-  * Class definition for MicroBit Button.
-  *
-  * Represents a single button on the device.
-  */
-  
 #ifndef MICROBIT_IO_H
 #define MICROBIT_IO_H
 
@@ -16,7 +10,11 @@
 #define IO_STATUS_ANALOG_OUT             0x08        // Pin is Analog I/O (analog otherwise)    
 #define IO_STATUS_EVENTBUS_ENABLED       0x10        // Pin is will generate events on change
 
-
+/**
+  * Class definition for MicroBit IO.
+  *
+  * This is an object that contains the pins on the edge connector as properties.
+  */
 class MicroBitIO
 {   
     public:
@@ -44,7 +42,6 @@ class MicroBitIO
     /**
       * Constructor. 
       * Create a representation of all given I/O pins on the edge connector
-      * @param id the event ID of the new MicroBitPin object.
       */
     MicroBitIO(int MICROBIT_ID_IO_P0, int MICROBIT_ID_IO_P1, int MICROBIT_ID_IO_P2,
                int MICROBIT_ID_IO_P3, int MICROBIT_ID_IO_P4, int MICROBIT_ID_IO_P5,

@@ -1,11 +1,19 @@
 #include "MicroBit.h"
 #include "inc/MicroBitPin.h"
 
+#define MICROBIT_PIN_MAX_OUTPUT 255
+
 /**
   * Constructor. 
-  * Create an Pin representation with the given ID.
-  * @param id the event ID of the new pin object.
-  * @param name the #defined pin name contained in MicroBitPin.h
+  * Create a Button representation with the given ID.
+  * @param id the ID of the new Pin object.
+  * @param name the pin name for this MicroBitPin instance to represent
+  * @param capability the capability of this pin, can it only be digital? can it only be analog? can it be both?
+  * 
+  * Example:
+  * @code 
+  * MicroBitPin P0(MICROBIT_ID_IO_P0, MICROBIT_PIN_P0, PIN_CAPABILITY_BOTH);
+  * @endcode
   */
 MicroBitPin::MicroBitPin(int id, PinName name, PinCapability capability) 
 {   
@@ -29,7 +37,6 @@ void MicroBitPin::disconnect()
 {
     // This is a bit ugly, but rarely used code.
     // It would be much better to use some polymorphism here, but the mBed I/O classes aren't arranged in an inheritance hierarchy.
-    // A shame, given they share some common method signatures... even delete! :-)
     if (status & IO_STATUS_DIGITAL_IN)
         delete ((DigitalIn *)pin);
 
@@ -41,19 +48,25 @@ void MicroBitPin::disconnect()
         delete ((AnalogIn *)pin);
     }
     
-    /*
-     * Removed as AnalogOut iscurrently not implemented
-     *  if (status & IO_STATUS_ANALOG_OUT)
-     *      delete ((AnalogOut *)pin);
-     */
-        
+    if (status & IO_STATUS_ANALOG_OUT)
+    {
+        if(((DynamicPwm *)pin)->getPinName() == name)
+            ((DynamicPwm *)pin)->free(); 
+    }   
+    
     this->pin = NULL;
     this->status = status & IO_STATUS_EVENTBUS_ENABLED; //retain event bus status
 }
 
 /**
-  * Configures this IO pin as a digital output (if necessary) and sets the pin to the given value.
-  * @param value The new value for this digital output.
+  * Configures this IO pin as a digital output (if necessary) and sets the pin to 'value'.
+  * @param value 0 (LO) or 1 (HI)
+  * 
+  * Example:
+  * @code 
+  * MicroBitPin P0(MICROBIT_ID_IO_P0, MICROBIT_PIN_P0, PIN_CAPABILITY_BOTH);
+  * P0.setDigitalValue(1); // P0 is now HI!
+  * @endcode
   */
 void MicroBitPin::setDigitalValue(int value)
 {
@@ -75,6 +88,12 @@ void MicroBitPin::setDigitalValue(int value)
 /**
   * Configures this IO pin as a digital input (if necessary) and tests its current value.
   * @return 1 if this input is high, 0 otherwise.
+  * 
+  * Example:
+  * @code 
+  * MicroBitPin P0(MICROBIT_ID_IO_P0, MICROBIT_PIN_P0, PIN_CAPABILITY_BOTH);
+  * P0.getDigitalValue(); // P0 is either 0 or 1;
+  * @endcode
   */
 int MicroBitPin::getDigitalValue()
 {
@@ -95,22 +114,43 @@ int MicroBitPin::getDigitalValue()
 /**
   * Configures this IO pin as an analogue output (if necessary and possible).
   * Change the DAC value to the given level.
-  *
-  * CURRENTLY NOT IN USE AS THERE IS NO DAC
-  *
-  * @param value the level to set on the output pin as
+  * @param value the level to set on the output pin, in the range 0..255
+  * @note We have a maximum of 3 PWM channels for this device - one is reserved for the display... the other two are reconfigured dynamically when they are required.
   */
 void MicroBitPin::setAnalogValue(int value)
 {
-    /**
-      * Could be doing something clever here with PWM in the future - for now, this is an empty function
-      */
+    //check if this pin has an analogue mode...
+    if(!(PIN_CAPABILITY_ANALOG & capability))
+        return;
+        
+    //sanitise the brightness level
+    if(value < 0 || value > 255)
+        return;
+        
+    float level = (float)value / float(MICROBIT_PIN_MAX_OUTPUT);
+    
+    // Move into an analogue input state if necessary.
+    if (!(status & IO_STATUS_ANALOG_OUT)){
+        disconnect();  
+        pin = (void *)DynamicPwm::allocate(name);
+        status |= IO_STATUS_ANALOG_OUT;
+    }
+    
+    //perform a write!
+    if(((DynamicPwm *)pin)->getPinName() == name)
+        ((DynamicPwm *)pin)->write(level);
 }
 
 
 /**
   * Configures this IO pin as an analogue input (if necessary and possible).
-  * @return the current analogue level on the pin as an int and is in the range 0x0 - 0xFFFF, or MICROBIT_IO_OP_NA if transition not allowed!
+  * @return the current analogue level on the pin, in the range 0-0xFFFF
+  * 
+  * Example:
+  * @code 
+  * MicroBitPin P0(MICROBIT_ID_IO_P0, MICROBIT_PIN_P0, PIN_CAPABILITY_BOTH);
+  * P0.getAnalogValue(); // P0 is a value in the range of 0 - 0xFFFF
+  * @endcode
   */
 int MicroBitPin::getAnalogValue()
 {
@@ -130,20 +170,22 @@ int MicroBitPin::getAnalogValue()
     return ((AnalogIn *)pin)->read_u16();
 }
 
- /**
-  * Enables asynchronous callback events from this button.
+/**
+  * Enables asynchronous callback events from this Pin.
   * When enabled, all state change updates will be propogated 
   * along the MicroBitMessageBus using the device's ID.
-  */    
+  * @note NOT YET IN USE 
+  */     
 void MicroBitPin::enableCallback()
 {
 }
 
- /**
-  * Disables asynchronous callback events from this button.
+/**
+  * Disables asynchronous callback events from this Pin.
   * When disabled no state change updates will be propogated 
   * along the MicroBitMessageBus from this button.
-  */    
+  * @note NOT YET IN USE 
+  */     
 void MicroBitPin::disableCallback()
 {
 }

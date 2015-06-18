@@ -1,9 +1,3 @@
-/**
-  * Class definition for MicroBit Button.
-  *
-  * Represents a single button on the device.
-  */
-  
 #ifndef MICROBIT_PIN_H
 #define MICROBIT_PIN_H
 
@@ -46,6 +40,11 @@ enum PinCapability{
     PIN_CAPABILITY_BOTH = PIN_CAPABILITY_DIGITAL | PIN_CAPABILITY_ANALOG
 };
 
+/**
+  * Class definition for MicroBitPin.
+  *
+  * Represents a I/O on the edge connector.
+  */
 class MicroBitPin
 {
     /**
@@ -66,26 +65,42 @@ class MicroBitPin
     void disconnect();
     
     public:
+    
     /**
       * Constructor. 
       * Create a Button representation with the given ID.
-      * @param id the ID of the new LED object.
+      * @param id the ID of the new Pin object.
+      * @param name the pin name for this MicroBitPin instance to represent
+      * @param capability the capability of this pin, can it only be digital? can it only be analog? can it be both?
+      * 
+      * Example:
+      * @code 
+      * MicroBitPin P0(MICROBIT_ID_IO_P0, MICROBIT_PIN_P0, PIN_CAPABILITY_BOTH);
+      * @endcode
       */
     MicroBitPin(int id, PinName name, PinCapability capability);
     
     /**
-      * Configures this IO pin as a digital output (if necessary) and sets the pin HI.
+      * Configures this IO pin as a digital output (if necessary) and sets the pin to 'value'.
+      * @param value 0 (LO) or 1 (HI)
+      * 
+      * Example:
+      * @code 
+      * MicroBitPin P0(MICROBIT_ID_IO_P0, MICROBIT_PIN_P0, PIN_CAPABILITY_BOTH);
+      * P0.setDigitalValue(1); // P0 is now HI!
+      * @endcode
       */
     void setDigitalValue(int value);
-
-    /**
-      * Configures this IO pin as a digital output (if necessary) and sets the pin LO.
-      */
-    void clearDigital();
     
     /**
       * Configures this IO pin as a digital input (if necessary) and tests its current value.
       * @return 1 if this input is high, 0 otherwise.
+      * 
+      * Example:
+      * @code 
+      * MicroBitPin P0(MICROBIT_ID_IO_P0, MICROBIT_PIN_P0, PIN_CAPABILITY_BOTH);
+      * P0.getDigitalValue(); // P0 is either 0 or 1;
+      * @endcode
       */
     int getDigitalValue();
 
@@ -93,27 +108,36 @@ class MicroBitPin
       * Configures this IO pin as an analogue output (if necessary and possible).
       * Change the DAC value to the given level.
       * @param value the level to set on the output pin, in the range 0..???
+      * @note NOT IN USE, but may exist in the future if we do some clever rejigging! :)
       */
     void setAnalogValue(int value);
 
 
     /**
       * Configures this IO pin as an analogue input (if necessary and possible).
-      * @return the current analogue level on the pin, in the range 0..???
+      * @return the current analogue level on the pin, in the range 0-0xFFFF
+      * 
+      * Example:
+      * @code 
+      * MicroBitPin P0(MICROBIT_ID_IO_P0, MICROBIT_PIN_P0, PIN_CAPABILITY_BOTH);
+      * P0.getAnalogValue(); // P0 is a value in the range of 0 - 0xFFFF
+      * @endcode
       */
     int getAnalogValue();
 
      /**
-      * Enables asynchronous callback events from this button.
+      * Enables asynchronous callback events from this Pin.
       * When enabled, all state change updates will be propogated 
       * along the MicroBitMessageBus using the device's ID.
+      * @note NOT YET IN USE 
       */    
     void enableCallback();
     
      /**
-      * Disables asynchronous callback events from this button.
+      * Disables asynchronous callback events from this Pin.
       * When disabled no state change updates will be propogated 
       * along the MicroBitMessageBus from this button.
+      * @note NOT YET IN USE 
       */    
     void disableCallback();
     

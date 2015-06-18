@@ -5,7 +5,7 @@
 #include <new> 
 
 /**
-  * Overrides malloc globally, and fires the panic function if we run out of memory!
+  \brief Overrides malloc globally, and fires the panic function if we run out of memory!
   */
 inline void* ubit_malloc(size_t size)
 {
@@ -20,8 +20,7 @@ inline void* ubit_malloc(size_t size)
 }
 
 /**
-  * Overrides malloc globally, and fires the panic function if we run out of memory!
-  * could just call ubit_malloc???
+  \brief Overrides malloc globally, and fires the panic function if we run out of memory!
   */
 inline void* operator new(size_t size) throw(std::bad_alloc)
 {   
@@ -35,6 +34,6 @@ inline void* operator new(size_t size) throw(std::bad_alloc)
     return ptr;
 }
 
-#define malloc(X) ubit_malloc( X )
+#define malloc(X) ubit_malloc( X ) //macro! Override malloc! Hehehe
 
 #endif

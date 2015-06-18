@@ -10,7 +10,7 @@ char MICROBIT_BLE_SOFTWARE_VERSION[] = "1.0";
 
 /**
   * Constructor. 
-  * Create a representation of a MicroBit device.
+  * Create a representation of a MicroBit device as a global singleton.
   * @param messageBus callback function to receive MicroBitMessageBus events.
   *
   * Exposed objects:
@@ -29,7 +29,7 @@ char MICROBIT_BLE_SOFTWARE_VERSION[] = "1.0";
 MicroBit::MicroBit() : 
     flags(0x00),
     i2c(MICROBIT_PIN_SDA, MICROBIT_PIN_SCL),
-    MessageBus(), 
+    MessageBus(),
     display(MICROBIT_ID_DISPLAY, 5, 5),
     buttonA(MICROBIT_ID_BUTTON_A,MICROBIT_PIN_BUTTON_A),
     buttonB(MICROBIT_ID_BUTTON_B,MICROBIT_PIN_BUTTON_B),
@@ -97,6 +97,8 @@ void MicroBit::init()
   * a power efficent, concurrent sleep operation.
   * If the scheduler is disabled or we're running in an interrupt context, this
   * will revert to a busy wait. 
+  *
+  * @note Values of 6 and below tend to lose resolution - do you really need to sleep for this short amount of time?
   * 
   * @param milliseconds the amount of time, in ms, to wait for. This number cannot be negative.
   *
@@ -123,11 +125,11 @@ void MicroBit::sleep(int milliseconds)
   * TODO: Determine if we want to, given its relatively high power consumption!
   *
   * @param max the upper range to generate a number for. This number cannot be negative
-  * @return A random, natural number between 0 and the the given maximum value. Or MICROBIT_INVALID_VALUE (defined in ErrorNo.h) if max is <= 0.
+  * @return A random, natural number between 0 and the max-1. Or MICROBIT_INVALID_VALUE (defined in ErrorNo.h) if max is <= 0.
   *
   * Example:
   * @code 
-  * uBit.random(200); //a number between 0 and 200 inclusive
+  * uBit.random(200); //a number between 0 and 199
   * @endcode
   */
 int MicroBit::random(int max)
@@ -155,14 +157,13 @@ int MicroBit::random(int max)
     NRF_RNG->TASKS_STOP = 1;
     
     // Set output according to the random value
-    return (retVal) % ((max + 1) == 0 ? max : max + 1);
+    return (retVal) % max;
 }
 
 
 /**
   * Period callback. Used by MicroBitDisplay, FiberScheduler and I2C sensors to
   * provide a power efficient sense of time.
-  *
   */
 void MicroBit::systemTick()
 {
@@ -206,7 +207,6 @@ unsigned long MicroBit::systemTime()
   */
 void MicroBit::panic(int statusCode)
 {
-    __disable_irq(); //this will disable the system ticker in future - right now it is required to display the error message and unhappy face.
     //show error and enter infinite while
     uBit.display.error(statusCode);
 }

@@ -9,6 +9,9 @@
 /**
   * Constructor. 
   * Create a new Message Bus Listener.
+  * @param id The ID of the component you want to listen to.
+  * @param value The event ID you would like to listen to from that component
+  * @param handler A function pointer to call when the event is detected.
   */
 MicroBitListener::MicroBitListener(int id, int value, void (*handler)(void))
 {
@@ -50,6 +53,16 @@ void MicroBitMessageBus::send(MicroBitEvent &evt)
   * TODO: For now, this is unbuffered. We should consider scheduling events here, and operating
   * a different thread that empties the queue. This would perhaps provide greater opportunities
   * for aggregation.
+  *
+  * THIS IS NOW WRAPPED BY THE MicroBitEvent CLASS FOR CONVENIENCE...
+  *
+  * Example:
+  * @code 
+  * MicroBitEvent evt(id,MICROBIT_BUTTON_EVT_DOWN,ticks,NULL);
+  * evt.fire();
+  * //OR YOU CAN DO THIS...  
+  * MicroBitEvent evt(id,MICROBIT_BUTTON_EVT_DOWN,ticks,NULL,true);
+  * @endcode
   */
 void MicroBitMessageBus::send(MicroBitEvent &evt, MicroBitMessageBusCache *c)
 {
@@ -110,6 +123,15 @@ void MicroBitMessageBus::send(MicroBitEvent &evt, MicroBitMessageBusCache *c)
   * @param hander The function to call when an event is received.
   *
   * TODO: We currently don't support C++ member functions as callbacks, which we should.
+  *
+  * Example:
+  * @code 
+  * void onButtonBClick()
+  * {
+  * 	//do something
+  * }
+  * uBit.MessageBus.listen(MICROBIT_ID_BUTTON_B, MICROBIT_BUTTON_EVT_CLICK, onButtonBClick); // call function when ever a click event is detected.
+  * @endcode
   */
 
 void MicroBitMessageBus::listen(int id, int value, void (*handler)(void))

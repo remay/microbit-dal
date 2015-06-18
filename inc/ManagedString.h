@@ -1,3 +1,8 @@
+#ifndef MANAGED_STRING_H
+#define MANAGED_STRING_H
+
+#include "MicroBitCompat.h"
+
 /**
   * Class definition for a ManagedString.
   *
@@ -10,12 +15,6 @@
   * 2) to reduce memory footprint - we don't need many of the other features in the std library
   * 3) it makes an interestin case study for anyone interested in seeing how it works!
   */
-  
-#ifndef MANAGED_STRING_H
-#define MANAGED_STRING_H
-
-#include "MicroBitCompat.h"
-
 class ManagedString
 {
     // Internally we record the string as a char *, but control access to this to proide immutability

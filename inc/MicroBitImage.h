@@ -1,25 +1,33 @@
+#ifndef MICROBIT_IMAGE_H
+#define MICROBIT_IMAGE_H
+
+#include "mbed.h"
+
 /**
   * Class definition for a MicroBitImage.
   *
   * An MicroBitImage is a simple bitmap representation of an image.
   * n.b. This is a mutable, managed type.
   */
-  
-#ifndef MICROBIT_IMAGE_H
-#define MICROBIT_IMAGE_H
-
-#include "mbed.h"
-
 class MicroBitImage
 {
     int width;                               // Width of the bitmap, in pixels.
     int height;                              // Height of the bitmap, in pixels.
     int *ref;                                // Reference count.
     
+    
     /**
-      * Internal constructor support function. 
+      * Internal constructor which provides sanity checking and initialises class properties.
+      *
+      * @param x the width of the image
+      * @param y the height of the image
+      * @param bitmap an array of integers that make up an image.
       */
     void init(const int x, const int y, const uint8_t *bitmap);
+    
+    /**
+      * Internal constructor which defaults to the Empty Image instance variable
+      */
     void init_empty();
     
     public:
@@ -28,18 +36,28 @@ class MicroBitImage
     
     /**
       * Default Constructor. 
-      * Creates a new reference to the empty MicroBitImage bitmap
-      * 
+      * Creates a new reference to the empty MicroBitImage bitmap 
+      *
+      * Example:
+      * @code
+      * MicroBitImage i(); //an empty image
+      * @endcode
       */
     MicroBitImage();
     
     
-  /**
-    * Copy Constructor. 
-    * Add ourselves as a reference to an existing MicroBitImage.
-    * 
-    * @param image The MicroBitImage to reference.
-    */
+    /**
+      * Copy Constructor. 
+      * Add ourselves as a reference to an existing MicroBitImage.
+      * 
+      * @param image The MicroBitImage to reference.
+      *
+      * Example:
+      * @code
+      * MicroBitImage i("0,1,0,1,0\n");
+      * MicroBitImage i2(i); //points to i
+      * @endcode
+      */
     MicroBitImage(const MicroBitImage &image);
     
     /**
@@ -47,6 +65,11 @@ class MicroBitImage
       * Create a blank bitmap representation of a given size.
       * 
       * @param s A text based representation of the image given whitespace delimited numeric values.
+      *
+      * Example:
+      * @code
+      * MicroBitImage i("0,1,0,1,0\n1,0,1,0,1\n0,1,0,1,0\n1,0,1,0,1\n0,1,0,1,0\n"); // 5x5 image
+      * @endcode
       */
     MicroBitImage(const char *s);
 
@@ -55,7 +78,20 @@ class MicroBitImage
       * Create a blank bitmap representation of a given size.
       * 
       * @param x the width of the image.
-      * @param y the height of the image.     
+      * @param y the height of the image. 
+      *
+      * Bitmap buffer is linear, with 8 bits per pixel, row by row, 
+      * top to bottom with no word alignment. Stride is therefore the image width in pixels.
+      * in where w and h are width and height respectively, the layout is therefore:
+      *
+      * |[0,0]...[w,o][1,0]...[w,1]  ...  [[w,h]
+      *
+      * A copy of the image is made in RAM, as images are mutable.
+      *
+      * Example:
+      * @code
+      * MicroBitImage i(5,5); // a blank 5x5 image 
+      * @endcode    
       */
     MicroBitImage(const int x, const int y);
 
@@ -66,7 +102,12 @@ class MicroBitImage
       * @param x the width of the image.
       * @param y the height of the image.
       * @param bitmap a 2D array representing the image.
-      *     
+      * 
+      * Example:
+      * @code
+      * const uint8_t bitmap0[] = { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, }; // a cute heart
+      * MicroBitImage i(10,5,bitmap0); 
+      * @endcode     
       */
     MicroBitImage(const int x, const int y, const uint8_t *bitmap);
 
@@ -85,6 +126,14 @@ class MicroBitImage
       * and increase its reference count.
       *
       * @param s The MicroBitImage to reference.
+      * 
+      * Example:
+      * @code
+      * const uint8_t bitmap0[] = { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, }; // a cute heart
+      * MicroBitImage i(10,5,bitmap0); 
+      * MicroBitImage i1();
+      * i1 = 1; // i1 now references i 
+      * @endcode
       */
     MicroBitImage& operator = (const MicroBitImage& i);
 
@@ -96,11 +145,26 @@ class MicroBitImage
       *
       * @param i The MicroBitImage to test ourselves against.
       * @return true if this MicroBitImage is identical to the one supplied, false otherwise.
+      * 
+      * Example:
+      * @code
+      * MicroBitImage i(); 
+      * MicroBitImage i1();
+      *
+      * if(i == i1) //will be true
+      *     print("true"); 
+      * @endcode
       */
     bool operator== (const MicroBitImage& i);
     
     /**
       * Clears all pixels in this image
+      *
+      * Example:
+      * @code
+      * MicroBitImage i("0,1,0,1,0\n1,0,1,0,1\n0,1,0,1,0\n1,0,1,0,1\n0,1,0,1,0\n"); // 5x5 image
+      * i.clear();
+      * @endcode
       */
     void clear();
 
@@ -108,13 +172,25 @@ class MicroBitImage
       * Sets the pixel at the given co-ordinates to a given value.
       * @param x The co-ordinate of the pixel to change w.r.t. top left origin.
       * @param y The co-ordinate of the pixel to change w.r.t. top left origin.
-      * @param value The new value of the pixel.
+      * @param value The new value of the pixel (the brightness level 0-255)
+      *
+      * Example:
+      * @code
+      * MicroBitImage i("0,1,0,1,0\n1,0,1,0,1\n0,1,0,1,0\n1,0,1,0,1\n0,1,0,1,0\n"); // 5x5 image
+      * i.setPixelValue(0,0,255);
+      * @endcode
       */
     void setPixelValue(int x , int y, int value);
 
     /**
-      * Determined the value of a given pixel.
-      * @return The value assigned to the givne pixel location
+      * Determines the value of a given pixel.
+      * @return The value assigned to the given pixel location (the brightness level 0-255)
+      *
+      * Example:
+      * @code
+      * MicroBitImage i("0,1,0,1,0\n1,0,1,0,1\n0,1,0,1,0\n1,0,1,0,1\n0,1,0,1,0\n"); // 5x5 image
+      * i.getPixelValue(0,0); //should be 0;
+      * @endcode
       */
     int getPixelValue(int x , int y);
 
@@ -126,7 +202,13 @@ class MicroBitImage
       * @param x the width of the image.
       * @param y the height of the image.
       * @param bitmap a 2D array representing the image.
-      *     
+      * 
+      * Example:
+      * @code
+      * const uint8_t bitmap0[] = { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, }; // a cute heart
+      * MicroBitImage i(); 
+      * i.printImage(0,0,bitmap0); 
+      * @endcode
       */
     void printImage(int x, int y, const uint8_t *bitmap);
     
@@ -139,6 +221,13 @@ class MicroBitImage
       * @param y The uppermost Y co-ordinate in this image where the given image should be pasted.
       * @param alpha set to 1 if transparency clear pixels in given image should be treated as transparent. Set to 0 otherwise.
       * @return The number of pixels written.
+      * 
+      * Example:
+      * @code
+      * const uint8_t bitmap0[] = { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, }; // a cute heart
+      * MicroBitImage i(10,5,bitmap0); //if you show this image - you will see a big heart
+      * i.paste(-5,0,i); //displays a small heart :) 
+      * @endcode
       */
     int paste(const MicroBitImage &image, int x, int y, int alpha);
  
@@ -148,6 +237,12 @@ class MicroBitImage
       * @param c The character to display.
       * @param x The x co-ordinate of on the image to place the top left of the character
       * @param y The y co-ordinate of on the image to place the top left of the character
+      * 
+      * Example:
+      * @code
+      * MicroBitImage i(5,5); 
+      * i.print('a',0,0);
+      * @endcode
       */
     void print(char c, int x, int y);
  
@@ -155,6 +250,13 @@ class MicroBitImage
       * Shifts the pixels in this Image a given number of pixels to the Left.
       *
       * @param n The number of pixels to shift.
+      * 
+      * Example:
+      * @code
+      * const uint8_t bitmap0[] = { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, }; // a cute heart
+      * MicroBitImage i(10,5,bitmap0); //if you show this image - you will see a big heart
+      * i.shiftLeft(5); //displays a small heart :) 
+      * @endcode
       */
     void shiftLeft(int n);
 
@@ -162,6 +264,14 @@ class MicroBitImage
       * Shifts the pixels in this Image a given number of pixels to the Right.
       *
       * @param n The number of pixels to shift.
+      * 
+      * Example:
+      * @code
+      * const uint8_t bitmap0[] = { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, }; // a cute heart
+      * MicroBitImage i(10,5,bitmap0);
+      * i.shiftLeft(5); //displays a small heart :) 
+      * i.shiftRight(5); //displays a big heart :) 
+      * @endcode
       */
     void shiftRight(int n);
     
@@ -169,6 +279,13 @@ class MicroBitImage
       * Shifts the pixels in this Image a given number of pixels to Upward.
       *
       * @param n The number of pixels to shift.
+      * 
+      * Example:
+      * @code
+      * const uint8_t bitmap0[] = { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, }; // a cute heart
+      * MicroBitImage i(10,5,bitmap0);
+      * i.shiftUp(1);
+      * @endcode
       */
     void shiftUp(int n);
     
@@ -176,6 +293,13 @@ class MicroBitImage
       * Shifts the pixels in this Image a given number of pixels to Downward.
       *
       * @param n The number of pixels to shift.
+      * 
+      * Example:
+      * @code
+      * const uint8_t bitmap0[] = { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, }; // a cute heart
+      * MicroBitImage i(10,5,bitmap0);
+      * i.shiftDown(1);
+      * @endcode
       */
     void shiftDown(int n);
 
@@ -183,6 +307,13 @@ class MicroBitImage
       * Gets the width of this image.
       *
       * @return The width of this image.
+      * 
+      * Example:
+      * @code
+      * const uint8_t bitmap0[] = { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, }; // a cute heart
+      * MicroBitImage i(10,5,bitmap0);
+      * i.getWidth(); //equals 10...
+      * @endcode
       */
     int getWidth();
 
@@ -190,6 +321,13 @@ class MicroBitImage
       * Gets the height of this image.
       *
       * @return The height of this image.
+      * 
+      * Example:
+      * @code
+      * const uint8_t bitmap0[] = { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, }; // a cute heart
+      * MicroBitImage i(10,5,bitmap0);
+      * i.getHeight(); //equals 5...
+      * @endcode
       */
     int getHeight();
 

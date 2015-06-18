@@ -1,9 +1,3 @@
-/**
-  * Class definition for a MicroBit device.
-  *
-  * Represents the device as a whole, and includes member variables to that reflect the components of the system.
-  */
-  
 #ifndef MICROBIT_H
 #define MICROBIT_H
 
@@ -32,10 +26,12 @@ void panic(int statusCode);
 #include "MicroBitFiber.h"
 #include "ManagedType.h"
 #include "ManagedString.h"
+#include "MicroBitFont.h"
 #include "MicroBitImage.h"
 #include "MicroBitEvent.h"
 #include "MicroBitMessageBus.h"
-#include "SmartPwm.h"
+//#include "SmartPwm.h"
+#include "DynamicPwm.h"
 
 #include "MicroBitButton.h"
 #include "MicroBitDisplay.h"
@@ -93,6 +89,11 @@ void panic(int statusCode);
 
 extern Serial pc;
 
+/**
+  * Class definition for a MicroBit device.
+  *
+  * Represents the device as a whole, and includes member variables to that reflect the components of the system.
+  */
 class MicroBit
 {                                    
     public:
@@ -108,7 +109,7 @@ class MicroBit
 
 
     // Device level Message Bus abstraction
-    MicroBitMessageBus      MessageBus;      
+    MicroBitMessageBus      MessageBus;     
     
     // Member variables to represent each of the core components on the device.
     MicroBitDisplay         display;
@@ -167,6 +168,8 @@ class MicroBit
       * If the scheduler is disabled or we're running in an interrupt context, this
       * will revert to a busy wait. 
       * 
+      * @note Values of 6 and below tend to lose resolution - do you really need to sleep for this short amount of time?
+      *
       * @param milliseconds the amount of time, in ms, to wait for. This number cannot be negative.
       *
       * Example:
@@ -182,11 +185,11 @@ class MicroBit
       * TODO: Determine if we want to, given its relatively high power consumption!
       *
       * @param max the upper range to generate a number for. This number cannot be negative
-      * @return A random, natural number between 0 and the the given maximum value. Or MICROBIT_INVALID_VALUE (defined in ErrorNo.h) if max is <= 0.
+      * @return A random, natural number between 0 and the max-1. Or MICROBIT_INVALID_VALUE (defined in ErrorNo.h) if max is <= 0.
       *
       * Example:
       * @code 
-      * uBit.random(200); //a number between 0 and 200 inclusive
+      * uBit.random(200); //a number between 0 and 199
       * @endcode
       */
     int random(int max);
@@ -208,7 +211,7 @@ class MicroBit
     /**
       * Triggers a microbit panic where an infinite loop will occur swapping between the panicFace and statusCode if provided.
       * This will be refactored to call the global panic function.
-      * TODO: refactor this so that it doesn't rely on instantiating new variables as memory will not be available.
+      * 
       * @param statusCode the status code of the associated error - TBD
       *
       */

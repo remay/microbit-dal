@@ -1,19 +1,3 @@
-/**
-  * Class definition for a MicroBit Device Firmware Update loader.
-  *
-  * This is actually just a frontend to a memory resident nordic DFU loader.
-  * Here we deal with the MicroBit 'pairing' functionality with BLE devices, and
-  * very basic authentication and authorization. 
-  *
-  * This implementation is not intended to be fully secure, but rather intends to:
-  *
-  * 1. Provide a simple mechanism to identify an individual MicroBit amongst a classroom of others
-  * 2. Allow BLE devices to discover and cache a passcode that can be used to flash the device over BLE.
-  * 3. Provide an escape route for programs that 'brick' the MicroBit. 
-  *
-  * Represents the device as a whole, and includes member variables to that reflect the components of the system.
-  */
-  
 #ifndef MICROBIT_DFU_SERVICE_H
 #define MICROBIT_DFU_SERVICE_H
 
@@ -38,6 +22,21 @@ extern const uint8_t  MicroBitDFUServiceFlashCodeCharacteristicUUID[];
 // Handle on the memory resident Nordic bootloader.
 extern "C" void bootloader_start(void);
 
+/**
+  * Class definition for a MicroBit Device Firmware Update loader.
+  *
+  * This is actually just a frontend to a memory resident nordic DFU loader.
+  * Here we deal with the MicroBit 'pairing' functionality with BLE devices, and
+  * very basic authentication and authorization. 
+  *
+  * This implementation is not intended to be fully secure, but rather intends to:
+  *
+  * 1. Provide a simple mechanism to identify an individual MicroBit amongst a classroom of others
+  * 2. Allow BLE devices to discover and cache a passcode that can be used to flash the device over BLE.
+  * 3. Provide an escape route for programs that 'brick' the MicroBit. 
+  *
+  * Represents the device as a whole, and includes member variables to that reflect the components of the system.
+  */
 class MicroBitDFUService
 {                                    
     public:

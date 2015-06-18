@@ -1,9 +1,14 @@
+/**
+  * Class definition for MicroBit IO.
+  *
+  * Represents a single IO pin on the edge connector.
+  */
+
 #include "inc/MicroBitIO.h"
 
 /**
   * Constructor. 
-  * Create an LED representation with the given ID.
-  * @param id the ID of the new LED object.
+  * Create a representation of all given I/O pins on the edge connector
   */
 MicroBitIO::MicroBitIO(int MICROBIT_ID_IO_P0, int MICROBIT_ID_IO_P1, int MICROBIT_ID_IO_P2,
                        int MICROBIT_ID_IO_P3, int MICROBIT_ID_IO_P4, int MICROBIT_ID_IO_P5,

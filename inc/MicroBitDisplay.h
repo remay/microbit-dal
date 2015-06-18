@@ -1,9 +1,3 @@
-/**
-  * Class definition for a MicroBitDisplay.
-  *
-  * An MicroBitDisplay represents the LED matrix array on the MicroBit device.
-  */
-
 #ifndef MICROBIT_DISPLAY_H
 #define MICROBIT_DISPLAY_H
 
@@ -72,6 +66,8 @@
 #define MICROBIT_DISPLAY_COLUMN_PINS        P0_4, P0_5, P0_6, P0_7, P0_8, P0_9, P0_10, P0_11, P0_12
 #endif
 
+#define SPACING 1
+
 #include "mbed.h"
 #include "MicroBit.h"
 
@@ -89,6 +85,11 @@ struct MatrixPoint {
     MatrixPoint(int x, int y);
 };
 
+/**
+  * Class definition for a MicroBitDisplay.
+  *
+  * A MicroBitDisplay represents the LED matrix array on the MicroBit device.
+  */
 class MicroBitDisplay
 {
     int id;
@@ -98,8 +99,9 @@ class MicroBitDisplay
     int strobeRow;
     int rotation;
     BusOut columnPins;
-    SmartPwm rowDrive;
+    DynamicPwm* rowDrive;
     int strobeCount;
+    MicroBitFont font;
     
     //
     // State used by all animation routines.
@@ -160,11 +162,40 @@ class MicroBitDisplay
     static const MatrixPoint matrixMap[MICROBIT_DISPLAY_COLUMN_COUNT][MICROBIT_DISPLAY_ROW_COUNT];
 
     // Internal methods to handle animation.
+    
+    /**
+      * Resets the current given animation.
+      * @param delay the delay after which the animation is reset.
+      */
     void resetAnimation(int delay);
+    
+    /**
+      *  Periodic callback, that we use to perform any animations we have running.
+      */
     void animationUpdate();
+    
+    /**
+      * Internal scrollText update method. 
+      * Shift the screen image by one pixel to the left. If necessary, paste in the next char.
+      */  
     void updateScrollText();
+    
+    /**
+      * Internal printText update method. 
+      * Paste in the next char in the string.
+      */  
     void updatePrintText();
+    
+    /**
+      * Internal scrollImage update method. 
+      * Paste the stored bitmap at the appropriate point.
+      */  
     void updateScrollImage();
+    
+    /**
+      * Broadcasts an event onto the shared MessageBus
+      * @param eventCode The ID of the event that has occurred.
+      */
     void sendEvent(int eventcode);
 
 
@@ -179,6 +210,11 @@ public:
       *
       * @param x the width of the display in pixels.
       * @param y the height of the display in pixels.
+      * 
+      * Example:
+      * @code 
+      * MicroBitDisplay display(MICROBIT_ID_DISPLAY, 5, 5),
+      * @endcode
       */
     MicroBitDisplay(int id, int x, int y);
 
@@ -188,16 +224,14 @@ public:
     void strobeUpdate();
 
     /**
-      * Internal Display brighntess control call back.
-      *
-      * Simply turns the display off, until the next strobeUdate() interrupt.
-      */
-    void strobeClear();
-
-    /**
       * Prints the given character to the display.
       *
       * @param c The character to display.
+      * 
+      * Example:
+      * @code 
+      * uBit.display.print('p');
+      * @endcode
       */
     void print(char c);
 
@@ -208,6 +242,11 @@ public:
       *
       * @param s The string to display.
       * @param delay The time to delay between characters, in timer ticks.
+      * 
+      * Example:
+      * @code 
+      * uBit.display.printString("abc123",400);
+      * @endcode
       */
     void printString(ManagedString s, int delay = MICROBIT_DEFAULT_PRINT_SPEED);
 
@@ -218,6 +257,11 @@ public:
       *
       * @param s The string to display.
       * @param delay The time to delay between characters, in timer ticks.
+      * 
+      * Example:
+      * @code 
+      * uBit.display.printStringAsync("abc123",400);
+      * @endcode
       */
     void printStringAsync(ManagedString s, int delay = MICROBIT_DEFAULT_PRINT_SPEED);
 
@@ -229,6 +273,11 @@ public:
       *
       * @param s The string to display.
       * @param delay The time to delay between characters, in timer ticks.
+      * 
+      * Example:
+      * @code 
+      * uBit.display.scrollString("abc123",100);
+      * @endcode
       */
     void scrollString(ManagedString s, int delay = MICROBIT_DEFAULT_SCROLL_SPEED);
 
@@ -239,6 +288,11 @@ public:
       *
       * @param s The string to display.
       * @param delay The time to delay between characters, in timer ticks.
+      * 
+      * Example:
+      * @code 
+      * uBit.display.scrollStringAsync("abc123",100);
+      * @endcode
       */
     void scrollStringAsync(ManagedString s, int delay = MICROBIT_DEFAULT_SCROLL_SPEED);
 
@@ -248,59 +302,119 @@ public:
       * Blocks the calling thread until all the text has been displayed.
       *
       * @param image The image to display.
-      * @param delay The time to delay between each scroll update, in timer ticks.
-      * @param stride The number of pixels to move in each quantum.
+      * @param delay The time to delay between each scroll update, in timer ticks. Has a default.
+      * @param stride The number of pixels to move in each quantum. Has a default. 
+      * 
+      * Example:
+      * @code 
+      * MicrobitImage i("1,1,1,1,1\n1,1,1,1,1\n"); 
+      * uBit.display.scrollImage(i,100,1);
+      * @endcode
       */
     void scrollImage(MicroBitImage image, int delay = MICROBIT_DEFAULT_SCROLL_SPEED, int stride = MICROBIT_DEFAULT_SCROLL_STRIDE);
 
 
     /**
       * Scrolls the given image across the display, from right to left.
-      * Returns immediately, and executes the animation asynchronously.      *
+      * Returns immediately, and executes the animation asynchronously.
       * @param image The image to display.
-      * @param delay The time to delay between each scroll update, in timer ticks.
-      * @param stride The number of pixels to move in each quantum.
+      * @param delay The time to delay between each scroll update, in timer ticks. Has a default.
+      * @param stride The number of pixels to move in each quantum. Has a default.
+      * 
+      * Example:
+      * @code 
+      * MicrobitImage i("1,1,1,1,1\n1,1,1,1,1\n"); 
+      * uBit.display.scrollImageAsync(i,100,1);
+      * @endcode
       */
     void scrollImageAsync(MicroBitImage image, int delay = MICROBIT_DEFAULT_SCROLL_SPEED, int stride = MICROBIT_DEFAULT_SCROLL_STRIDE);
 
     /**
-     * Sets the display brightness to the specified level.
-     * @param b The brightness to set the brightness to, in the range 0..255.
-     */
+      * Sets the display brightness to the specified level.
+      * @param b The brightness to set the brightness to, in the range 0..255.
+      * 
+      * Example:
+      * @code 
+      * uBit.display.setBrightness(255); //max brightness
+      * @endcode
+      */
     void setBrightness(int b);
 
     /**
-     * Tests the brightness of this display.
-     * @return the brightness of this display, in the range 0..255.
-     */
+      * Fetches the current brightness of this display.
+      * @return the brightness of this display, in the range 0..255.
+      * 
+      * Example:
+      * @code 
+      * uBit.display.getBrightness(); //the current brightness
+      * @endcode
+      */
     int getBrightness();
 
     /**
-     * Rotates the display to the given position.
-     * Axis aligned values only.
-     */
+      * Rotates the display to the given position.
+      * Axis aligned values only.
+      *
+      * Example:
+      * @code 
+      * uBit.display.rotateTo(MICROBIT_DISPLAY_ROTATION_180); //rotates 180 degrees from original orientation
+      * @endcode
+      */
     void rotateTo(int position);
     
     /**
-     * Enables the display, should only be called if the display is disabled.
-     */
+      * Enables the display, should only be called if the display is disabled.
+      *
+      * Example:
+      * @code 
+      * uBit.display.enable(); //reenables the display mechanics
+      * @endcode
+      */
     void enable();
     
     /**
-     * Disables the display, should only be called if the display is enabled.
-     */
+      * Disables the display, should only be called if the display is enabled.
+      * Display must be disabled to avoid MUXing of edge connector pins.
+      *
+      * Example:
+      * @code 
+      * uBit.display.disable(); //disables the display
+      * @endcode
+      */
     void disable();
     
     /**
-     * Clears the current image on the display.
-     */ 
+      * Clears the current image on the display.
+      * Simplifies the process, you can also use uBit.display.image.clear
+      *
+      * Example:
+      * @code 
+      * uBit.display.clear(); //clears the display
+      * @endcode
+      */ 
     void clear();
     
      /**
-      * Displays "=(" and an accompanying status code 
+      * Displays "=(" and an accompanying status code infinitely.
       * @param statusCode the appropriate status code - 0 means no code will be displayed.
+      *
+      * Example:
+      * @code 
+      * uBit.display.error(20);
+      * @endcode
       */
     void error(int statusCode);
+    
+    /**
+      * Updates the font property of this object with the new font.
+      * @param font the new font that will be used to render characters..
+      */
+    void setFont(MicroBitFont font);
+
+    /**
+      * Retreives the font object used for rendering characters on the display.
+      */
+    MicroBitFont getFont();  
 };
 
 #endif

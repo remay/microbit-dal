@@ -1,3 +1,38 @@
+#ifndef MICROBIT_MESSAGE_BUS_H
+#define MICROBIT_MESSAGE_BUS_H
+
+#include "mbed.h"
+#include "inc/MicroBitEvent.h"
+// Enumeration of core components.
+#define MICROBIT_CONTROL_BUS_ID         0
+
+#define MICROBIT_ID_ANY					0
+#define MICROBIT_EVT_ANY				0
+
+struct MicroBitListener
+{
+	int id;								// The ID of the component that this listener is interested in. 
+	int value;							// Value this listener is interested in receiving. 
+	void (*cb)(void);					// Callback function associated with this listener.
+	MicroBitListener *next;
+
+	/**
+	  * Constructor. 
+	  * Create a new Message Bus Listener.
+	  * @param id The ID of the component you want to listen to.
+	  * @param value The event ID you would like to listen to from that component
+	  * @param handler A function pointer to call when the event is detected.
+	  */
+	MicroBitListener(int id, int value, void (*handler)(void));
+};
+
+struct MicroBitMessageBusCache
+{
+	int seq;
+	MicroBitListener *ptr;
+};
+	
+
 /**
   * Class definition for the MicroBitMessageBus.
   *
@@ -16,50 +51,12 @@
   * 1) Maintain a low RAM footprint where possible
   * 2) Make few assumptions about the underlying platform, but allow optimizations where possible.
   */
-  
-#ifndef MICROBIT_MESSAGE_BUS_H
-#define MICROBIT_MESSAGE_BUS_H
-
-#include "mbed.h"
-#include "inc/MicroBitEvent.h"
-// Enumeration of core components.
-#define MICROBIT_CONTROL_BUS_ID         0
-
-#define MICROBIT_ID_ANY					0
-#define MICROBIT_EVT_ANY				0
-/*
-struct MicroBitEvent
-{
-	int source;         // ID of the MicroBit Component that generated the event � e.g. MICROBIT_ID_BUTTON_A. 
-    int value;          // Component specific code indicating the cause of the event.
-    int timestamp;		// Time at which the event was generated. ms since power on?
-    void *context;		// context specfic data associated with the event. 
-};*/
-
-struct MicroBitListener
-{
-	int id;								// The ID of the component that this listener is interested in. 
-	int value;							// Value this listener is interested in receiving. 
-	void (*cb)(void);					// Callback function associated with this listener.
-	MicroBitListener *next;
-
-	MicroBitListener(int id, int value, void (*messageBus)(void));
-};
-
-struct MicroBitMessageBusCache
-{
-	int seq;
-	MicroBitListener *ptr;
-};
-	
-
-
 class MicroBitMessageBus
 {
     public:
 
 	/**
-	  * Constructor. 
+	  * Default constructor. 
 	  * Anticipating only one MessageBus per device, as filtering is handled within the class.
 	  */
     MicroBitMessageBus();    
@@ -69,6 +66,16 @@ class MicroBitMessageBus
 	  *
 	  * @param The event to send. This structure is assumed to be heap allocated, and will 
 	  * be automatically freed once all recipients have been notified.
+	  *
+	  * THIS IS NOW WRAPPED BY THE MicroBitEvent CLASS FOR CONVENIENCE...
+	  *
+	  * Example:
+      * @code 
+	  * MicroBitEvent evt(id,MICROBIT_BUTTON_EVT_DOWN,ticks,NULL);
+	  * evt.fire();
+	  * //OR YOU CAN DO THIS...  
+	  * MicroBitEvent evt(id,MICROBIT_BUTTON_EVT_DOWN,ticks,NULL,true);
+      * @endcode
 	  */
 	void send(MicroBitEvent &evt);
 
@@ -92,8 +99,16 @@ class MicroBitMessageBus
 	  * Use MICROBIT_EVT_ANY to receive events of any value.
 	  *
 	  * @param hander The function to call when an event is received.
+	  * 
+      * Example:
+      * @code 
+      * void onButtonBClick()
+      * {
+      * 	//do something
+      * }
+      * uBit.MessageBus.listen(MICROBIT_ID_BUTTON_B, MICROBIT_BUTTON_EVT_CLICK, onButtonBClick); // call function when ever a click event is detected.
+      * @endcode
 	  */
-
 	void listen(int id, int value, void (*handler)(void));
 
 	private:
