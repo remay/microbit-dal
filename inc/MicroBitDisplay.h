@@ -21,7 +21,7 @@
 /**
   * Default parameters.
   */
-#define MICROBIT_DEFAULT_SCROLL_SPEED       90
+#define MICROBIT_DEFAULT_SCROLL_SPEED       120
 #define MICROBIT_DEFAULT_PRINT_SPEED        1200
 #define MICROBIT_DEFAULT_SCROLL_STRIDE      -1
 #define MICROBIT_DISPLAY_MAX_BRIGHTNESS     255
@@ -33,6 +33,7 @@
 #define MICROBIT_DISPLAY_EVT_SCROLLTEXT_COMPLETE         1
 #define MICROBIT_DISPLAY_EVT_PRINTTEXT_COMPLETE          2
 #define MICROBIT_DISPLAY_EVT_SCROLLIMAGE_COMPLETE        3
+#define MICROBIT_DISPLAY_EVT_ANIMATEIMAGE_COMPLETE       4
 
 
 /**
@@ -66,7 +67,7 @@
 #define MICROBIT_DISPLAY_COLUMN_PINS        P0_4, P0_5, P0_6, P0_7, P0_8, P0_9, P0_10, P0_11, P0_12
 #endif
 
-#define SPACING 1
+#define MICROBIT_DISPLAY_SPACING 1
 
 #include "mbed.h"
 #include "MicroBit.h"
@@ -75,7 +76,8 @@ enum AnimationMode {
     ANIMATION_MODE_NONE,
     ANIMATION_MODE_SCROLL_TEXT,
     ANIMATION_MODE_PRINT_TEXT,
-    ANIMATION_MODE_SCROLL_IMAGE
+    ANIMATION_MODE_SCROLL_IMAGE,
+    ANIMATION_MODE_ANIMATE_IMAGE
 };
 
 struct MatrixPoint {
@@ -191,6 +193,13 @@ class MicroBitDisplay
       * Paste the stored bitmap at the appropriate point.
       */  
     void updateScrollImage();
+   
+    
+    /**
+      * Internal animateImage update method. 
+      * Paste the stored bitmap at the appropriate point and stop on the last frame.
+      */   
+    void updateAnimateImage();
     
     /**
       * Broadcasts an event onto the shared MessageBus
@@ -328,6 +337,46 @@ public:
       * @endcode
       */
     void scrollImageAsync(MicroBitImage image, int delay = MICROBIT_DEFAULT_SCROLL_SPEED, int stride = MICROBIT_DEFAULT_SCROLL_STRIDE);
+
+    /**
+      * "Animates" the current image across the display with a given stride, finishing on the last frame of the animation.
+      * Returns immediately.
+      *
+      * @param image The image to display.
+      * @param delay The time to delay between each animation update, in timer ticks. Has a default.
+      * @param stride The number of pixels to move in each quantum. Has a default.
+      * 
+      * Example:
+      * @code 
+      * const int heart_w = 10;
+      * const int heart_h = 5;
+      * const uint8_t heart[] = { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, };
+      *
+      * MicroBitImage i(heart_w,heart_h,heart);
+      * uBit.display.animateImageAsync(i,100,5);
+      * @endcode
+      */
+    void animateImageAsync(MicroBitImage image, int delay, int stride);
+
+    /**
+      * "Animates" the current image across the display with a given stride, finishing on the last frame of the animation.
+      * Blocks the calling thread until the animation is complete.
+      * 
+      * @param image The image to display.
+      * @param delay The time to delay between each animation update, in timer ticks. Has a default.
+      * @param stride The number of pixels to move in each quantum. Has a default.
+      * 
+      * Example:
+      * @code 
+      * const int heart_w = 10;
+      * const int heart_h = 5;
+      * const uint8_t heart[] = { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, };
+      *
+      * MicroBitImage i(heart_w,heart_h,heart);
+      * uBit.display.animateImage(i,100,5);
+      * @endcode
+      */
+    void animateImage(MicroBitImage image, int delay, int stride);
 
     /**
       * Sets the display brightness to the specified level.

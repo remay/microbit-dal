@@ -358,6 +358,12 @@ ManagedString ManagedString::operator+ (ManagedString& s)
 
     if (len == 0)
         return s;
+        
+    if(s == ManagedString::EmptyString)
+        return *this;
+        
+    if(*this == ManagedString::EmptyString)
+        return s;
 
     return ManagedString(data, s.data);
 }

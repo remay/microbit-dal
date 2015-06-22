@@ -129,14 +129,14 @@ void MicroBitPin::setAnalogValue(int value)
         
     float level = (float)value / float(MICROBIT_PIN_MAX_OUTPUT);
     
-    // Move into an analogue input state if necessary.
-    if (!(status & IO_STATUS_ANALOG_OUT)){
+    // Move into an analogue input state if necessary, if we are no longer the focus of a DynamicPWM instance, allocate ourselves again!
+    if (!(status & IO_STATUS_ANALOG_OUT) || !(((DynamicPwm *)pin)->getPinName() == name)){
         disconnect();  
         pin = (void *)DynamicPwm::allocate(name);
         status |= IO_STATUS_ANALOG_OUT;
     }
     
-    //perform a write!
+    //perform a write with an extra check! :)
     if(((DynamicPwm *)pin)->getPinName() == name)
         ((DynamicPwm *)pin)->write(level);
 }

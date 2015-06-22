@@ -44,7 +44,7 @@ MicroBitDisplay::MicroBitDisplay(int id, int x, int y) :
     this->height = y;
     this->strobeRow = 0;
     this->strobeCount = 0;
-    this->rowDrive->period_ms(1);
+    this->rowDrive->period_us(MICROBIT_DISPLAY_PWM_PERIOD);
     
     this->rotation = MICROBIT_DISPLAY_ROTATION_0;
     this->setBrightness(MICROBIT_DEFAULT_BRIGHTNESS);
@@ -133,6 +133,9 @@ MicroBitDisplay::animationUpdate()
         if (animationMode == ANIMATION_MODE_SCROLL_IMAGE)
             this->updateScrollImage();
             
+        if (animationMode == ANIMATION_MODE_ANIMATE_IMAGE)
+            this->updateAnimateImage();
+            
     }
 }
 
@@ -161,7 +164,7 @@ void MicroBitDisplay::updateScrollText()
     image.shiftLeft(1);
     scrollingPosition++;
     
-    if (scrollingPosition == width + SPACING)
+    if (scrollingPosition == width + MICROBIT_DISPLAY_SPACING)
     {        
         scrollingPosition = 0;
         
@@ -214,6 +217,26 @@ void MicroBitDisplay::updateScrollImage()
     scrollingImageRendered = true;
 }
 
+
+/**
+  * Internal animateImage update method. 
+  * Paste the stored bitmap at the appropriate point and stop on the last frame.
+  */   
+void MicroBitDisplay::updateAnimateImage()
+{   
+    if (scrollingImagePosition <= -scrollingImage.getWidth() && scrollingImageRendered)
+    {
+        animationMode = ANIMATION_MODE_NONE;  
+        this->sendEvent(MICROBIT_DISPLAY_EVT_ANIMATEIMAGE_COMPLETE);     
+        return;
+    }
+    
+    image.clear();     
+    image.paste(scrollingImage, scrollingImagePosition, 0, 0);
+    
+    scrollingImageRendered = true;
+    scrollingImagePosition += scrollingImageStride;
+}
 
 /**
   * Resets the current given animation.
@@ -424,6 +447,76 @@ void MicroBitDisplay::scrollImage(MicroBitImage image, int delay, int stride)
         uBit.sleep(100);
 }
 
+/**
+  * "Animates" the current image across the display with a given stride, finishing on the last frame of the animation.
+  * Returns immediately.
+  *
+  * @param image The image to display.
+  * @param delay The time to delay between each animation update, in timer ticks. Has a default.
+  * @param stride The number of pixels to move in each quantum. Has a default.
+  * 
+  * Example:
+  * @code 
+  * const int heart_w = 10;
+  * const int heart_h = 5;
+  * const uint8_t heart[] = { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, };
+  *
+  * MicroBitImage i(heart_w,heart_h,heart);
+  * uBit.display.animateImageAsync(i,100,5);
+  * @endcode
+  */
+void MicroBitDisplay::animateImageAsync(MicroBitImage image, int delay, int stride)
+{
+    // Assume right to left functionality, to align with scrollString()
+    stride = -stride;
+    
+    //sanitise the delay value
+    if(delay <= 0 )
+        delay = MICROBIT_DEFAULT_SCROLL_SPEED;
+            
+    this->resetAnimation(delay);
+
+    this->scrollingImagePosition = 0;//stride < 0 ? width : -image.getWidth();
+    this->scrollingImageStride = stride;
+    this->scrollingImage = image;
+    this->scrollingImageRendered = false;
+        
+    animationMode = ANIMATION_MODE_ANIMATE_IMAGE;
+}
+
+/**
+  * "Animates" the current image across the display with a given stride, finishing on the last frame of the animation.
+  * Blocks the calling thread until the animation is complete.
+  * 
+  * @param image The image to display.
+  * @param delay The time to delay between each animation update, in timer ticks. Has a default.
+  * @param stride The number of pixels to move in each quantum. Has a default.
+  * 
+  * Example:
+  * @code 
+  * const int heart_w = 10;
+  * const int heart_h = 5;
+  * const uint8_t heart[] = { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, };
+  *
+  * MicroBitImage i(heart_w,heart_h,heart);
+  * uBit.display.animateImage(i,100,5);
+  * @endcode
+  */
+void MicroBitDisplay::animateImage(MicroBitImage image, int delay, int stride)
+{
+    //sanitise the delay value
+    if(delay <= 0 )
+        delay = MICROBIT_DEFAULT_SCROLL_SPEED;
+    
+    // Start the effect.
+    this->animateImageAsync(image, delay, stride);
+    
+    // Wait for completion.
+    // TODO: We're polling here for now, but should really block on an event here.
+    while (animationMode == ANIMATION_MODE_ANIMATE_IMAGE)
+        uBit.sleep(100);
+}
+
 
 /**
   * Sets the display brightness to the specified level.
@@ -501,7 +594,7 @@ void MicroBitDisplay::enable()
     new(&columnPins) BusOut(MICROBIT_DISPLAY_COLUMN_PINS);  //bring columnPins back up
     columnPins.write(0xFFFF);                               //write 0xFFFF to reset all column pins 
     rowDrive = DynamicPwm::allocate(rowPins[0],PWM_PERSISTENCE_PERSISTENT); //bring rowDrive back up
-    rowDrive->period_ms(1);                                  
+    rowDrive->period_us(MICROBIT_DISPLAY_PWM_PERIOD);                          
     setBrightness(brightness);
     uBit.flags |= MICROBIT_FLAG_DISPLAY_RUNNING;            //set the display running flag
 }
