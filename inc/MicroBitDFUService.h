@@ -65,7 +65,7 @@ class MicroBitDFUService
     /**
       * Callback. Invoked when any of our attributes are written via BLE.
       */
-    virtual void onDataWritten(const GattCharacteristicWriteCBParams *params);
+    virtual void onDataWritten(const GattWriteCallbackParams *params);
 
     private:
 

@@ -108,7 +108,7 @@ void MicroBitDFUService::pair()
         {
             if (flashCodeRequested)
             {
-                uBit.display.scrollString(pairString);
+                uBit.display.scrollStringAsync(pairString);
                 for (int j=0; j<40; j++)
                 {          
                     if (uBit.buttonA.isPressed())
@@ -140,13 +140,13 @@ void MicroBitDFUService::pair()
 /**
   * Callback. Invoked when any of our attributes are written via BLE.
   */
-void MicroBitDFUService::onDataWritten(const GattCharacteristicWriteCBParams *params)
+void MicroBitDFUService::onDataWritten(const GattWriteCallbackParams *params)
 {
 #ifdef MICROBIT_DEBUG
     pc.printf("MicroBitDFUService::onDataWritten: Called... ");       
 #endif
     
-    if (params->charHandle == microBitDFUServiceControlCharacteristic.getValueHandle()) {
+    if (params->handle == microBitDFUServiceControlCharacteristic.getValueHandle()) {
 
 #ifdef MICROBIT_DEBUG        
     pc.printf("Control Point:\n   ");
@@ -190,7 +190,7 @@ void MicroBitDFUService::onDataWritten(const GattCharacteristicWriteCBParams *pa
         }
     }
     
-    if (params->charHandle == microBitDFUServiceFlashCodeCharacteristic.getValueHandle()) {
+    if (params->handle == microBitDFUServiceFlashCodeCharacteristic.getValueHandle()) {
 
 #ifdef MICROBIT_DEBUG
         pc.printf("FlashCode\n\n");    
@@ -221,7 +221,8 @@ void MicroBitDFUService::onDataWritten(const GattCharacteristicWriteCBParams *pa
   */
 void MicroBitDFUService::showTick()
 {
-    uBit.display.scrollString(ManagedString::EmptyString);
+    uBit.display.resetAnimation(0);
+    
     uBit.display.image.setPixelValue(0,3, 255);
     uBit.display.image.setPixelValue(1,4, 255);
     uBit.display.image.setPixelValue(2,3, 255);
@@ -238,14 +239,15 @@ void MicroBitDFUService::showNameHistogram()
 #ifdef MICROBIT_DEBUG
     pc.printf("MicroBitDFUService::showNameHistogram: Called\n");
 #endif
-    
-    uBit.display.scrollString(ManagedString::EmptyString);
+
+    uBit.display.resetAnimation(0);
 
     int n = NRF_FICR->DEVICEID[1];
     int ld = 1;
     int d = MICROBIT_DFU_HISTOGRAM_HEIGHT;
     int h;
 
+    uBit.display.clear();
     for (int i=0; i<MICROBIT_DFU_HISTOGRAM_WIDTH;i++)
     {
         h = (n % d) / ld;

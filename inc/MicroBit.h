@@ -6,9 +6,8 @@
 
 //#define MICROBIT_BLE
 
-
 #include "mbed.h"
-#include "BLEDevice.h"
+#include "BLE.h"
 #include "DeviceInformationService.h"
 
 //error number enumeration
@@ -30,7 +29,6 @@ void panic(int statusCode);
 #include "MicroBitImage.h"
 #include "MicroBitEvent.h"
 #include "MicroBitMessageBus.h"
-//#include "SmartPwm.h"
 #include "DynamicPwm.h"
 
 #include "MicroBitButton.h"

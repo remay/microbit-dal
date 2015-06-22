@@ -166,12 +166,6 @@ class MicroBitDisplay
     // Internal methods to handle animation.
     
     /**
-      * Resets the current given animation.
-      * @param delay the delay after which the animation is reset.
-      */
-    void resetAnimation(int delay);
-    
-    /**
       *  Periodic callback, that we use to perform any animations we have running.
       */
     void animationUpdate();
@@ -226,6 +220,12 @@ public:
       * @endcode
       */
     MicroBitDisplay(int id, int x, int y);
+
+    /**
+      * Resets the current given animation.
+      * @param delay the delay after which the animation is reset.
+      */
+    void resetAnimation(int delay);
 
     /**
       * Frame update method, invoked periodically to strobe the display.

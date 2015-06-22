@@ -59,6 +59,7 @@ MicroBit::MicroBit() :
   */
 void MicroBit::init()
 {   
+
 #ifdef MICROBIT_BLE
     // Start the BLE stack.        
     ble = new BLEDevice();
@@ -79,7 +80,7 @@ void MicroBit::init()
     ble->setAdvertisingInterval(Gap::MSEC_TO_ADVERTISEMENT_DURATION_UNITS(1000));
     ble->startAdvertising();   
 
-#else
+#else 
 
     ble = NULL;
     ble_firmware_update_service = NULL;
