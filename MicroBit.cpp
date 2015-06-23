@@ -202,9 +202,8 @@ unsigned long MicroBit::systemTime()
 
 /**
   * Triggers a microbit panic where an infinite loop will occur swapping between the panicFace and statusCode if provided.
-  * TODO: use the statusCode variable
-  * @param statusCode the status code of the associated error - TBD
-  *
+  * 
+  * @param statusCode the status code of the associated error. Status codes must be in the range 0-255.
   */
 void MicroBit::panic(int statusCode)
 {

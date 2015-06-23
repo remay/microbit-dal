@@ -15,8 +15,7 @@
 
 /**
   * Displays "=(" and an accompanying status code 
-  * TODO: utilise statusCode
-  * @param statusCode the appropriate status code - 0 means no code will be displayed.
+  * @param statusCode the appropriate status code - 0 means no code will be displayed. Status codes must be in the range 0-255.
   */
 void panic(int statusCode);
 
@@ -208,10 +207,8 @@ class MicroBit
     
     /**
       * Triggers a microbit panic where an infinite loop will occur swapping between the panicFace and statusCode if provided.
-      * This will be refactored to call the global panic function.
       * 
-      * @param statusCode the status code of the associated error - TBD
-      *
+      * @param statusCode the status code of the associated error. Status codes must be in the range 0-255.
       */
     void panic(int statusCode = 0);
 

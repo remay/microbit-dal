@@ -139,8 +139,20 @@ void MicroBitMessageBus::listen(int id, int value, void (*handler)(void))
 	//handler can't be NULL!
 	if(handler == NULL)
 		return;
-	
+		
 	MicroBitListener *l, *p;
+	
+	l = listeners;
+	
+	while (l != NULL)
+	{
+		if(l->id == id && l->value == value && l->cb == handler)
+			return;
+			
+		l = l->next;
+	}
+	
+	
 	MicroBitListener *newListener = new MicroBitListener(id, value, handler);
 
 	//if listeners is null - we can automatically add this listener to the list at the beginning...

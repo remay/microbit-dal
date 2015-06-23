@@ -1,8 +1,6 @@
 #ifndef MANAGED_STRING_H
 #define MANAGED_STRING_H
 
-#include "MicroBitCompat.h"
-
 /**
   * Class definition for a ManagedString.
   *

@@ -417,6 +417,6 @@ int ManagedString::length()
 /**
   * Empty string constant literal
   */
-ManagedString ManagedString::EmptyString("<null>");
+ManagedString ManagedString::EmptyString("\0");
 
 

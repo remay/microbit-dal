@@ -68,6 +68,7 @@
 #endif
 
 #define MICROBIT_DISPLAY_SPACING 1
+#define MICROBIT_DISPLAY_ERROR_CHARS 4
 
 #include "mbed.h"
 #include "MicroBit.h"
@@ -445,7 +446,7 @@ public:
     
      /**
       * Displays "=(" and an accompanying status code infinitely.
-      * @param statusCode the appropriate status code - 0 means no code will be displayed.
+      * @param statusCode the appropriate status code - 0 means no code will be displayed. Status codes must be in the range 0-255.
       *
       * Example:
       * @code 

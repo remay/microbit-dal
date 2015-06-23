@@ -591,12 +591,15 @@ void MicroBitDisplay::rotateTo(int position)
   */
 void MicroBitDisplay::enable()
 {
-    new(&columnPins) BusOut(MICROBIT_DISPLAY_COLUMN_PINS);  //bring columnPins back up
-    columnPins.write(0xFFFF);                               //write 0xFFFF to reset all column pins 
-    rowDrive = DynamicPwm::allocate(rowPins[0],PWM_PERSISTENCE_PERSISTENT); //bring rowDrive back up
-    rowDrive->period_us(MICROBIT_DISPLAY_PWM_PERIOD);                          
-    setBrightness(brightness);
-    uBit.flags |= MICROBIT_FLAG_DISPLAY_RUNNING;            //set the display running flag
+    if(!(uBit.flags & MICROBIT_FLAG_DISPLAY_RUNNING))
+    {
+        new(&columnPins) BusOut(MICROBIT_DISPLAY_COLUMN_PINS);  //bring columnPins back up
+        columnPins.write(0xFFFF);                               //write 0xFFFF to reset all column pins 
+        rowDrive = DynamicPwm::allocate(rowPins[0],PWM_PERSISTENCE_PERSISTENT); //bring rowDrive back up
+        rowDrive->period_us(MICROBIT_DISPLAY_PWM_PERIOD);                          
+        setBrightness(brightness);
+        uBit.flags |= MICROBIT_FLAG_DISPLAY_RUNNING;            //set the display running flag
+    }
 }
     
 /**
@@ -610,10 +613,12 @@ void MicroBitDisplay::enable()
   */
 void MicroBitDisplay::disable()
 {
-    uBit.flags &= ~MICROBIT_FLAG_DISPLAY_RUNNING;           //unset the display running flag
-    columnPins.~BusOut();
-    rowDrive->free();
-    
+    if(uBit.flags & MICROBIT_FLAG_DISPLAY_RUNNING)
+    {
+        uBit.flags &= ~MICROBIT_FLAG_DISPLAY_RUNNING;           //unset the display running flag
+        columnPins.~BusOut();
+        rowDrive->free();
+    }   
 }
 
 /**
@@ -632,7 +637,7 @@ void MicroBitDisplay::clear()
 
 /**
   * Displays "=(" and an accompanying status code infinitely.
-  * @param statusCode the appropriate status code - 0 means no code will be displayed.
+  * @param statusCode the appropriate status code - 0 means no code will be displayed. Status codes must be in the range 0-255.
   *
   * Example:
   * @code 
@@ -643,7 +648,7 @@ void MicroBitDisplay::error(int statusCode)
 {   
     __disable_irq(); //stop ALL interrupts
 
-    if(statusCode < 0)
+    if(statusCode < 0 || statusCode > 255)
         statusCode = 0;
 
     disable(); //relinquish PWMOut's control
@@ -651,49 +656,65 @@ void MicroBitDisplay::error(int statusCode)
     uint8_t strobeRow = 0;
     uint8_t strobeBitMsk = 0x20;
     
+    //point to the font stored in Flash
+    const unsigned char * fontLocation = MicroBitFont::defaultFont;
+    
+    //get individual digits of status code, and place it into a single array/
+    const uint8_t* chars[MICROBIT_DISPLAY_ERROR_CHARS] = { panicFace, fontLocation+((((statusCode/100 % 10)+48)-MICROBIT_FONT_ASCII_START) * 5), fontLocation+((((statusCode/10 % 10)+48)-MICROBIT_FONT_ASCII_START) * 5), fontLocation+((((statusCode % 10)+48)-MICROBIT_FONT_ASCII_START) * 5)};
+    
     //enter infinite loop.
     while(1)
     {
-        
-        int coldata = 0;
-
-        int i = 0;
-
-        //if we have hit the row limit - reset both the bit mask and the row variable
-        if(strobeRow == 3)
+        //iterate through our chars :)
+        for(int characterCount = 0; characterCount < MICROBIT_DISPLAY_ERROR_CHARS; characterCount++)
         {
-            strobeRow = 0; 
-            strobeBitMsk = 0x20;
-        }    
-
-        // Calculate the bitpattern to write.
-        for (i = 0; i<MICROBIT_DISPLAY_COLUMN_COUNT; i++)
-        {
+            int outerCount = 0;
             
-            int bitMsk = 0x10 >> matrixMap[i][strobeRow].x; //chars are right aligned but read left to right
-            int y = matrixMap[i][strobeRow].y;
-                 
-            if(panicFace[y] & bitMsk)
-                coldata |= (1 << i);
+            //display the current character
+            while( outerCount < 100000)
+            {
+                int coldata = 0;
+        
+                int i = 0;
+        
+                //if we have hit the row limit - reset both the bit mask and the row variable
+                if(strobeRow == 3)
+                {
+                    strobeRow = 0; 
+                    strobeBitMsk = 0x20;
+                }    
+        
+                // Calculate the bitpattern to write.
+                for (i = 0; i<MICROBIT_DISPLAY_COLUMN_COUNT; i++)
+                {
+                    
+                    int bitMsk = 0x10 >> matrixMap[i][strobeRow].x; //chars are right aligned but read left to right
+                    int y = matrixMap[i][strobeRow].y;
+                         
+                    if(chars[characterCount][y] & bitMsk)
+                        coldata |= (1 << i);
+                }
+                
+                nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT0, 0xF0); //clear port 0 4-7
+                nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT1, strobeBitMsk | 0x1F); // clear port 1 8-12
+                
+                //write the new bit pattern
+                nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT0, ~coldata<<4 & 0xF0); //set port 0 4-7
+                nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT1, strobeBitMsk | (~coldata>>4 & 0x1F)); //set port 1 8-12
+            
+                //set i to an obscene number.
+                i = 100000;
+                
+                //burn cycles
+                while(i>0)
+                    i--;
+                
+                //update the bit mask and row count
+                strobeBitMsk <<= 1;    
+                strobeRow++;
+                outerCount++;
+            }
         }
-        
-        nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT0, 0xF0); //clear port 0 4-7
-        nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT1, strobeBitMsk | 0x1F); // clear port 1 8-12
-        
-        //write the new bit pattern
-        nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT0, ~coldata<<4 & 0xF0); //set port 0 4-7
-        nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT1, strobeBitMsk | (~coldata>>4 & 0x1F)); //set port 1 8-12
-    
-        //set i to an obscene number.
-        i = 100000;
-        
-        //burn cycles
-        while(i>0)
-            i--;
-        
-        //update the bit mask and row count
-        strobeBitMsk <<= 1;    
-        strobeRow++;
     }
 }
 

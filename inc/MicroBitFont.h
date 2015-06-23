@@ -16,6 +16,8 @@ class MicroBitFont
 {
     public:
     
+    static const unsigned char* defaultFont;
+    
     const unsigned char* characters;
     
     int asciiEnd;
