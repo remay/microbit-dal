@@ -38,6 +38,7 @@ void panic(int statusCode);
 
 #include "MicroBitDFUService.h"
 #include "MicroBitEventService.h"
+#include "ExternalEvents.h"
 
 // MicroBit::flags values
 #define MICROBIT_FLAG_SCHEDULER_RUNNING         0x00000001
