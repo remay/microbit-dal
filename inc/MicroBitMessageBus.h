@@ -11,9 +11,10 @@
 
 struct MicroBitListener
 {
-	uint16_t		id;							// The ID of the component that this listener is interested in. 
-	uint16_t 		value;						// Value this listener is interested in receiving. 
-	void 			(*cb)(MicroBitEvent);		// Callback function associated with this listener.
+	uint16_t		id;				// The ID of the component that this listener is interested in. 
+	uint16_t 		value;			// Value this listener is interested in receiving. 
+	void* 			cb;				// Callback function associated with this listener. Either (*cb)(MicroBitEvent) or (*cb)(MicroBitEvent, void*) depending on whether cb_arg is NULL.
+	void*			cb_arg;			// Argument to be passed to the caller. This is assumed to be a pointer, so passing in NULL means that the function doesn't take an argument.
 	MicroBitEvent 	evt;
 	
 	MicroBitListener *next;
@@ -26,6 +27,13 @@ struct MicroBitListener
 	  * @param handler A function pointer to call when the event is detected.
 	  */
 	MicroBitListener(uint16_t id, uint16_t value, void (*handler)(MicroBitEvent));
+	
+	/**
+	  * Alternative constructor where we register a value to be passed to the
+	  * callback. If arg == NULL, the function takes no extra arguemnt.
+	  * Otherwise, the function is understood to take an extra argument.
+	  */
+	MicroBitListener(uint16_t id, uint16_t value, void *handler, void* arg);
 };
 
 struct MicroBitMessageBusCache
@@ -112,11 +120,20 @@ class MicroBitMessageBus
       * @endcode
 	  */
 	void listen(int id, int value, void (*handler)(MicroBitEvent));
+	
+	/**
+	  * Register a listener function.
+	  * 
+	  * Same as above, except the listener function is passed an extra argument in addition to the
+	  * MicroBitEvent, when called.
+	  */
+	void listen(int id, int value, void (*handler)(MicroBitEvent, void*), void* arg);
 
 	private:
 	
 	MicroBitListener *listeners;		// Chain of active listeners.
 	int seq;							// Sequence number. Used to invalidate cache entries.
+	void listen(int id, int value, void* handler, void* arg);
 };
 
 #endif

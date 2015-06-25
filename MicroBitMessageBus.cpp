@@ -17,7 +17,21 @@ MicroBitListener::MicroBitListener(uint16_t id, uint16_t value, void (*handler)(
 {
 	this->id = id;
 	this->value = value;
+	this->cb = (void*) handler;
+	this->cb_arg = NULL;
+	this->next = NULL;
+}
+
+/**
+  * A low-level, internal version of the constructor, where the handler's type is determined
+  * by the value of arg. (See MicroBitMessageBus.h).
+  */
+MicroBitListener::MicroBitListener(uint16_t id, uint16_t value, void* handler, void* arg)
+{
+	this->id = id;
+	this->value = value;
 	this->cb = handler;
+	this->cb_arg = arg;
 	this->next = NULL;
 }
 
@@ -35,12 +49,15 @@ MicroBitMessageBus::MicroBitMessageBus()
   * Invokes a callback on a given MicroBitListener
   *
   * Internal wrapper function, used to enable
-  * parameterized callabacks through the fiber scheduler.
+  * parameterized callbacks through the fiber scheduler.
   */
 void async_callback(void *param)
 {
 	MicroBitListener *listener = (MicroBitListener *)param;
-	listener->cb(listener->evt);
+	if (listener->cb_arg != NULL)
+		((void (*)(MicroBitEvent, void*))listener->cb)(listener->evt, listener->cb_arg);
+	else
+		((void (*)(MicroBitEvent))listener->cb)(listener->evt);
 }
 
 /**
@@ -153,7 +170,15 @@ void MicroBitMessageBus::send(MicroBitEvent &evt, MicroBitMessageBusCache *c)
   * @endcode
   */
 
-void MicroBitMessageBus::listen(int id, int value, void (*handler)(MicroBitEvent))
+void MicroBitMessageBus::listen(int id, int value, void (*handler)(MicroBitEvent, void*), void* arg) {
+	this->listen(id, value, (void*) handler, arg);
+}
+
+void MicroBitMessageBus::listen(int id, int value, void (*handler)(MicroBitEvent)) {
+	this->listen(id, value, (void*) handler, NULL);
+}
+
+void MicroBitMessageBus::listen(int id, int value, void* handler, void* arg)
 {
 	//handler can't be NULL!
 	if(handler == NULL)
@@ -171,7 +196,7 @@ void MicroBitMessageBus::listen(int id, int value, void (*handler)(MicroBitEvent
 		l = l->next;
 	}
 	
-	MicroBitListener *newListener = new MicroBitListener(id, value, handler);
+	MicroBitListener *newListener = new MicroBitListener(id, value, handler, arg);
 
 	//if listeners is null - we can automatically add this listener to the list at the beginning...
 	if (listeners == NULL)
