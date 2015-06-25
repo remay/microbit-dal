@@ -1,7 +1,7 @@
 #ifndef MICROBIT_EVENT
 #define MICROBIT_EVENT
 
-#include "mbed.h"
+#include "MicroBit.h"
 
 /**
   * Class definition for a MicrobitEvent
@@ -14,35 +14,36 @@ class MicroBitEvent
     //These are public at the moment for backwards compatability with old code
     //will be refactored in the future!
     
-    int source;         // ID of the MicroBit Component that generated the event e.g. MICROBIT_ID_BUTTON_A. 
-    int value;          // Component specific code indicating the cause of the event.
-    int timestamp;      // Time at which the event was generated. ms since power on.
-    void *context;      // context specfic data associated with the event. 
+    uint16_t source;         // ID of the MicroBit Component that generated the event e.g. MICROBIT_ID_BUTTON_A. 
+    uint16_t value;          // Component specific code indicating the cause of the event.
+    uint32_t timestamp;      // Time at which the event was generated. ms since power on.
 
     /**
       * Constructor. 
       * @param src ID of the MicroBit Component that generated the event e.g. MICROBIT_ID_BUTTON_A.
       * @param value Component specific code indicating the cause of the event.
-      * @param timestamp Time at which the event was generated. ms since power on.
-      * @param context context specfic data associated with the event.
       * @param fire whether the event should be fire immediately upon construction
       * 
       * Example:
       * @code 
-      * MicrobitEvent evt(id,MICROBIT_BUTTON_EVT_CLICK,ticks,NULL,true); // auto fire
+      * MicrobitEvent evt(id,MICROBIT_BUTTON_EVT_CLICK,true); // auto fire
       * @endcode
       */
     
-    MicroBitEvent(int source, int value, int timestamp, void *context, bool fire=false);  
+    MicroBitEvent(uint16_t source, uint16_t value, bool fire = true);  
     
-    //empty constructor. 
+    /**
+      * Default constructor - initialises all values, and sets timestamp to the current time.
+      */ 
     MicroBitEvent(); 
 
     /**
-      * Default constructor - initialises all values to 0.
+      * Fires the represented event onto the message bus.
       */
     void fire();
 };
+
+
 
 #endif
 

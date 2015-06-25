@@ -2,18 +2,20 @@
 #define MICROBIT_MESSAGE_BUS_H
 
 #include "mbed.h"
-#include "inc/MicroBitEvent.h"
+#include "MicroBitEvent.h"
+
 // Enumeration of core components.
 #define MICROBIT_CONTROL_BUS_ID         0
-
 #define MICROBIT_ID_ANY					0
 #define MICROBIT_EVT_ANY				0
 
 struct MicroBitListener
 {
-	int id;								// The ID of the component that this listener is interested in. 
-	int value;							// Value this listener is interested in receiving. 
-	void (*cb)(void);					// Callback function associated with this listener.
+	uint16_t		id;							// The ID of the component that this listener is interested in. 
+	uint16_t 		value;						// Value this listener is interested in receiving. 
+	void 			(*cb)(MicroBitEvent);		// Callback function associated with this listener.
+	MicroBitEvent 	evt;
+	
 	MicroBitListener *next;
 
 	/**
@@ -23,7 +25,7 @@ struct MicroBitListener
 	  * @param value The event ID you would like to listen to from that component
 	  * @param handler A function pointer to call when the event is detected.
 	  */
-	MicroBitListener(int id, int value, void (*handler)(void));
+	MicroBitListener(uint16_t id, uint16_t value, void (*handler)(MicroBitEvent));
 };
 
 struct MicroBitMessageBusCache
@@ -71,10 +73,10 @@ class MicroBitMessageBus
 	  *
 	  * Example:
       * @code 
-	  * MicroBitEvent evt(id,MICROBIT_BUTTON_EVT_DOWN,ticks,NULL);
+	  * MicroBitEvent evt(id,MICROBIT_BUTTON_EVT_DOWN,ticks,false);
 	  * evt.fire();
 	  * //OR YOU CAN DO THIS...  
-	  * MicroBitEvent evt(id,MICROBIT_BUTTON_EVT_DOWN,ticks,NULL,true);
+	  * MicroBitEvent evt(id,MICROBIT_BUTTON_EVT_DOWN);
       * @endcode
 	  */
 	void send(MicroBitEvent &evt);
@@ -109,9 +111,10 @@ class MicroBitMessageBus
       * uBit.MessageBus.listen(MICROBIT_ID_BUTTON_B, MICROBIT_BUTTON_EVT_CLICK, onButtonBClick); // call function when ever a click event is detected.
       * @endcode
 	  */
-	void listen(int id, int value, void (*handler)(void));
+	void listen(int id, int value, void (*handler)(MicroBitEvent));
 
 	private:
+	
 	MicroBitListener *listeners;		// Chain of active listeners.
 	int seq;							// Sequence number. Used to invalidate cache entries.
 };

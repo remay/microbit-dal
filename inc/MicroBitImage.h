@@ -11,9 +11,9 @@
   */
 class MicroBitImage
 {
-    int width;                               // Width of the bitmap, in pixels.
-    int height;                              // Height of the bitmap, in pixels.
-    int *ref;                                // Reference count.
+    int16_t width;                               // Width of the bitmap, in pixels.
+    int16_t height;                              // Height of the bitmap, in pixels.
+    int16_t *ref;                                // Reference count.
     
     
     /**
@@ -23,7 +23,7 @@ class MicroBitImage
       * @param y the height of the image
       * @param bitmap an array of integers that make up an image.
       */
-    void init(const int x, const int y, const uint8_t *bitmap);
+    void init(const int16_t x, const int16_t y, const uint8_t *bitmap);
     
     /**
       * Internal constructor which defaults to the Empty Image instance variable
@@ -93,7 +93,7 @@ class MicroBitImage
       * MicroBitImage i(5,5); // a blank 5x5 image 
       * @endcode    
       */
-    MicroBitImage(const int x, const int y);
+    MicroBitImage(const int16_t x, const int16_t y);
 
     /**
       * Constructor. 
@@ -109,7 +109,7 @@ class MicroBitImage
       * MicroBitImage i(10,5,heart); 
       * @endcode     
       */
-    MicroBitImage(const int x, const int y, const uint8_t *bitmap);
+    MicroBitImage(const int16_t x, const int16_t y, const uint8_t *bitmap);
 
     /**
       * Destructor. 
@@ -180,7 +180,7 @@ class MicroBitImage
       * i.setPixelValue(0,0,255);
       * @endcode
       */
-    void setPixelValue(int x , int y, int value);
+    void setPixelValue(int16_t x , int16_t y, uint8_t value);
 
     /**
       * Determines the value of a given pixel.
@@ -192,7 +192,7 @@ class MicroBitImage
       * i.getPixelValue(0,0); //should be 0;
       * @endcode
       */
-    int getPixelValue(int x , int y);
+    int getPixelValue(int16_t x , int16_t y);
 
     /**
       * Replaces the content of this image with that of a given 
@@ -210,7 +210,7 @@ class MicroBitImage
       * i.printImage(0,0,heart); 
       * @endcode
       */
-    void printImage(int x, int y, const uint8_t *bitmap);
+    void printImage(int16_t x, int16_t y, const uint8_t *bitmap);
     
     /**
       * Pastes a given bitmap at the given co-ordinates.
@@ -229,7 +229,7 @@ class MicroBitImage
       * i.paste(-5,0,i); //displays a small heart :) 
       * @endcode
       */
-    int paste(const MicroBitImage &image, int x, int y, int alpha);
+    int paste(const MicroBitImage &image, int16_t x, int16_t y, uint8_t alpha);
  
      /**
       * Prints a character to the display at the given location
@@ -244,7 +244,7 @@ class MicroBitImage
       * i.print('a',0,0);
       * @endcode
       */
-    void print(char c, int x, int y);
+    void print(char c, int16_t x, int16_t y);
  
     /**
       * Shifts the pixels in this Image a given number of pixels to the Left.
@@ -258,7 +258,7 @@ class MicroBitImage
       * i.shiftLeft(5); //displays a small heart :) 
       * @endcode
       */
-    void shiftLeft(int n);
+    void shiftLeft(int16_t n);
 
     /**
       * Shifts the pixels in this Image a given number of pixels to the Right.
@@ -273,7 +273,7 @@ class MicroBitImage
       * i.shiftRight(5); //displays a big heart :) 
       * @endcode
       */
-    void shiftRight(int n);
+    void shiftRight(int16_t n);
     
     /**
       * Shifts the pixels in this Image a given number of pixels to Upward.
@@ -287,7 +287,7 @@ class MicroBitImage
       * i.shiftUp(1);
       * @endcode
       */
-    void shiftUp(int n);
+    void shiftUp(int16_t n);
     
     /**
       * Shifts the pixels in this Image a given number of pixels to Downward.
@@ -301,7 +301,7 @@ class MicroBitImage
       * i.shiftDown(1);
       * @endcode
       */
-    void shiftDown(int n);
+    void shiftDown(int16_t n);
 
     /**
       * Gets the width of this image.

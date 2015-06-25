@@ -10,39 +10,35 @@
   * Constructor. 
   * @param src ID of the MicroBit Component that generated the event e.g. MICROBIT_ID_BUTTON_A.
   * @param value Component specific code indicating the cause of the event.
-  * @param timestamp Time at which the event was generated. ms since power on.
-  * @param context context specfic data associated with the event.
   * @param fire whether the event should be fire immediately upon construction
   * 
   * Example:
   * @code 
-  * MicrobitEvent evt(id,MICROBIT_BUTTON_EVT_CLICK,ticks,NULL,true); // auto fire
+  * MicrobitEvent evt(id,MICROBIT_BUTTON_EVT_CLICK,true); // auto fire
   * @endcode
   */
-MicroBitEvent::MicroBitEvent(int source, int value, int timestamp, void *context, bool fire)
+MicroBitEvent::MicroBitEvent(uint16_t source, uint16_t value, bool fire)
 {
     this->source = source;
     this->value = value;
-    this->timestamp = timestamp;
-    this->context = context;   
+    this->timestamp = ticks;
     
     if(fire)
         this->fire();
 }    
 
 /**
-  * Default constructor - initialises all values to 0.
+  * Default constructor - initialises all values, and sets timestamp to the current time.
   */
 MicroBitEvent::MicroBitEvent()
 {
     this->source = 0;
     this->value = 0;
-    this->timestamp = 0;
-    this->context = (void *)0;
+    this->timestamp = ticks;
 }
 
 /**
-  * Fires the represented event onto the message bus!
+  * Fires the represented event onto the message bus.
   */
 void MicroBitEvent::fire()
 {

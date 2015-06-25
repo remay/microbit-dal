@@ -11,7 +11,7 @@
 
 
 /**
-  * Core Confuration settings.
+  * Core Configuration settings.
   */
 
 #define MICROBIT_SB2
@@ -82,10 +82,10 @@ enum AnimationMode {
 };
 
 struct MatrixPoint {
-    int x;
-    int y;
+    uint8_t x;
+    uint8_t y;
 
-    MatrixPoint(int x, int y);
+    MatrixPoint(uint8_t x, uint8_t y);
 };
 
 /**
@@ -95,15 +95,15 @@ struct MatrixPoint {
   */
 class MicroBitDisplay
 {
-    int id;
-    int width;
-    int height;
-    int brightness;
-    int strobeRow;
-    int rotation;
+    uint16_t id;
+    uint8_t width;
+    uint8_t height;
+    uint8_t brightness;
+    uint8_t strobeRow;
+    uint8_t rotation;
+    
     BusOut columnPins;
     DynamicPwm* rowDrive;
-    int strobeCount;
     MicroBitFont font;
     
     //
@@ -114,10 +114,10 @@ class MicroBitDisplay
     AnimationMode animationMode;
 
     // The time (in ticks) between each frame update.
-    int animationDelay;
+    uint16_t animationDelay;
 
     // The time (in ticks) since the frame update.
-    int animationTick;
+    uint16_t animationTick;
 
     // Stop playback of any animations
     void stopAnimation(int delay);
@@ -130,10 +130,10 @@ class MicroBitDisplay
     ManagedString scrollingText;
 
     // The index of the character currently being displayed.
-    int scrollingChar;
+    uint16_t scrollingChar;
 
     // The number of pixels the current character has been shifted on the display.
-    int scrollingPosition;
+    uint8_t scrollingPosition;
 
     //
     // State for printString() method.
@@ -145,7 +145,7 @@ class MicroBitDisplay
     ManagedString printingText;
 
     // The index of the character currently being displayed.
-    int printingChar;
+    uint16_t printingChar;
 
     //
     // State for scrollImage() method.
@@ -154,10 +154,10 @@ class MicroBitDisplay
     MicroBitImage scrollingImage;
 
     // The number of pixels the image has been shifted on the display.
-    int scrollingImagePosition;
+    uint8_t scrollingImagePosition;
 
     // The number of pixels the image is shifted on the display in each quantum.
-    int scrollingImageStride;
+    int8_t scrollingImageStride;
 
     // Flag to indicate if image has been rendered to screen yet (or not)
     bool scrollingImageRendered;
@@ -200,7 +200,7 @@ class MicroBitDisplay
       * Broadcasts an event onto the shared MessageBus
       * @param eventCode The ID of the event that has occurred.
       */
-    void sendEvent(int eventcode);
+    void sendEvent(uint16_t eventcode);
 
 
 public:
@@ -220,13 +220,13 @@ public:
       * MicroBitDisplay display(MICROBIT_ID_DISPLAY, 5, 5),
       * @endcode
       */
-    MicroBitDisplay(int id, int x, int y);
+    MicroBitDisplay(uint16_t id, uint8_t x, uint8_t y);
 
     /**
       * Resets the current given animation.
       * @param delay the delay after which the animation is reset.
       */
-    void resetAnimation(int delay);
+    void resetAnimation(uint16_t delay);
 
     /**
       * Frame update method, invoked periodically to strobe the display.
@@ -258,7 +258,7 @@ public:
       * uBit.display.printString("abc123",400);
       * @endcode
       */
-    void printString(ManagedString s, int delay = MICROBIT_DEFAULT_PRINT_SPEED);
+    void printString(ManagedString s, uint16_t delay = MICROBIT_DEFAULT_PRINT_SPEED);
 
     /**
       * Prints the given string to the display, one character at a time.
@@ -273,7 +273,7 @@ public:
       * uBit.display.printStringAsync("abc123",400);
       * @endcode
       */
-    void printStringAsync(ManagedString s, int delay = MICROBIT_DEFAULT_PRINT_SPEED);
+    void printStringAsync(ManagedString s, uint16_t delay = MICROBIT_DEFAULT_PRINT_SPEED);
 
 
     /**
@@ -289,7 +289,7 @@ public:
       * uBit.display.scrollString("abc123",100);
       * @endcode
       */
-    void scrollString(ManagedString s, int delay = MICROBIT_DEFAULT_SCROLL_SPEED);
+    void scrollString(ManagedString s, uint16_t delay = MICROBIT_DEFAULT_SCROLL_SPEED);
 
     /**
       * Scrolls the given string to the display, from right to left.
@@ -304,7 +304,7 @@ public:
       * uBit.display.scrollStringAsync("abc123",100);
       * @endcode
       */
-    void scrollStringAsync(ManagedString s, int delay = MICROBIT_DEFAULT_SCROLL_SPEED);
+    void scrollStringAsync(ManagedString s, uint16_t delay = MICROBIT_DEFAULT_SCROLL_SPEED);
 
 
     /**
@@ -321,7 +321,7 @@ public:
       * uBit.display.scrollImage(i,100,1);
       * @endcode
       */
-    void scrollImage(MicroBitImage image, int delay = MICROBIT_DEFAULT_SCROLL_SPEED, int stride = MICROBIT_DEFAULT_SCROLL_STRIDE);
+    void scrollImage(MicroBitImage image, uint16_t delay = MICROBIT_DEFAULT_SCROLL_SPEED, int8_t stride = MICROBIT_DEFAULT_SCROLL_STRIDE);
 
 
     /**
@@ -337,7 +337,7 @@ public:
       * uBit.display.scrollImageAsync(i,100,1);
       * @endcode
       */
-    void scrollImageAsync(MicroBitImage image, int delay = MICROBIT_DEFAULT_SCROLL_SPEED, int stride = MICROBIT_DEFAULT_SCROLL_STRIDE);
+    void scrollImageAsync(MicroBitImage image, uint16_t delay = MICROBIT_DEFAULT_SCROLL_SPEED, int8_t stride = MICROBIT_DEFAULT_SCROLL_STRIDE);
 
     /**
       * "Animates" the current image across the display with a given stride, finishing on the last frame of the animation.
@@ -357,7 +357,7 @@ public:
       * uBit.display.animateImageAsync(i,100,5);
       * @endcode
       */
-    void animateImageAsync(MicroBitImage image, int delay, int stride);
+    void animateImageAsync(MicroBitImage image, uint16_t delay, int8_t stride);
 
     /**
       * "Animates" the current image across the display with a given stride, finishing on the last frame of the animation.
@@ -377,7 +377,7 @@ public:
       * uBit.display.animateImage(i,100,5);
       * @endcode
       */
-    void animateImage(MicroBitImage image, int delay, int stride);
+    void animateImage(MicroBitImage image, uint16_t delay, int8_t stride);
 
     /**
       * Sets the display brightness to the specified level.
@@ -388,7 +388,7 @@ public:
       * uBit.display.setBrightness(255); //max brightness
       * @endcode
       */
-    void setBrightness(int b);
+    void setBrightness(uint8_t b);
 
     /**
       * Fetches the current brightness of this display.
@@ -410,7 +410,7 @@ public:
       * uBit.display.rotateTo(MICROBIT_DISPLAY_ROTATION_180); //rotates 180 degrees from original orientation
       * @endcode
       */
-    void rotateTo(int position);
+    void rotateTo(uint8_t position);
     
     /**
       * Enables the display, should only be called if the display is disabled.

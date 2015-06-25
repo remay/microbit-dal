@@ -1,4 +1,4 @@
-#include "inc/MicroBit.h"
+#include "MicroBit.h"
 
 char MICROBIT_BLE_DEVICE_NAME[] = "BBC MicroBit [xxxxx]";
 char MICROBIT_BLE_MANUFACTURER[] = "The Cast of W1A";
@@ -69,6 +69,7 @@ void MicroBit::init()
     // Add our auxiliary services.
     ble_firmware_update_service = new MicroBitDFUService(*ble);
     ble_device_information_service = new DeviceInformationService(*ble, MICROBIT_BLE_MANUFACTURER, MICROBIT_BLE_MODEL, MICROBIT_BLE_SERIAL, MICROBIT_BLE_HARDWARE_VERSION, MICROBIT_BLE_FIRMWARE_VERSION, MICROBIT_BLE_SOFTWARE_VERSION);
+    ble_event_service = new MicroBitEventService(*ble);
     
     // Compute our auto-generated MicroBit device name.
     ble_firmware_update_service->getName(MICROBIT_BLE_DEVICE_NAME+14);
@@ -85,7 +86,8 @@ void MicroBit::init()
     ble = NULL;
     ble_firmware_update_service = NULL;
     ble_device_information_service = NULL;
-
+    ble_event_service = NULL;
+    
 #endif
 
     // Start refreshing the Matrix Display
@@ -167,8 +169,8 @@ int MicroBit::random(int max)
   * provide a power efficient sense of time.
   */
 void MicroBit::systemTick()
-{
-    // Refresh the matric display, and update animations, if we need to.
+{   
+    // Refresh the matrix display, and update animations, if we need to.
     if (uBit.flags & MICROBIT_FLAG_DISPLAY_RUNNING)
         uBit.display.strobeUpdate();
                 

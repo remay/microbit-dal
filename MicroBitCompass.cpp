@@ -11,7 +11,7 @@
   * compass(MICROBIT_ID_COMPASS, MAG3110_DEFAULT_ADDR);
   * @endcode
   */
-MicroBitCompass::MicroBitCompass(int id, int address) : average(), sample(), int1(MICROBIT_PIN_COMPASS_DATA_READY)
+MicroBitCompass::MicroBitCompass(uint16_t id, uint16_t address) : average(), sample(), int1(MICROBIT_PIN_COMPASS_DATA_READY)
 {
     this->id = id;
     this->address = address;

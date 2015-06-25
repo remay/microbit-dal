@@ -28,7 +28,7 @@ void ManagedString::initString(const char *str)
     len = strlen(str);
     data = (char *) malloc(len+1);
     memcpy(data, str, len+1);
-    ref = (int *) malloc(sizeof(int));
+    ref = (int16_t *) malloc(sizeof(int16_t));
     *ref = 1;
 }
 
@@ -92,7 +92,6 @@ ManagedString::ManagedString(const char *str)
 
 ManagedString::ManagedString(const ManagedString &s1, const ManagedString &s2)
 {
-    
     // Calculate length of new string.
     len = s1.len + s2.len;
 
@@ -105,7 +104,7 @@ ManagedString::ManagedString(const ManagedString &s1, const ManagedString &s2)
     data[len] = 0;
 
     // Initialise the ref count and we're done.
-    ref = (int *) malloc(sizeof(int));
+    ref = (int16_t *) malloc(sizeof(int16_t));
     *ref = 1;
 }
 
@@ -124,7 +123,7 @@ ManagedString::ManagedString(const ManagedString &s1, const ManagedString &s2)
   * ManagedString s("abcdefg",7); // this is generally used for substring... why not use a normal char * constructor?
   * @endcode
   */  
-ManagedString::ManagedString(const char *str, const int length)
+ManagedString::ManagedString(const char *str, const int16_t length)
 {
     // Sanity check. Return EmptyString for anything distasteful
     if (str == NULL || *str == 0 || length > strlen(str))
@@ -142,7 +141,7 @@ ManagedString::ManagedString(const char *str, const int length)
     data[len] = 0;
 
     // Initialize a refcount and we're done.
-    ref = (int *) malloc(sizeof(int));
+    ref = (int16_t *) malloc(sizeof(int16_t));
     *ref = 1;
 }
 
@@ -323,7 +322,7 @@ bool ManagedString::operator> (const ManagedString& s)
   * print(s.substring(0,2)) // prints "ab"
   * @endcode
   */ 
-ManagedString ManagedString::substring(int start, int length)
+ManagedString ManagedString::substring(int16_t start, int16_t length)
 {
     // If the parameters are illegal, just return a reference to the empty string.
     if (start >= len)
@@ -382,7 +381,7 @@ ManagedString ManagedString::operator+ (ManagedString& s)
   * print(s.charAt(1)) // prints "b"
   * @endcode
   */     
-char ManagedString::charAt(int index)
+char ManagedString::charAt(int16_t index)
 {
     return (index >=0 && index < len) ? data[index] : 0;
 }
@@ -409,7 +408,7 @@ const char *ManagedString::toCharArray()
   * print(s.length()) // prints "4"
   * @endcode
   */ 
-int ManagedString::length()
+int16_t ManagedString::length()
 {
     return len;
 }

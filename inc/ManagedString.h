@@ -1,6 +1,8 @@
 #ifndef MANAGED_STRING_H
 #define MANAGED_STRING_H
 
+#include "mbed.h"
+
 /**
   * Class definition for a ManagedString.
   *
@@ -18,8 +20,8 @@ class ManagedString
     // Internally we record the string as a char *, but control access to this to proide immutability
     // and reference counting.
     char *data;
-    int *ref;
-    int len;
+    int16_t *ref;
+    int16_t len;
 
     public:
 
@@ -79,7 +81,7 @@ class ManagedString
       * ManagedString s("abcdefg",7); // this is generally used for substring... why not use a normal char * constructor?
       * @endcode
       */    
-    ManagedString(const char *str, const int length);
+    ManagedString(const char *str, const int16_t length);
 
     /**
       * Copy constructor. 
@@ -214,7 +216,7 @@ class ManagedString
       * print(s.substring(0,2)) // prints "ab"
       * @endcode
       */    
-    ManagedString substring(int start, int length);
+    ManagedString substring(int16_t start, int16_t length);
     
     /**
       * Concatenates this string with the one provided.
@@ -245,7 +247,7 @@ class ManagedString
       * print(s.charAt(1)) // prints "b"
       * @endcode
       */    
-    char charAt(int index);
+    char charAt(int16_t index);
 
 
     /**
@@ -267,7 +269,7 @@ class ManagedString
       * print(s.length()) // prints "4"
       * @endcode
       */ 
-    int length();
+    int16_t length();
 
     /**
       * Empty String constant

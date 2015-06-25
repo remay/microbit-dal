@@ -52,10 +52,10 @@ class MicroBitPin
       * Used to track asynchronous events in the event bus.
       */
       
-    int id;             // Event Bus ID
-    PinName name;       // mBed pin name of this pin.
-    void *pin;          // The mBed object looking after this pin at any point in time (may change!).
-    int status;         // latched state
+    void *pin;                  // The mBed object looking after this pin at any point in time (may change!).
+    uint8_t id;                 // Event Bus ID
+    PinName name;               // mBed pin name of this pin.
+    uint8_t status;             // latched state
     PinCapability capability;
    
     /**

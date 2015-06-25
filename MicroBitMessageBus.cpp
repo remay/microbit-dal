@@ -13,7 +13,7 @@
   * @param value The event ID you would like to listen to from that component
   * @param handler A function pointer to call when the event is detected.
   */
-MicroBitListener::MicroBitListener(int id, int value, void (*handler)(void))
+MicroBitListener::MicroBitListener(uint16_t id, uint16_t value, void (*handler)(MicroBitEvent))
 {
 	this->id = id;
 	this->value = value;
@@ -29,6 +29,18 @@ MicroBitMessageBus::MicroBitMessageBus()
 {
 	this->listeners = NULL;
 	this->seq = 0;
+}
+
+/**
+  * Invokes a callback on a given MicroBitListener
+  *
+  * Internal wrapper function, used to enable
+  * parameterized callabacks through the fiber scheduler.
+  */
+void async_callback(void *param)
+{
+	MicroBitListener *listener = (MicroBitListener *)param;
+	listener->cb(listener->evt);
 }
 
 /**
@@ -89,7 +101,8 @@ void MicroBitMessageBus::send(MicroBitEvent &evt, MicroBitMessageBusCache *c)
 	{
 		if(l->value ==  MICROBIT_EVT_ANY || l->value == evt.value)
 		{
-			create_fiber(l->cb);
+			l->evt = evt;
+			create_fiber(async_callback, (void *)l);
 		}
 
 		l = l->next;
@@ -99,16 +112,22 @@ void MicroBitMessageBus::send(MicroBitEvent &evt, MicroBitMessageBusCache *c)
 	l = listeners;
 	while (l != NULL && l->id == MICROBIT_ID_ANY)
 	{
-		create_fiber(l->cb);
+		l->evt = evt;
+		create_fiber(async_callback, (void *)l);
+		
 		l = l->next;	
 	}
 
-	// Finally, if we were given a cached entry that's now invalid, update it.
+	// If we were given a cached entry that's now invalid, update it.
 	if ( c != NULL && c->seq != this->seq)
 	{
 		c->ptr = start;
 		c->seq = this->seq;
 	}
+	
+	// Finally, see if thsi event needs to be propogated through our BLE interface
+	if (uBit.ble_event_service)
+    	uBit.ble_event_service->onMicroBitEvent(evt);
 }
 
 /**
@@ -126,7 +145,7 @@ void MicroBitMessageBus::send(MicroBitEvent &evt, MicroBitMessageBusCache *c)
   *
   * Example:
   * @code 
-  * void onButtonBClick()
+  * void onButtonBClick(MicroBitEvent evt)
   * {
   * 	//do something
   * }
@@ -134,7 +153,7 @@ void MicroBitMessageBus::send(MicroBitEvent &evt, MicroBitMessageBusCache *c)
   * @endcode
   */
 
-void MicroBitMessageBus::listen(int id, int value, void (*handler)(void))
+void MicroBitMessageBus::listen(int id, int value, void (*handler)(MicroBitEvent))
 {
 	//handler can't be NULL!
 	if(handler == NULL)
@@ -151,7 +170,6 @@ void MicroBitMessageBus::listen(int id, int value, void (*handler)(void))
 			
 		l = l->next;
 	}
-	
 	
 	MicroBitListener *newListener = new MicroBitListener(id, value, handler);
 
@@ -207,4 +225,5 @@ void MicroBitMessageBus::listen(int id, int value, void (*handler)(void))
 	// This will lazily invalidate any cached entries to the listener list.
 	this->seq++;
 }
+
 

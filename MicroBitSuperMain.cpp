@@ -6,6 +6,12 @@ Serial pc(USBTX, USBRX);
 
 MicroBit    uBit;
 
+void
+onResetButtonPressed(MicroBitEvent evt)
+{
+    NVIC_SystemReset();
+}
+
 int main()
 {   
 #ifdef MICROBIT_DBG
@@ -52,7 +58,7 @@ int main()
             uBit.ble_firmware_update_service->pair();
     }
         
-    uBit.MessageBus.listen(MICROBIT_ID_BUTTON_RESET, MICROBIT_BUTTON_EVT_CLICK, NVIC_SystemReset);
+    uBit.MessageBus.listen(MICROBIT_ID_BUTTON_RESET, MICROBIT_BUTTON_EVT_CLICK, onResetButtonPressed);
     app_main();
     
     while(1)

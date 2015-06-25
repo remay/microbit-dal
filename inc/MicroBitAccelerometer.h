@@ -52,8 +52,8 @@ class MicroBitAccelerometer
       * Used to track asynchronous events in the event bus.
       */
       
-    int             id;            // Event Bus ID
-    int             address;       // I2C address of this accelerometer.
+    uint16_t        id;            // Event Bus ID
+    uint16_t        address;       // I2C address of this accelerometer.
     MMA8653Sample   sample;        // The last sample read.
     DigitalIn       int1;          // Data ready interrupt.
     
@@ -70,7 +70,7 @@ class MicroBitAccelerometer
       * accelerometer(MICROBIT_ID_ACCELEROMETER, MMA8653_DEFAULT_ADDR)
       * @endcode
       */
-    MicroBitAccelerometer(int id, int address);
+    MicroBitAccelerometer(uint16_t id, uint16_t address);
     
     /**
       * Reads the acceleration data from the accelerometer, and stores it in our buffer.

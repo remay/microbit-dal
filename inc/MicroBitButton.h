@@ -35,7 +35,7 @@ class MicroBitButton
       * Used to track asynchronous events in the event bus.
       */
 
-    int id;                         // Event Bus ID
+    uint16_t id;                    // Event Bus ID
     PinName name;                   // mBed pin name of this pin.
     DigitalIn pin;                  // The mBed object looking after this pin at any point in time (may change!).
     uint8_t status;                 // Keeps track of the button state when performing debounce detection.
@@ -66,7 +66,7 @@ class MicroBitButton
       * MICROBIT_BUTTON_EVT_LONG_CLICK
       * @endcode
       */
-    MicroBitButton(int id, PinName name);
+    MicroBitButton(uint16_t id, PinName name);
     
     /**
       * Tests if this Button is currently pressed.

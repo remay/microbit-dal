@@ -14,7 +14,7 @@
   * Create a Point representation of an LED on a matrix
   * Used to handle non-linear matrix layouts.
   */
-MatrixPoint::MatrixPoint(int x, int y)
+MatrixPoint::MatrixPoint(uint8_t x, uint8_t y)
 {
     this->x = x;
     this->y = y;
@@ -33,7 +33,7 @@ MatrixPoint::MatrixPoint(int x, int y)
   * MicroBitDisplay display(MICROBIT_ID_DISPLAY, 5, 5),
   * @endcode
   */
-MicroBitDisplay::MicroBitDisplay(int id, int x, int y) : 
+MicroBitDisplay::MicroBitDisplay(uint16_t id, uint8_t x, uint8_t y) : 
     columnPins(MICROBIT_DISPLAY_COLUMN_PINS), 
     font(),
     image(x*2,y)
@@ -43,7 +43,6 @@ MicroBitDisplay::MicroBitDisplay(int id, int x, int y) :
     this->width = x;
     this->height = y;
     this->strobeRow = 0;
-    this->strobeCount = 0;
     this->rowDrive->period_us(MICROBIT_DISPLAY_PWM_PERIOD);
     
     this->rotation = MICROBIT_DISPLAY_ROTATION_0;
@@ -143,16 +142,9 @@ MicroBitDisplay::animationUpdate()
   * Broadcasts an event onto the shared MessageBus
   * @param eventCode The ID of the event that has occurred.
   */
-void MicroBitDisplay::sendEvent(int eventCode)
+void MicroBitDisplay::sendEvent(uint16_t eventCode)
 {
-    MicroBitEvent evt;
-    
-    evt.source = id;
-    evt.context = NULL;
-    evt.timestamp = ticks;
-    evt.value = eventCode;
-    
-    uBit.MessageBus.send(evt);
+    MicroBitEvent evt(id,eventCode);
 }
 
 /**
@@ -242,7 +234,7 @@ void MicroBitDisplay::updateAnimateImage()
   * Resets the current given animation.
   * @param delay the delay after which the animation is reset.
   */
-void MicroBitDisplay::resetAnimation(int delay)
+void MicroBitDisplay::resetAnimation(uint16_t delay)
 {
     //sanitise this value
     if(delay <= 0 )
@@ -286,7 +278,7 @@ void MicroBitDisplay::print(char c)
   * uBit.display.printStringAsync("abc123",400);
   * @endcode
   */
-void MicroBitDisplay::printStringAsync(ManagedString s, int delay)
+void MicroBitDisplay::printStringAsync(ManagedString s, uint16_t delay)
 {
     //sanitise this value
     if(delay <= 0 )
@@ -313,7 +305,7 @@ void MicroBitDisplay::printStringAsync(ManagedString s, int delay)
   * uBit.display.printString("abc123",400);
   * @endcode
   */
-void MicroBitDisplay::printString(ManagedString s, int delay)
+void MicroBitDisplay::printString(ManagedString s, uint16_t delay)
 {
     //sanitise this value
     if(delay <= 0 )
@@ -342,7 +334,7 @@ void MicroBitDisplay::printString(ManagedString s, int delay)
   * uBit.display.scrollStringAsync("abc123",100);
   * @endcode
   */
-void MicroBitDisplay::scrollStringAsync(ManagedString s, int delay)
+void MicroBitDisplay::scrollStringAsync(ManagedString s, uint16_t delay)
 {
     //sanitise this value
     if(delay <= 0 )
@@ -370,7 +362,7 @@ void MicroBitDisplay::scrollStringAsync(ManagedString s, int delay)
   * uBit.display.scrollString("abc123",100);
   * @endcode
   */
-void MicroBitDisplay::scrollString(ManagedString s, int delay)
+void MicroBitDisplay::scrollString(ManagedString s, uint16_t delay)
 {
     //sanitise this value
     if(delay <= 0 )
@@ -399,7 +391,7 @@ void MicroBitDisplay::scrollString(ManagedString s, int delay)
   * uBit.display.scrollImageAsync(i,100,1);
   * @endcode
   */
-void MicroBitDisplay::scrollImageAsync(MicroBitImage image, int delay, int stride)
+void MicroBitDisplay::scrollImageAsync(MicroBitImage image, uint16_t delay, int8_t stride)
 {
     // Assume right to left functionality, to align with scrollString()
     stride = -stride;
@@ -432,7 +424,7 @@ void MicroBitDisplay::scrollImageAsync(MicroBitImage image, int delay, int strid
   * uBit.display.scrollImage(i,100,1);
   * @endcode
   */
-void MicroBitDisplay::scrollImage(MicroBitImage image, int delay, int stride)
+void MicroBitDisplay::scrollImage(MicroBitImage image, uint16_t delay, int8_t stride)
 {
     //sanitise the delay value
     if(delay <= 0 )
@@ -465,7 +457,7 @@ void MicroBitDisplay::scrollImage(MicroBitImage image, int delay, int stride)
   * uBit.display.animateImageAsync(i,100,5);
   * @endcode
   */
-void MicroBitDisplay::animateImageAsync(MicroBitImage image, int delay, int stride)
+void MicroBitDisplay::animateImageAsync(MicroBitImage image, uint16_t delay, int8_t stride)
 {
     // Assume right to left functionality, to align with scrollString()
     stride = -stride;
@@ -502,7 +494,7 @@ void MicroBitDisplay::animateImageAsync(MicroBitImage image, int delay, int stri
   * uBit.display.animateImage(i,100,5);
   * @endcode
   */
-void MicroBitDisplay::animateImage(MicroBitImage image, int delay, int stride)
+void MicroBitDisplay::animateImage(MicroBitImage image, uint16_t delay, int8_t stride)
 {
     //sanitise the delay value
     if(delay <= 0 )
@@ -527,11 +519,11 @@ void MicroBitDisplay::animateImage(MicroBitImage image, int delay, int stride)
   * uBit.display.setBrightness(255); //max brightness
   * @endcode
   */  
-void MicroBitDisplay::setBrightness(int b)
+void MicroBitDisplay::setBrightness(uint8_t b)
 {
     //sanitise the brightness level
-    if(b < 0 || b > 255)
-        return;
+    //if(b < 0 || b > 255)
+    //    return;
     
     float level = (float)b / float(MICROBIT_DISPLAY_MAX_BRIGHTNESS);
     
@@ -562,7 +554,7 @@ int MicroBitDisplay::getBrightness()
   * uBit.display.rotateTo(MICROBIT_DISPLAY_ROTATION_180); //rotates 180 degrees from original orientation
   * @endcode
   */   
-void MicroBitDisplay::rotateTo(int position)
+void MicroBitDisplay::rotateTo(uint8_t position)
 {
     //perform a switch on position to restrict range to distinct values
     switch(position){

@@ -46,7 +46,7 @@ MicroBitImage::MicroBitImage()
   * TODO: Consider an immutable flavour, which might save us RAM for animation spritesheets...
   * ...as these could be kept in FLASH.
   */
-MicroBitImage::MicroBitImage(const int x, const int y)
+MicroBitImage::MicroBitImage(const int16_t x, const int16_t y)
 {
     this->init(x,y,NULL);
 }
@@ -142,7 +142,7 @@ MicroBitImage::MicroBitImage(const char *s)
     this->width = width;
     this->height = height;
     this->bitmap = (uint8_t *) malloc(width * height);
-    this->ref = (int *) malloc(sizeof(int));
+    this->ref = (int16_t *) malloc(sizeof(int16_t));
     *ref = 1;
 
     // Second pass: collect the data.
@@ -186,7 +186,7 @@ MicroBitImage::MicroBitImage(const char *s)
   * MicroBitImage i(10,5,heart); 
   * @endcode     
   */
-MicroBitImage::MicroBitImage(const int x, const int y, const uint8_t *bitmap)
+MicroBitImage::MicroBitImage(const int16_t x, const int16_t y, const uint8_t *bitmap)
 {
     this->init(x,y,bitmap);
 }
@@ -224,7 +224,7 @@ void MicroBitImage::init_empty()
   * @param y the height of the image
   * @param bitmap an array of integers that make up an image.
   */
-void MicroBitImage::init(const int x, const int y, const uint8_t *bitmap)
+void MicroBitImage::init(const int16_t x, const int16_t y, const uint8_t *bitmap)
 {
     //sanity check size of image - you cannot have a negative sizes
     if(x < 0 || y < 0)
@@ -247,7 +247,7 @@ void MicroBitImage::init(const int x, const int y, const uint8_t *bitmap)
     else
         this->clear();
         
-    ref = (int *) malloc(sizeof(int));
+    ref = (int16_t *) malloc(sizeof(int16_t));
     *ref = 1;
 }
 
@@ -342,10 +342,10 @@ void MicroBitImage::clear()
   * i.setPixelValue(0,0,255);
   * @endcode
   */
-void MicroBitImage::setPixelValue(int x , int y, int value)
+void MicroBitImage::setPixelValue(int16_t x , int16_t y, uint8_t value)
 {
     //sanity check
-    if(x >= width || y >= height || x < 0 || y < 0 || value < 0 || value > 255)
+    if(x >= width || y >= height || x < 0 || y < 0)
         return;
     
     this->bitmap[y*width+x] = value;
@@ -361,7 +361,7 @@ void MicroBitImage::setPixelValue(int x , int y, int value)
   * i.getPixelValue(0,0); //should be 0;
   * @endcode
   */
-int MicroBitImage::getPixelValue(int x , int y)
+int MicroBitImage::getPixelValue(int16_t x , int16_t y)
 {
     //sanity check
     if(x >= width || y >= height || x < 0 || y < 0)
@@ -386,7 +386,7 @@ int MicroBitImage::getPixelValue(int x , int y)
   * i.printImage(0,0,heart); 
   * @endcode
   */
-void MicroBitImage::printImage(int width, int height, const uint8_t *bitmap)
+void MicroBitImage::printImage(int16_t width, int16_t height, const uint8_t *bitmap)
 {   
     const uint8_t *pIn;
     uint8_t *pOut;
@@ -429,7 +429,7 @@ void MicroBitImage::printImage(int width, int height, const uint8_t *bitmap)
   * i.paste(-5,0,i); //displays a small heart :) 
   * @endcode
   */
-int MicroBitImage::paste(const MicroBitImage &image, int x, int y, int alpha)
+int MicroBitImage::paste(const MicroBitImage &image, int16_t x, int16_t y, uint8_t alpha)
 {
     uint8_t *pIn, *pOut;
     int cx, cy;
@@ -502,7 +502,7 @@ int MicroBitImage::paste(const MicroBitImage &image, int x, int y, int alpha)
   * i.print('a',0,0);
   * @endcode
   */
-void MicroBitImage::print(char c, int x, int y)
+void MicroBitImage::print(char c, int16_t x, int16_t y)
 {
     unsigned char v;
     int x1, y1;
@@ -549,7 +549,7 @@ void MicroBitImage::print(char c, int x, int y)
   * i.shiftLeft(5); //displays a small heart :) 
   * @endcode
   */
-void MicroBitImage::shiftLeft(int n)
+void MicroBitImage::shiftLeft(int16_t n)
 {
     uint8_t *p = bitmap;
     int pixels = width-n;
@@ -585,7 +585,7 @@ void MicroBitImage::shiftLeft(int n)
   * i.shiftRight(5); //displays a big heart :) 
   * @endcode
   */
-void MicroBitImage::shiftRight(int n)
+void MicroBitImage::shiftRight(int16_t n)
 {
     uint8_t *p = bitmap;
     int pixels = width-n;
@@ -621,7 +621,7 @@ void MicroBitImage::shiftRight(int n)
   * i.shiftUp(1);
   * @endcode
   */
-void MicroBitImage::shiftUp(int n)
+void MicroBitImage::shiftUp(int16_t n)
 {
     uint8_t *pOut, *pIn;
    
@@ -663,7 +663,7 @@ void MicroBitImage::shiftUp(int n)
   * i.shiftDown(1);
   * @endcode
   */
-void MicroBitImage::shiftDown(int n)
+void MicroBitImage::shiftDown(int16_t n)
 {
     uint8_t *pOut, *pIn;
    

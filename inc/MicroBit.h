@@ -37,6 +37,7 @@ void panic(int statusCode);
 #include "MicroBitAccelerometer.h"
 
 #include "MicroBitDFUService.h"
+#include "MicroBitEventService.h"
 
 // MicroBit::flags values
 #define MICROBIT_FLAG_SCHEDULER_RUNNING         0x00000001
@@ -84,8 +85,9 @@ void panic(int statusCode);
 #define MICROBIT_PIN_SDA                P0_30
 #define MICROBIT_PIN_SCL                P0_0
 
+#ifdef MICROBIT_DEBUG
 extern Serial pc;
-
+#endif
 /**
   * Class definition for a MicroBit device.
   *
@@ -123,6 +125,7 @@ class MicroBit
     BLEDevice                   *ble;
     DeviceInformationService    *ble_device_information_service;
     MicroBitDFUService          *ble_firmware_update_service;
+    MicroBitEventService        *ble_event_service;
 
     
     /**

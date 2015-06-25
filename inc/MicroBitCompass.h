@@ -43,9 +43,9 @@
 
 struct CompassSample
 {
-    int         x;
-    int         y;
-    int         z;
+    int16_t         x;
+    int16_t         y;
+    int16_t         z;
 };
 
 /**
@@ -61,8 +61,8 @@ class MicroBitCompass
       * Used to track asynchronous events in the event bus.
       */
       
-    int id;             // Event Bus ID
-    int address;        // I2C address of the magnetmometer.  
+    uint16_t id;             // Event Bus ID
+    uint16_t address;        // I2C address of the magnetmometer.  
 
     public:
     
@@ -72,7 +72,7 @@ class MicroBitCompass
     CompassSample       sample;         // The latest sample data recorded.
     DigitalIn           int1;           // Data ready interrupt.
 
-    int                 calibrating;     // flag.    
+    uint8_t             calibrating;     // flag.    
             
     /**
       * Constructor. 
@@ -85,7 +85,7 @@ class MicroBitCompass
       * compass(MICROBIT_ID_COMPASS, MAG3110_DEFAULT_ADDR);
       * @endcode
       */
-    MicroBitCompass(int id, int address);
+    MicroBitCompass(uint16_t id, uint16_t address);
     
     /**
       * Gets the current heading of the device, relative to magnetic north.

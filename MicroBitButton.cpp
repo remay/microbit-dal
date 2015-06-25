@@ -21,7 +21,7 @@
   * MICROBIT_BUTTON_EVT_LONG_CLICK
   * @endcode
   */
-MicroBitButton::MicroBitButton(int id, PinName name) : pin(name)
+MicroBitButton::MicroBitButton(uint16_t id, PinName name) : pin(name)
 {
     this->id = id;
     this->name = name;
@@ -35,7 +35,7 @@ MicroBitButton::MicroBitButton(int id, PinName name) : pin(name)
 void MicroBitButton::debounceDown()
 {
     //send a button down event
-    MicroBitEvent evt(id,MICROBIT_BUTTON_EVT_DOWN,ticks,NULL,true);
+    MicroBitEvent evt(id,MICROBIT_BUTTON_EVT_DOWN);
     
     //set the downStartTime,
     downStartTime=ticks;        
@@ -47,13 +47,13 @@ void MicroBitButton::debounceDown()
 void MicroBitButton::debounceUp()
 {
     //send button up event
-    MicroBitEvent evt(id,MICROBIT_BUTTON_EVT_UP,ticks,NULL,true);
+    MicroBitEvent evt(id,MICROBIT_BUTTON_EVT_UP);
     
     //determine if this is a long click or a normal click and send event
     if((ticks-downStartTime)>=MICROBIT_BUTTON_DEBOUNCE_LONG)
-        MicroBitEvent evt(id,MICROBIT_BUTTON_EVT_LONG_CLICK,ticks,NULL,true);    
+        MicroBitEvent evt(id,MICROBIT_BUTTON_EVT_LONG_CLICK);    
     else
-        MicroBitEvent evt(id,MICROBIT_BUTTON_EVT_CLICK,ticks,NULL,true);
+        MicroBitEvent evt(id,MICROBIT_BUTTON_EVT_CLICK);
 }
 
 /**
@@ -77,7 +77,7 @@ void MicroBitButton::tick()
         status |= MICROBIT_BUTTON_STATE_HOLD_TRIGGERED;
         
         //fire hold event
-        MicroBitEvent evt(id,MICROBIT_BUTTON_EVT_HOLD,ticks,NULL,true);
+        MicroBitEvent evt(id,MICROBIT_BUTTON_EVT_HOLD);
     }
     
     //handle button debounce, this ensure we don't get multiple button events for a single press
