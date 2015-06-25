@@ -25,7 +25,9 @@
 //
 #define FIBER_STACK_SIZE        64
 #define FIBER_TICK_PERIOD_MS    6
-#define CORTEX_M0_STACK_BASE    (0x20004000 - 4) 
+#define CORTEX_M0_STACK_BASE    (0x20004000 - 4)
+
+#define MICROBIT_FLAG_DATA_READ 0x01 
 
 /**
   *  Thread Context for an ARM Cortex M0 core.
@@ -169,5 +171,10 @@ extern "C" void save_context(Cortex_M0_TCB *tcb, uint32_t stack);
   * When stored as an unsigned long, this gives us approx 50 days between rollover, which is ample. :-)
   */
 extern unsigned long ticks;
+
+/**
+  * This variable is used to prioritise the systems' idle fibre to execute essential tasks.
+  */
+extern uint8_t fiber_flags;
 
 #endif

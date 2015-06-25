@@ -160,6 +160,11 @@ class MicroBitCompass
       */  
     void tick();
     
+    /**
+      * Returns 0 or 1. 1 indicates data is waiting to be read, zero means data is not ready to be read.
+      */
+    int isDataReady();
+    
     private:
     
     /**
@@ -199,7 +204,6 @@ class MicroBitCompass
       * @return The register value, interpreted as a 8 bi signed value.
       */
     int16_t read8(uint8_t reg);
-
 };
 
 #endif

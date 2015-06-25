@@ -132,6 +132,11 @@ class MicroBitAccelerometer
       */    
     void tick();
     
+    /**
+      * Returns 0 or 1. 1 indicates data is waiting to be read, zero means data is not ready to be read.
+      */
+    int isDataReady();
+    
     private:
     /**
       * Issues a standard, 2 byte I2C command write to the accelerometer.
@@ -151,7 +156,6 @@ class MicroBitAccelerometer
       * @param length The number of bytes to read.
       */
     void readCommand(uint8_t reg, uint8_t* buffer, int length);
-
 };
 
 #endif

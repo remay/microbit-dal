@@ -46,6 +46,7 @@ void panic(int statusCode);
 #define MICROBIT_FLAG_DISPLAY_RUNNING           0x00000004
 #define MICROBIT_FLAG_COMPASS_RUNNING           0x00000008
 
+
 // Random number generator
 #define NRF51822_RNG_ADDRESS            0x4000D000
 
@@ -200,6 +201,11 @@ class MicroBit
       * provide a power efficient sense of time.
       */
     void systemTick();
+    
+    /**
+      * System tasks to be executed by the idle thread when the Micro:Bit isn't busy or when data needs to be read.
+      */
+    void systemTasks();
 
     /**
       * Determine the time since this MicroBit was last reset.

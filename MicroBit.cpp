@@ -174,6 +174,23 @@ void MicroBit::systemTick()
     if (uBit.flags & MICROBIT_FLAG_DISPLAY_RUNNING)
         uBit.display.strobeUpdate();
                 
+    // Scheduler callback. We do this here just as a single timer is more efficient. :-)
+    if (uBit.flags & MICROBIT_FLAG_SCHEDULER_RUNNING)
+        scheduler_tick();  
+        
+    if(uBit.accelerometer.isDataReady() || uBit.compass.isDataReady())
+        fiber_flags |= MICROBIT_FLAG_DATA_READ;
+        
+    //update the buttons if required.
+    uBit.buttonA.tick();
+    uBit.buttonB.tick();
+}
+
+/**
+  * System tasks to be executed by the idle thread when the Micro:Bit isn't busy or when data needs to be read.
+  */
+void MicroBit::systemTasks()
+{   
     // Update Accelerometer if needed.
     if (uBit.flags & MICROBIT_FLAG_ACCELEROMETER_RUNNING)
         uBit.accelerometer.tick();
@@ -181,14 +198,8 @@ void MicroBit::systemTick()
     // Update Accelerometer if needed.
     if (uBit.flags & MICROBIT_FLAG_COMPASS_RUNNING)
         uBit.compass.tick();
- 
-    // Scheduler callback. We do this here just as a single timer is more efficient. :-)
-    if (uBit.flags & MICROBIT_FLAG_SCHEDULER_RUNNING)
-        scheduler_tick();  
-        
-    //update the buttons if required.
-    uBit.buttonA.tick();
-    uBit.buttonB.tick();
+    
+    fiber_flags &= ~MICROBIT_FLAG_DATA_READ;
 }
 
 /**

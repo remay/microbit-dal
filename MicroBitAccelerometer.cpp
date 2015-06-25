@@ -185,3 +185,11 @@ void MicroBitAccelerometer::tick()
     if(!int1)
         update();
 }
+
+/**
+  * Returns 0 or 1. 1 indicates data is waiting to be read, zero means data is not ready to be read.
+  */
+int MicroBitAccelerometer::isDataReady()
+{
+    return !int1;
+}

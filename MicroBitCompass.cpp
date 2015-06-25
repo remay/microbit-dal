@@ -227,3 +227,12 @@ void MicroBitCompass::calibrateEnd()
     average.y = (maxSample.y + minSample.y) / 2;
     average.z = (maxSample.z + minSample.z) / 2;
 }    
+
+/**
+  * Returns 0 or 1. 1 indicates data is waiting to be read, zero means data is not ready to be read.
+  */
+int MicroBitCompass::isDataReady()
+{
+    //Active HI
+    return int1;
+}

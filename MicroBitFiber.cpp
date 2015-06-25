@@ -32,6 +32,8 @@ Cortex_M0_TCB  *emptyContext = NULL;        // Initialized context for fiber ent
  */
 unsigned long ticks = 0;
 
+uint8_t fiber_flags = 0;
+
 /**
   * Utility function to add the currenty running fiber to the given queue. 
   * Perform a simple add at the head, to avoid complexity,
@@ -361,7 +363,7 @@ void schedule()
     Fiber *oldFiber = currentFiber;
 
     // OK - if we've nothing to do, then run the IDLE task (power saving sleep)
-    if (runQueue == NULL)
+    if (runQueue == NULL || fiber_flags & MICROBIT_FLAG_DATA_READ)
         currentFiber = idle;
         
     // If the current fiber is on the run queue, round robin.
@@ -411,6 +413,10 @@ void idle_task()
     {
         if (uBit.ble)
             uBit.ble->waitForEvent();
+        else
+            __WFI();
+            
+        uBit.systemTasks();
 
         schedule();
     }
