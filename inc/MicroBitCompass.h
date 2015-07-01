@@ -36,6 +36,22 @@
 #define MAG_CTRL_REG2 0x11
 
 /*
+ * Compass events
+ */
+#define MICROBIT_COMPASS_EVT_CAL_REQUIRED       1
+#define MICROBIT_COMPASS_EVT_CAL_START          2
+#define MICROBIT_COMPASS_EVT_CAL_END            3
+
+/*
+ * Status Bits
+ */
+#define MICROBIT_COMPASS_STATUS_CALIBRATED      1
+#define MICROBIT_COMPASS_STATUS_CALIBRATING     2
+ 
+ 
+#define MICROBIT_COMPASS_CALIBRATE_PERIOD       10000
+
+/*
  * MAG3110 MAGIC ID value
  * Returned from the MAG_WHO_AM_I register for ID purposes.
  */
@@ -46,6 +62,13 @@ struct CompassSample
     int16_t         x;
     int16_t         y;
     int16_t         z;
+    
+    CompassSample()
+    {
+        this->x = 0;
+        this->y = 0;
+        this->z = 0;   
+    }
 };
 
 /**
@@ -61,8 +84,10 @@ class MicroBitCompass
       * Used to track asynchronous events in the event bus.
       */
       
-    uint16_t id;             // Event Bus ID
-    uint16_t address;        // I2C address of the magnetmometer.  
+    uint16_t id;                        // Event Bus ID
+    uint16_t address;                   // I2C address of the magnetmometer.  
+
+    unsigned long eventStartTime;       // used to store the current system clock when async calibration has started
 
     public:
     
@@ -72,7 +97,7 @@ class MicroBitCompass
     CompassSample       sample;         // The latest sample data recorded.
     DigitalIn           int1;           // Data ready interrupt.
 
-    uint8_t             calibrating;     // flag.    
+    uint8_t             status;     // flag.  
             
     /**
       * Constructor. 
@@ -83,6 +108,13 @@ class MicroBitCompass
       * Example:
       * @code
       * compass(MICROBIT_ID_COMPASS, MAG3110_DEFAULT_ADDR);
+      * @endcode
+      *
+      * Possible Events for the compass are as follows:
+      * @code
+      * MICROBIT_COMPASS_EVT_CAL_REQUIRED   // triggered when no magnetometer data is available in persistent storage
+      * MICROBIT_COMPASS_EVT_CAL_START      // triggered when calibration has begun
+      * MICROBIT_COMPASS_EVT_CAL_END        // triggered when calibration has finished.
       * @endcode
       */
     MicroBitCompass(uint16_t id, uint16_t address);
@@ -143,14 +175,23 @@ class MicroBitCompass
     int getZ();    
 
     /**
+      * Perform the asynchronous calibration of the compass.
+      * This will fire MICROBIT_COMPASS_EVT_CAL_START and MICROBIT_COMPASS_EVT_CAL_END when finished.
+      * @note THIS MUST BE CALLED TO GAIN RELIABLE VALUES FROM THE COMPASS
+      */
+    void calibrateAsync();  
+
+    /**
       * Perform a calibration of the compass.
-      * **THIS MUST BE CALLED TO GAIN RELIABLE VALUES FROM THE COMPASS**
+      * This will fire MICROBIT_COMPASS_EVT_CAL_START.
+      * @note THIS MUST BE CALLED TO GAIN RELIABLE VALUES FROM THE COMPASS
       */
     void calibrateStart();    
 
     /**
       * Complete the calibration of the compass.
-      * **THIS MUST BE CALLED TO GAIN RELIABLE VALUES FROM THE COMPASS**
+      * This will fire MICROBIT_COMPASS_EVT_CAL_END.
+      * @note THIS MUST BE CALLED TO GAIN RELIABLE VALUES FROM THE COMPASS
       */    
     void calibrateEnd();    
 
@@ -159,6 +200,21 @@ class MicroBitCompass
       * Check if any data is ready for reading by checking the interrupt.
       */  
     void tick();
+    
+    /**
+      * Returns 0 or 1. 1 indicates that the compass is calibrated, zero means the compass requires calibration.
+      */
+    int isCalibrated();
+    
+    /**
+      * Returns 0 or 1. 1 indicates that the compass is calibrating, zero means the compass is not currently calibrating.
+      */
+    int isCalibrating();
+    
+    /**
+      * Clears the calibration held in persistent storage, and sets the calibrated flag to zero.
+      */
+    void clearCalibration();
     
     /**
       * Returns 0 or 1. 1 indicates data is waiting to be read, zero means data is not ready to be read.

@@ -9,6 +9,23 @@ char MICROBIT_BLE_FIRMWARE_VERSION[] = "1.1";
 char MICROBIT_BLE_SOFTWARE_VERSION[] = "1.0";
 
 /**
+  * custom function for panic for malloc & new due to scoping issue.
+  */
+void panic(int statusCode)
+{
+    uBit.panic(statusCode);   
+}
+
+/**
+  * Callback when a BLE GATT disconnect occurs.
+  */
+void bleDisconnectionCallback(Gap::Handle_t handle, Gap::DisconnectionReason_t reason)
+{
+    uBit.ble->startAdvertising(); // restart advertising!
+}
+
+
+/**
   * Constructor. 
   * Create a representation of a MicroBit device as a global singleton.
   * @param messageBus callback function to receive MicroBitMessageBus events.
@@ -65,6 +82,7 @@ void MicroBit::init()
     ble = new BLEDevice();
     
     ble->init();
+    ble->onDisconnection(bleDisconnectionCallback);
  
     // Add our auxiliary services.
     ble_firmware_update_service = new MicroBitDFUService(*ble);
@@ -224,10 +242,3 @@ void MicroBit::panic(int statusCode)
     uBit.display.error(statusCode);
 }
 
-/**
-  * custom function for panic for malloc & new due to scoping issue.
-  */
-void panic(int statusCode)
-{
-    uBit.panic(statusCode);   
-}

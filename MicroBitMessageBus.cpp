@@ -83,8 +83,6 @@ void MicroBitMessageBus::send(MicroBitEvent &evt)
   * a different thread that empties the queue. This would perhaps provide greater opportunities
   * for aggregation.
   *
-  * THIS IS NOW WRAPPED BY THE MicroBitEvent CLASS FOR CONVENIENCE...
-  *
   * Example:
   * @code 
   * MicroBitEvent evt(id,MICROBIT_BUTTON_EVT_DOWN,ticks,NULL);
@@ -92,6 +90,8 @@ void MicroBitMessageBus::send(MicroBitEvent &evt)
   * //OR YOU CAN DO THIS...  
   * MicroBitEvent evt(id,MICROBIT_BUTTON_EVT_DOWN,ticks,NULL,true);
   * @endcode
+  *
+  * @note THIS IS NOW WRAPPED BY THE MicroBitEvent CLASS FOR CONVENIENCE...
   */
 void MicroBitMessageBus::send(MicroBitEvent &evt, MicroBitMessageBusCache *c)
 {
@@ -181,21 +181,23 @@ void MicroBitMessageBus::listen(int id, int value, void (*handler)(MicroBitEvent
 void MicroBitMessageBus::listen(int id, int value, void* handler, void* arg)
 {
 	//handler can't be NULL!
-	if(handler == NULL)
+	if (handler == NULL)
 		return;
-		
+
 	MicroBitListener *l, *p;
-	
+
 	l = listeners;
-	
+
+	// Firstly, we treat a listener as an idempotent operation. Ensure we don't already have this handler
+	// registered in a that will already capture these events. If we do, silently ignore.
 	while (l != NULL)
 	{
-		if(l->id == id && l->value == value && l->cb == handler)
+		if (l->id == id && l->value == value && l->cb == handler)
 			return;
-			
+
 		l = l->next;
 	}
-	
+
 	MicroBitListener *newListener = new MicroBitListener(id, value, handler, arg);
 
 	//if listeners is null - we can automatically add this listener to the list at the beginning...
@@ -205,18 +207,6 @@ void MicroBitMessageBus::listen(int id, int value, void* handler, void* arg)
 		return;
 	}
 
-	// Firstly, we treat a listener as an idempotent operation. Ensure we don't already have this handler
-	// registered in a that will already capture these events. If we do, silently ignore.
-	l = listeners;
-
-	while (l != NULL && l->id <= id)
-	{
-		if (l->cb == handler && (l->id == id || l->id == MICROBIT_ID_ANY) && (l->value == value || l->value == MICROBIT_EVT_ANY))
-			return;
-
-		l = l->next;
-	}
-
 	// Maintain an ordered list of listeners. 
 	// Chain is held stictly in increasing order of ID (first level), then value code (second level).
 	// Find the correct point in the chain for this event.
@@ -224,16 +214,23 @@ void MicroBitMessageBus::listen(int id, int value, void* handler, void* arg)
 	p = listeners;
 	l = listeners;
 
-	while (l != NULL && l->id < id && l->value <= value)
+	while (l != NULL && l->id < id)
 	{
 		p = l;
 		l = l->next;
 	}
 
-	//add in front of P
-	if (p->id > id || p->value > value)
+	while (l != NULL && l->id == id && l->value < value)
 	{
+		p = l;
+		l = l->next;
+	}
 
+
+
+	//add at front of list
+	if (p == listeners && (id < p->id || (p->id == id && p->value > value)))
+	{
 		newListener->next = p;
 
 		//this new listener is now the front!
@@ -250,5 +247,4 @@ void MicroBitMessageBus::listen(int id, int value, void* handler, void* arg)
 	// This will lazily invalidate any cached entries to the listener list.
 	this->seq++;
 }
-
 

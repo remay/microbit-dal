@@ -13,7 +13,7 @@ onResetButtonPressed(MicroBitEvent evt)
 }
 
 int main()
-{   
+{
 #ifdef MICROBIT_DBG
     pc.baud(115200);
 
@@ -45,10 +45,12 @@ int main()
     // Bring up core services.
     scheduler_init();
     uBit.init();
+    
+    uBit.sleep(100);
+    
 #ifdef MICROBIT_BLE
     // Test if we need to enter BLE pairing mode...
     int i=0;
-    uBit.sleep(100);
     while (uBit.buttonA.isPressed() && uBit.buttonB.isPressed() && i<10)
     {
         uBit.sleep(100);
