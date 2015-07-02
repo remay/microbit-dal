@@ -119,7 +119,8 @@ int16_t MicroBitCompass::read8(uint8_t reg)
 
 /**
   * Gets the current heading of the device, relative to magnetic north.
-  * @return the current heading, in degrees. Or MICROBIT_COMPASS_IS_CALIBRATING if the compass is calibrating.
+  * @return the current heading, in degrees. Or MICROBIT_COMPASS_IS_CALIBRATING if the compass is calibrating. 
+  * Or MICROBIT_COMPASS_CALIBRATE_REQUIRED if the compass requires calibration.
   *
   * Example:
   * @code
@@ -129,7 +130,12 @@ int16_t MicroBitCompass::read8(uint8_t reg)
 int MicroBitCompass::heading()
 {
     if(status & MICROBIT_COMPASS_STATUS_CALIBRATING)
-        return MICROBIT_COMPASS_IS_CALIBRATING;
+        return MICROBIT_COMPASS_IS_CALIBRATING;    
+    else if(!(status & MICROBIT_COMPASS_STATUS_CALIBRATED))
+    {
+        MicroBitEvent(id, MICROBIT_COMPASS_EVT_CAL_REQUIRED);
+        return MICROBIT_COMPASS_CALIBRATE_REQUIRED;
+    }
     
     float bearing = (atan2((double)(sample.y - average.y),(double)(sample.x - average.x)))*180/PI;
     if (bearing < 0)
@@ -152,9 +158,6 @@ void MicroBitCompass::tick()
         sample.x = read16(MAG_OUT_X_MSB);
         sample.y = read16(MAG_OUT_Y_MSB);
         sample.z = read16(MAG_OUT_Z_MSB);
-            
-        if(!(status & MICROBIT_COMPASS_STATUS_CALIBRATED) && !(status & MICROBIT_COMPASS_STATUS_CALIBRATING))
-            MicroBitEvent(id, MICROBIT_COMPASS_EVT_CAL_REQUIRED);
 
         if (status & MICROBIT_COMPASS_STATUS_CALIBRATING)
         {
