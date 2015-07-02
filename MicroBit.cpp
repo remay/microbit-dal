@@ -1,12 +1,12 @@
 #include "MicroBit.h"
 
 char MICROBIT_BLE_DEVICE_NAME[] = "BBC MicroBit [xxxxx]";
-char MICROBIT_BLE_MANUFACTURER[] = "The Cast of W1A";
-char MICROBIT_BLE_MODEL[] = "Microbit SB2";
-char MICROBIT_BLE_SERIAL[] = "SN1";
-char MICROBIT_BLE_HARDWARE_VERSION[] = "0.2";
-char MICROBIT_BLE_FIRMWARE_VERSION[] = "1.1";
-char MICROBIT_BLE_SOFTWARE_VERSION[] = "1.0";
+const char MICROBIT_BLE_MANUFACTURER[] = "The Cast of W1A";
+const char MICROBIT_BLE_MODEL[] = "Microbit SB2";
+const char MICROBIT_BLE_SERIAL[] = "SN1";
+const char MICROBIT_BLE_HARDWARE_VERSION[] = "0.2";
+const char MICROBIT_BLE_FIRMWARE_VERSION[] = "1.1";
+const char MICROBIT_BLE_SOFTWARE_VERSION[] = "1.0";
 
 /**
   * custom function for panic for malloc & new due to scoping issue.
