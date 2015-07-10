@@ -76,7 +76,6 @@ MicroBit::MicroBit() :
   */
 void MicroBit::init()
 {   
-
 #ifdef MICROBIT_BLE
     // Start the BLE stack.        
     ble = new BLEDevice();

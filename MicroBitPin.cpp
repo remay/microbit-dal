@@ -171,21 +171,15 @@ int MicroBitPin::getAnalogValue()
 }
 
 /**
-  * Enables asynchronous callback events from this Pin.
-  * When enabled, all state change updates will be propogated 
-  * along the MicroBitMessageBus using the device's ID.
-  * @note NOT YET IN USE 
-  */     
-void MicroBitPin::enableCallback()
+  * Configures the PWM period of the analog output to the given value.
+  * If this pin is not configured as an analog output, the operation
+  * has no effect.
+  *
+  * @param period The new period for the analog output in milliseconds.
+  */   
+void MicroBitPin::setAnalogPeriod(int period)
 {
-}
-
-/**
-  * Disables asynchronous callback events from this Pin.
-  * When disabled no state change updates will be propogated 
-  * along the MicroBitMessageBus from this button.
-  * @note NOT YET IN USE 
-  */     
-void MicroBitPin::disableCallback()
-{
+    if (status & IO_STATUS_ANALOG_OUT)
+        ((DynamicPwm *)pin)->setPeriodUs(period*1000);
+   
 }
