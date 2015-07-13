@@ -77,14 +77,13 @@ struct CompassSample
   * Represents an implementation of the Freescale MAG3110 I2C Magnetmometer.
   * Also includes basic caching, calibration and on demand activation.
   */
-class MicroBitCompass
+class MicroBitCompass : public MicroBitComponent
 {
     /**
       * Unique, enumerated ID for this component. 
       * Used to track asynchronous events in the event bus.
       */
       
-    uint16_t id;                        // Event Bus ID
     uint16_t address;                   // I2C address of the magnetmometer.  
 
     unsigned long eventStartTime;       // used to store the current system clock when async calibration has started
@@ -96,8 +95,6 @@ class MicroBitCompass
     CompassSample       average;        // Centre point of sample data.
     CompassSample       sample;         // The latest sample data recorded.
     DigitalIn           int1;           // Data ready interrupt.
-
-    uint8_t             status;     // flag.  
             
     /**
       * Constructor. 
@@ -196,10 +193,10 @@ class MicroBitCompass
     void calibrateEnd();    
 
     /**
-      * Periodic callback from MicroBit clock.
+      * Periodic callback from MicroBit idle thread.
       * Check if any data is ready for reading by checking the interrupt.
       */  
-    void tick();
+    virtual void idleTick();
     
     /**
       * Returns 0 or 1. 1 indicates that the compass is calibrated, zero means the compass requires calibration.
@@ -219,7 +216,7 @@ class MicroBitCompass
     /**
       * Returns 0 or 1. 1 indicates data is waiting to be read, zero means data is not ready to be read.
       */
-    int isDataReady();
+    virtual int isIdleCallbackNeeded();
     
     private:
     

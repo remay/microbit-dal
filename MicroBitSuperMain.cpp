@@ -61,7 +61,7 @@ int main()
     }
 #endif
         
-    //uBit.MessageBus.listen(MICROBIT_ID_BUTTON_RESET, MICROBIT_BUTTON_EVT_CLICK, onResetButtonPressed);
+    uBit.MessageBus.listen(MICROBIT_ID_BUTTON_RESET, MICROBIT_BUTTON_EVT_CLICK, onResetButtonPressed);
     app_main();
     
     while(1)

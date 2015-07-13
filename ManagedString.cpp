@@ -65,7 +65,7 @@ ManagedString::ManagedString(const int value)
   */      
 ManagedString::ManagedString(const char value)
 {
-    const char *str = &value;
+    char str[2] = {value,0};
     initString(str);    
 }
 
@@ -257,7 +257,7 @@ ManagedString& ManagedString::operator = (const ManagedString& s)
   */
 bool ManagedString::operator== (const ManagedString& s)
 {
-    return (memcmp(data, s.data,min(len,s.len))==0);    
+    return (len==s.len && memcmp(data, s.data,len)==0);    
 }
 
 /**

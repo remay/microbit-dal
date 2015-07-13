@@ -45,14 +45,14 @@ struct MMA8653Sample
   * Represents an implementation of the Freescale MMA8653 3 axis accelerometer
   * Also includes basic data caching and on demand activation.
   */
-class MicroBitAccelerometer
+class MicroBitAccelerometer : public MicroBitComponent
 {
     /**
       * Unique, enumerated ID for this component. 
       * Used to track asynchronous events in the event bus.
       */
-      
-    uint16_t        id;            // Event Bus ID
+    
+    //if you are adding status here - don't it's in MicroBitComponent!!!
     uint16_t        address;       // I2C address of this accelerometer.
     MMA8653Sample   sample;        // The last sample read.
     DigitalIn       int1;          // Data ready interrupt.
@@ -127,15 +127,15 @@ class MicroBitAccelerometer
     int getZ();
 
     /**
-      * periodic callback from MicroBit clock.
+      * periodic callback from MicroBit idle thread.
       * Check if any data is ready for reading by checking the interrupt flag on the accelerometer
       */    
-    void tick();
+    virtual void idleTick();
     
     /**
       * Returns 0 or 1. 1 indicates data is waiting to be read, zero means data is not ready to be read.
       */
-    int isDataReady();
+    virtual int isIdleCallbackNeeded();
     
     private:
     /**

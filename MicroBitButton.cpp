@@ -19,6 +19,7 @@
   * MICROBIT_BUTTON_EVT_UP
   * MICROBIT_BUTTON_EVT_CLICK
   * MICROBIT_BUTTON_EVT_LONG_CLICK
+  * MICROBIT_BUTTON_EVT_HOLD
   * @endcode
   */
 MicroBitButton::MicroBitButton(uint16_t id, PinName name) : pin(name)
@@ -60,7 +61,7 @@ void MicroBitButton::debounceUp()
   * periodic callback from MicroBit clock.
   * Check for state change for this button, and fires a hold event if button is pressed.
   */  
-void MicroBitButton::tick()
+void MicroBitButton::systemTick()
 {
 
     //if the status button state is different from the pin state, and we haven't set the button state before...

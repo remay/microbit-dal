@@ -93,9 +93,8 @@ struct MatrixPoint {
   *
   * A MicroBitDisplay represents the LED matrix array on the MicroBit device.
   */
-class MicroBitDisplay
+class MicroBitDisplay : public MicroBitComponent
 {
-    uint16_t id;
     uint8_t width;
     uint8_t height;
     uint8_t brightness;
@@ -154,7 +153,7 @@ class MicroBitDisplay
     MicroBitImage scrollingImage;
 
     // The number of pixels the image has been shifted on the display.
-    uint8_t scrollingImagePosition;
+    int16_t scrollingImagePosition;
 
     // The number of pixels the image is shifted on the display in each quantum.
     int8_t scrollingImageStride;
@@ -231,7 +230,7 @@ public:
     /**
       * Frame update method, invoked periodically to strobe the display.
       */
-    void strobeUpdate();
+    virtual void systemTick();
 
     /**
       * Prints the given character to the display.

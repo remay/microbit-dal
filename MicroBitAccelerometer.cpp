@@ -178,7 +178,7 @@ int MicroBitAccelerometer::getZ()
   * periodic callback from MicroBit clock.
   * Check if any data is ready for reading by checking the interrupt flag on the accelerometer
   */  
-void MicroBitAccelerometer::tick()
+void MicroBitAccelerometer::idleTick()
 {
     // Poll interrupt line from accelerometer.
     // n.b. Default is Active LO. Interrupt is cleared in data read.
@@ -189,7 +189,7 @@ void MicroBitAccelerometer::tick()
 /**
   * Returns 0 or 1. 1 indicates data is waiting to be read, zero means data is not ready to be read.
   */
-int MicroBitAccelerometer::isDataReady()
+int MicroBitAccelerometer::isIdleCallbackNeeded()
 {
     return !int1;
 }
