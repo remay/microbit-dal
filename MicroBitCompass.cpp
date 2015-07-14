@@ -149,7 +149,7 @@ int MicroBitCompass::heading()
   * Periodic callback from MicroBit clock.
   * Check if any data is ready for reading by checking the interrupt.
   */
-void MicroBitCompass::tick()
+void MicroBitCompass::idleTick()
 {
     // Poll interrupt line from accelerometer.
     // Active HI. Interrupt is cleared in data read of MAG_OUT_X_MSB.
@@ -331,7 +331,7 @@ void MicroBitCompass::clearCalibration()
 /**
   * Returns 0 or 1. 1 indicates data is waiting to be read, zero means data is not ready to be read.
   */
-int MicroBitCompass::isDataReady()
+int MicroBitCompass::isIdleCallbackNeeded()
 {
     //Active HI
     return int1;

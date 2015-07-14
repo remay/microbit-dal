@@ -59,7 +59,7 @@ MicroBitDisplay::MicroBitDisplay(uint16_t id, uint8_t x, uint8_t y) :
   * TODO: Write a more efficient, complementary variation of this method for the case where 
   * MICROBIT_DISPLAY_ROW_COUNT > MICROBIT_DISPLAY_COLUMN_COUNT.
   */   
-void MicroBitDisplay::strobeUpdate()
+void MicroBitDisplay::systemTick()
 {   
     // TODO: Cache coldata for future use, so we don't recompute so often?
     int coldata;

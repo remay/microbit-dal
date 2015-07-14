@@ -30,8 +30,10 @@ void panic(int statusCode);
 #include "MicroBitMessageBus.h"
 #include "DynamicPwm.h"
 
+#include "MicroBitComponent.h"
 #include "MicroBitButton.h"
 #include "MicroBitDisplay.h"
+#include "MicroBitPin.h"
 #include "MicroBitIO.h"
 #include "MicroBitCompass.h"
 #include "MicroBitAccelerometer.h"
@@ -50,7 +52,7 @@ void panic(int statusCode);
 // Random number generator
 #define NRF51822_RNG_ADDRESS            0x4000D000
 
-#define MICROBIT_IO_PINS                3            // TODO: Need to change for live, currently 3 for test
+#define MICROBIT_IO_PINS                20            // TODO: Need to change for live, currently 3 for test
 
 // Enumeration of core components.
 #define MICROBIT_ID_BUTTON_A            1
@@ -87,6 +89,9 @@ void panic(int statusCode);
 #define MICROBIT_PIN_SDA                P0_30
 #define MICROBIT_PIN_SCL                P0_0
 
+#define MICROBIT_SYSTEM_COMPONENTS      6
+#define MICROBIT_IDLE_COMPONENTS      4
+
 #ifdef MICROBIT_DEBUG
 extern Serial pc;
 #endif
@@ -108,6 +113,11 @@ class MicroBit
     // I2C Interface
     I2C                     i2c;   
 
+    // Array of components which are iterated during a system tick
+    MicroBitComponent*      systemTickComponents[MICROBIT_SYSTEM_COMPONENTS];
+    
+    // Array of components which are iterated during idle thread execution, isIdleCallbackNeeded is polled during a systemTick.
+    MicroBitComponent*      idleThreadComponents[MICROBIT_IDLE_COMPONENTS];
 
     // Device level Message Bus abstraction
     MicroBitMessageBus      MessageBus;     
@@ -206,6 +216,27 @@ class MicroBit
       * System tasks to be executed by the idle thread when the Micro:Bit isn't busy or when data needs to be read.
       */
     void systemTasks();
+
+    /**
+      * add a component to the array of system components which invocate the systemTick member function during a systemTick 
+      */
+    void addSystemComponent(MicroBitComponent *component);
+    
+    /**
+      * remove a component from the array of system components
+      */
+    void removeSystemComponent(MicroBitComponent *component);
+    
+    /**
+      * add a component to the array of of idle thread components.
+      * isIdleCallbackNeeded is polled during a systemTick to determine if the idle thread should jump to the front of the queue
+      */
+    void addIdleComponent(MicroBitComponent *component);
+    
+    /**
+      * remove a component from the array of idle thread components
+      */
+    void removeIdleComponent(MicroBitComponent *component);
 
     /**
       * Determine the time since this MicroBit was last reset.

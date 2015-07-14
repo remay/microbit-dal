@@ -76,6 +76,19 @@ MicroBit::MicroBit() :
   */
 void MicroBit::init()
 {   
+
+    //add the buttons to the systemComponent array
+    addSystemComponent(&uBit.buttonA);
+    addSystemComponent(&uBit.buttonB);
+    addSystemComponent(&uBit.resetButton);
+    
+    //add the display as well
+    addSystemComponent(&uBit.display);
+    
+    //add the compass and accelerometer to the idle array
+    addIdleComponent(&uBit.accelerometer);
+    addIdleComponent(&uBit.compass);
+
 #ifdef MICROBIT_BLE
     // Start the BLE stack.        
     ble = new BLEDevice();
@@ -182,25 +195,26 @@ int MicroBit::random(int max)
 
 
 /**
-  * Period callback. Used by MicroBitDisplay, FiberScheduler and I2C sensors to
-  * provide a power efficient sense of time.
+  * Periodic callback. Used by MicroBitDisplay, FiberScheduler and buttons.
   */
 void MicroBit::systemTick()
 {   
-    // Refresh the matrix display, and update animations, if we need to.
-    if (uBit.flags & MICROBIT_FLAG_DISPLAY_RUNNING)
-        uBit.display.strobeUpdate();
-                
     // Scheduler callback. We do this here just as a single timer is more efficient. :-)
     if (uBit.flags & MICROBIT_FLAG_SCHEDULER_RUNNING)
         scheduler_tick();  
+    
+    //work out if any idle components need processing, if so prioritise the idle thread
+    for(int i = 0; i < MICROBIT_IDLE_COMPONENTS; i++)
+        if(idleThreadComponents[i] != NULL && idleThreadComponents[i]->isIdleCallbackNeeded())
+        {
+            fiber_flags |= MICROBIT_FLAG_DATA_READ;
+            break;
+        }
         
-    if(uBit.accelerometer.isDataReady() || uBit.compass.isDataReady())
-        fiber_flags |= MICROBIT_FLAG_DATA_READ;
-        
-    //update the buttons if required.
-    uBit.buttonA.tick();
-    uBit.buttonB.tick();
+    //update any components in the systemComponents array
+    for(int i = 0; i < MICROBIT_SYSTEM_COMPONENTS; i++)
+        if(systemTickComponents[i] != NULL)
+            systemTickComponents[i]->systemTick();
 }
 
 /**
@@ -208,15 +222,81 @@ void MicroBit::systemTick()
   */
 void MicroBit::systemTasks()
 {   
-    // Update Accelerometer if needed.
-    if (uBit.flags & MICROBIT_FLAG_ACCELEROMETER_RUNNING)
-        uBit.accelerometer.tick();
- 
-    // Update Accelerometer if needed.
-    if (uBit.flags & MICROBIT_FLAG_COMPASS_RUNNING)
-        uBit.compass.tick();
+
+    //call the idleTick member function indiscriminately 
+    for(int i = 0; i < MICROBIT_IDLE_COMPONENTS; i++)
+        if(idleThreadComponents[i] != NULL)
+            idleThreadComponents[i]->idleTick();
     
     fiber_flags &= ~MICROBIT_FLAG_DATA_READ;
+}
+
+/**
+  * add a component to the array of components which invocate the systemTick member function during a systemTick 
+  * @note this will be converted into a dynamic list of components
+  */
+void MicroBit::addSystemComponent(MicroBitComponent *component)
+{
+    int i = 0;
+    
+    while(systemTickComponents[i] != NULL && i < MICROBIT_SYSTEM_COMPONENTS)  
+        i++;
+    
+    if(i == MICROBIT_SYSTEM_COMPONENTS)
+        return;
+        
+    systemTickComponents[i] = component;    
+}
+
+/**
+  * remove a component from the array of components
+  * @note this will be converted into a dynamic list of components
+  */
+void MicroBit::removeSystemComponent(MicroBitComponent *component)
+{
+    int i = 0;
+    
+    while(systemTickComponents[i] != component  && i < MICROBIT_SYSTEM_COMPONENTS)  
+        i++;
+    
+    if(i == MICROBIT_SYSTEM_COMPONENTS)
+        return;
+
+    systemTickComponents[i] = NULL;
+}
+
+/**
+  * add a component to the array of components which invocate the systemTick member function during a systemTick 
+  * @note this will be converted into a dynamic list of components
+  */
+void MicroBit::addIdleComponent(MicroBitComponent *component)
+{
+    int i = 0;
+    
+    while(idleThreadComponents[i] != NULL && i < MICROBIT_IDLE_COMPONENTS)  
+        i++;
+    
+    if(i == MICROBIT_IDLE_COMPONENTS)
+        return;
+        
+    idleThreadComponents[i] = component;    
+}
+
+/**
+  * remove a component from the array of components
+  * @note this will be converted into a dynamic list of components
+  */
+void MicroBit::removeIdleComponent(MicroBitComponent *component)
+{
+    int i = 0;
+    
+    while(idleThreadComponents[i] != component  && i < MICROBIT_IDLE_COMPONENTS)  
+        i++;
+    
+    if(i == MICROBIT_IDLE_COMPONENTS)
+        return;
+
+    idleThreadComponents[i] = NULL;
 }
 
 /**

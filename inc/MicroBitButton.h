@@ -14,7 +14,7 @@
 #define MICROBIT_BUTTON_EVT_LONG_CLICK          4
 #define MICROBIT_BUTTON_EVT_HOLD                5
 
-#define MICROBIT_BUTTON_DEBOUNCE_PERIOD         0.02  //the time to set debounceDownTimeout and debounceUpTimeout to.
+#define MICROBIT_BUTTON_DEBOUNCE_PERIOD         20    //the time to set debounceDownTimeout and debounceUpTimeout to.
 #define MICROBIT_BUTTON_DEBOUNCE_LONG           1000  //1000 ticks is a LONG_CLICK
 #define MICROBIT_BUTTON_DEBOUNCE_HOLD           1500  //1500 ticks is a hold
 
@@ -28,17 +28,10 @@
   *
   * Represents a single, generic button on the device.
   */
-class MicroBitButton
+class MicroBitButton : public MicroBitComponent
 {
-    /**
-      * Unique, enumerated ID for this component. 
-      * Used to track asynchronous events in the event bus.
-      */
-
-    uint16_t id;                    // Event Bus ID
     PinName name;                   // mBed pin name of this pin.
     DigitalIn pin;                  // The mBed object looking after this pin at any point in time (may change!).
-    uint8_t status;                 // Keeps track of the button state when performing debounce detection.
     
     unsigned long eventStartTime;   // used to store the current system clock when button state changes
     unsigned long downStartTime;    // used to store the current system clock when a button down event occurs
@@ -84,7 +77,7 @@ class MicroBitButton
       * periodic callback from MicroBit clock.
       * Check for state change for this button, and fires a hold event if button is pressed.
       */  
-    void tick();
+    virtual void systemTick();
     
 };
 

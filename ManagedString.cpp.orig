@@ -65,9 +65,8 @@ ManagedString::ManagedString(const int value)
   */      
 ManagedString::ManagedString(const char value)
 {
-
-    char str[2] = {value, 0};
-    initString(str); 
+    char str[2] = {value,0};
+    initString(str);    
 }
 
 
@@ -82,7 +81,7 @@ ManagedString::ManagedString(const char value)
 ManagedString::ManagedString(const char *str)
 {
     // Sanity check. Return EmptyString for anything distasteful
-    if ((str == NULL || *str == 0) && this != &ManagedString::EmptyString)
+    if (str == NULL || *str == 0)
     {
         initEmpty();
         return;
@@ -258,7 +257,7 @@ ManagedString& ManagedString::operator = (const ManagedString& s)
   */
 bool ManagedString::operator== (const ManagedString& s)
 {
-    return ((len == s.len) && (memcmp(data,s.data,len)==0));    
+    return (len==s.len && memcmp(data, s.data,len)==0);    
 }
 
 /**

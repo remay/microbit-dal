@@ -1,6 +1,7 @@
 #ifndef MICROBIT_PIN_H
 #define MICROBIT_PIN_H
 
+#include "MicroBitComponent.h"
 #include "mbed.h"
                                                      // Status Field flags...
 #define IO_STATUS_DIGITAL_IN             0x01        // Pin is configured as a digital input, with no pull up.
@@ -45,7 +46,7 @@ enum PinCapability{
   *
   * Represents a I/O on the edge connector.
   */
-class MicroBitPin
+class MicroBitPin : public MicroBitComponent
 {
     /**
       * Unique, enumerated ID for this component. 
@@ -53,9 +54,7 @@ class MicroBitPin
       */
       
     void *pin;                  // The mBed object looking after this pin at any point in time (may change!).
-    uint8_t id;                 // Event Bus ID
     PinName name;               // mBed pin name of this pin.
-    uint8_t status;             // latched state
     PinCapability capability;
    
     /**
