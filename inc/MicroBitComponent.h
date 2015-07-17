@@ -1,12 +1,6 @@
 #ifndef MICROBIT_COMPONENT_H
 #define MICROBIT_COMPONENT_H
 
-//TODO: When platform is built for MB2 - pins will be defined by default, these will change...
-#define MICROBIT_PIN_BUTTON_A                   P0_17
-#define MICROBIT_PIN_BUTTON_B                   P0_26
-#define MICROBIT_PIN_BUTTON_RESET               P0_19
-
-
 /**
   * Class definition for MicroBitComponent
   * All components should inherit from this class.

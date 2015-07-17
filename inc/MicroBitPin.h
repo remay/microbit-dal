@@ -32,6 +32,9 @@
 #define MICROBIT_PIN_P19                 P0_0        //SCL
 #define MICROBIT_PIN_P20                 P0_30       //SDA
 
+#define MICROBIT_PIN_MAX_OUTPUT          1023
+
+
 /**
   * Pin capabilities enum. 
   * Used to determine the capabilities of each Pin as some can only be digital, or can be both digital and analogue.

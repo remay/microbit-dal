@@ -1,8 +1,6 @@
 #include "MicroBit.h"
 #include "inc/MicroBitPin.h"
 
-#define MICROBIT_PIN_MAX_OUTPUT 255
-
 /**
   * Constructor. 
   * Create a Button representation with the given ID.
@@ -127,7 +125,7 @@ void MicroBitPin::setAnalogValue(int value)
         return;
         
     //sanitise the brightness level
-    if(value < 0 || value > 255)
+    if(value < 0 || value > MICROBIT_PIN_MAX_OUTPUT)
         return;
         
     float level = (float)value / float(MICROBIT_PIN_MAX_OUTPUT);
