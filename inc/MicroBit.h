@@ -89,8 +89,8 @@ void panic(int statusCode);
 #define MICROBIT_PIN_SDA                P0_30
 #define MICROBIT_PIN_SCL                P0_0
 
-#define MICROBIT_SYSTEM_COMPONENTS      6
-#define MICROBIT_IDLE_COMPONENTS      4
+#define MICROBIT_SYSTEM_COMPONENTS      8
+#define MICROBIT_IDLE_COMPONENTS        6
 
 #ifdef MICROBIT_DEBUG
 extern Serial pc;

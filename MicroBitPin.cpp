@@ -30,13 +30,13 @@ MicroBitPin::MicroBitPin(int id, PinName name, PinCapability capability)
 }
 
 /**
-  * Disconnect any attached mBed IO from this pin.
+  * Disconnect any attached mbed IO from this pin.
   * Used only when pin changes mode (i.e. Input/Output/Analog/Digital)
   */
 void MicroBitPin::disconnect()
 {
     // This is a bit ugly, but rarely used code.
-    // It would be much better to use some polymorphism here, but the mBed I/O classes aren't arranged in an inheritance hierarchy.
+    // It would be much better to use some polymorphism here, but the mBed I/O classes aren't arranged in an inheritance hierarchy... yet. :-)
     if (status & IO_STATUS_DIGITAL_IN)
         delete ((DigitalIn *)pin);
 
@@ -44,7 +44,7 @@ void MicroBitPin::disconnect()
         delete ((DigitalOut *)pin);
 
     if (status & IO_STATUS_ANALOG_IN){
-        NRF_ADC->ENABLE = ADC_ENABLE_ENABLE_Disabled; // forcibly disable the ADC - BUG IN EMBED....
+        NRF_ADC->ENABLE = ADC_ENABLE_ENABLE_Disabled; // forcibly disable the ADC - BUG in mbed....
         delete ((AnalogIn *)pin);
     }
     
@@ -53,6 +53,9 @@ void MicroBitPin::disconnect()
         if(((DynamicPwm *)pin)->getPinName() == name)
             ((DynamicPwm *)pin)->free(); 
     }   
+
+    if (status & IO_STATUS_TOUCH_IN)
+        delete ((MicroBitButton *)pin);
     
     this->pin = NULL;
     this->status = status & IO_STATUS_EVENTBUS_ENABLED; //retain event bus status
@@ -168,6 +171,35 @@ int MicroBitPin::getAnalogValue()
     
     //perform a read!
     return ((AnalogIn *)pin)->read_u16();
+}
+
+/**
+  * Configures this IO pin as a makey makey style touch sensor (if necessary) and tests its current debounced state.
+  * @return 1 if pin is touched, 0 otherwise.
+  * 
+  * Example:
+  * @code 
+  * MicroBitPin P0(MICROBIT_ID_IO_P0, MICROBIT_PIN_P0, PIN_CAPABILITY_ALL);
+  * if(P0.isTouched())
+  * {
+  *   uBit.display.clear();
+  * } 
+  * @endcode
+  */
+int MicroBitPin::isTouched()
+{
+    //check if this pin has a touch mode...
+    if(!(PIN_CAPABILITY_TOUCH & capability))
+        return MICROBIT_IO_OP_NA;
+    
+    // Move into a touch input state if necessary.
+    if (!(status & IO_STATUS_TOUCH_IN)){
+        disconnect();  
+        pin = new MicroBitButton(id, name); 
+        status |= IO_STATUS_TOUCH_IN;
+    }
+    
+    return ((MicroBitButton *)pin)->isPressed();
 }
 
 /**

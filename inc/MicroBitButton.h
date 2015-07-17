@@ -14,13 +14,16 @@
 #define MICROBIT_BUTTON_EVT_LONG_CLICK          4
 #define MICROBIT_BUTTON_EVT_HOLD                5
 
-#define MICROBIT_BUTTON_DEBOUNCE_PERIOD         20    //the time to set debounceDownTimeout and debounceUpTimeout to.
-#define MICROBIT_BUTTON_DEBOUNCE_LONG           1000  //1000 ticks is a LONG_CLICK
-#define MICROBIT_BUTTON_DEBOUNCE_HOLD           1500  //1500 ticks is a hold
+#define MICROBIT_BUTTON_LONG_CLICK_TIME         1000  
+#define MICROBIT_BUTTON_HOLD_TIME               1500  
 
 #define MICROBIT_BUTTON_STATE                   1
-#define MICROBIT_BUTTON_STATE_SET               2
-#define MICROBIT_BUTTON_STATE_HOLD_TRIGGERED    4
+#define MICROBIT_BUTTON_STATE_HOLD_TRIGGERED    2
+
+#define MICROBIT_BUTTON_SIGMA_MIN               0
+#define MICROBIT_BUTTON_SIGMA_MAX               12
+#define MICROBIT_BUTTON_SIGMA_THRESH_HI         8
+#define MICROBIT_BUTTON_SIGMA_THRESH_LO         2
 
 
 /**
@@ -33,13 +36,11 @@ class MicroBitButton : public MicroBitComponent
     PinName name;                   // mBed pin name of this pin.
     DigitalIn pin;                  // The mBed object looking after this pin at any point in time (may change!).
     
-    unsigned long eventStartTime;   // used to store the current system clock when button state changes
     unsigned long downStartTime;    // used to store the current system clock when a button down event occurs
-    
-    void debounceDown();            // Handles when a the state of the button has been changed to pressed, after a debounce.
-    void debounceUp();              // Handles when a the state of the button has been changed to released, after a debounce.
-    
+    uint8_t sigma;                  // integration of samples over time.
+        
     public:
+
     /**
       * Constructor. 
       * Create a pin representation with the given ID.

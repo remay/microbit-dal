@@ -8,7 +8,8 @@
 #define IO_STATUS_DIGITAL_OUT            0x02        // Pin is configured as a digital output
 #define IO_STATUS_ANALOG_IN              0x04        // Pin is Analog in 
 #define IO_STATUS_ANALOG_OUT             0x08        // Pin is Analog out (not currently possible)  
-#define IO_STATUS_EVENTBUS_ENABLED       0x10        // Pin is will generate events on change
+#define IO_STATUS_TOUCH_IN               0x10        // Pin is a makey-makey style touch sensor
+#define IO_STATUS_EVENTBUS_ENABLED       0x80        // Pin is will generate events on change
 
 //#defines for each edge connector pin
 #define MICROBIT_PIN_P0                  P0_3        //P0 is the left most pad (ANALOG/DIGITAL) used to be P0_3 on green board
@@ -38,7 +39,10 @@
 enum PinCapability{
     PIN_CAPABILITY_DIGITAL = 0x01,
     PIN_CAPABILITY_ANALOG = 0x02,
-    PIN_CAPABILITY_BOTH = PIN_CAPABILITY_DIGITAL | PIN_CAPABILITY_ANALOG
+    PIN_CAPABILITY_TOUCH = 0x04,
+    PIN_CAPABILITY_AD = PIN_CAPABILITY_DIGITAL | PIN_CAPABILITY_ANALOG,
+    PIN_CAPABILITY_ALL = PIN_CAPABILITY_DIGITAL | PIN_CAPABILITY_ANALOG | PIN_CAPABILITY_TOUCH
+    
 };
 
 /**
@@ -123,6 +127,21 @@ class MicroBitPin : public MicroBitComponent
       * @endcode
       */
     int getAnalogValue();
+
+    /**
+      * Configures this IO pin as a makey makey style touch sensor (if necessary) and tests its current debounced state.
+      * @return 1 if pin is touched, 0 otherwise.
+      * 
+      * Example:
+      * @code 
+      * MicroBitPin P0(MICROBIT_ID_IO_P0, MICROBIT_PIN_P0, PIN_CAPABILITY_ALL);
+      * if(P0.isTouched())
+      * {
+      *   uBit.display.clear();
+      * } 
+      * @endcode
+      */
+    int isTouched();
 
      /**
       * Configures the PWM period of the analog output to the given value.

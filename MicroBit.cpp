@@ -77,12 +77,7 @@ MicroBit::MicroBit() :
 void MicroBit::init()
 {   
 
-    //add the buttons to the systemComponent array
-    addSystemComponent(&uBit.buttonA);
-    addSystemComponent(&uBit.buttonB);
-    addSystemComponent(&uBit.resetButton);
-    
-    //add the display as well
+    //add the display to the systemComponent array
     addSystemComponent(&uBit.display);
     
     //add the compass and accelerometer to the idle array

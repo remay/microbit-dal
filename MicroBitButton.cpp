@@ -22,40 +22,15 @@
   * MICROBIT_BUTTON_EVT_HOLD
   * @endcode
   */
-MicroBitButton::MicroBitButton(uint16_t id, PinName name) : pin(name)
+MicroBitButton::MicroBitButton(uint16_t id, PinName name) : pin(name, PullNone)
 {
     this->id = id;
     this->name = name;
-    this->eventStartTime = 0;
     this->downStartTime = 0;
+    this->sigma = 0;
+    uBit.addSystemComponent(this);
 }
 
-/**
-  * Handles when a the state of the button has been changed to pressed, after a debounce.
-  */
-void MicroBitButton::debounceDown()
-{
-    //send a button down event
-    MicroBitEvent evt(id,MICROBIT_BUTTON_EVT_DOWN);
-    
-    //set the downStartTime,
-    downStartTime=ticks;        
-}
-
-/**
-  * Handles when a the state of the button has been changed to released, after a debounce.
-  */
-void MicroBitButton::debounceUp()
-{
-    //send button up event
-    MicroBitEvent evt(id,MICROBIT_BUTTON_EVT_UP);
-    
-    //determine if this is a long click or a normal click and send event
-    if((ticks-downStartTime)>=MICROBIT_BUTTON_DEBOUNCE_LONG)
-        MicroBitEvent evt(id,MICROBIT_BUTTON_EVT_LONG_CLICK);    
-    else
-        MicroBitEvent evt(id,MICROBIT_BUTTON_EVT_CLICK);
-}
 
 /**
   * periodic callback from MicroBit clock.
@@ -63,39 +38,55 @@ void MicroBitButton::debounceUp()
   */  
 void MicroBitButton::systemTick()
 {
-
-    //if the status button state is different from the pin state, and we haven't set the button state before...
-    if((status & MICROBIT_BUTTON_STATE) == pin && !(status & MICROBIT_BUTTON_STATE_SET))
+    //
+    // If the pin is pulled low (touched), increment our culumative counter.
+    // otherwise, decrement it. We're essentially building a lazy follower here.
+    // This makes the output debounced for buttons, and desensitizes touch sensors
+    // (particularly in environments where there is mains noise!)
+    //
+    if(!pin)
     {
-        status |= MICROBIT_BUTTON_STATE_SET;
-        eventStartTime = ticks;    
+        if (sigma < MICROBIT_BUTTON_SIGMA_MAX) 
+            sigma++;  
+    }
+    else
+    {
+        if (sigma > MICROBIT_BUTTON_SIGMA_MIN) 
+            sigma--;
+    }
+    
+    // Check to see if we have off->on state change.
+    if(sigma > MICROBIT_BUTTON_SIGMA_THRESH_HI && !(status & MICROBIT_BUTTON_STATE))
+    {
+        // Record we have a state change, and raise an event.
+        status |= MICROBIT_BUTTON_STATE;
+        MicroBitEvent evt(id,MICROBIT_BUTTON_EVT_DOWN);
+    
+        //Record the time the button was pressed.
+        downStartTime=ticks;        
+    }
+    
+    // Check to see if we have on->off state change.    
+    if(sigma < MICROBIT_BUTTON_SIGMA_THRESH_LO && (status & MICROBIT_BUTTON_STATE))
+    {
+        status = 0;
+        MicroBitEvent evt(id,MICROBIT_BUTTON_EVT_UP);
+    
+        //determine if this is a long click or a normal click and send event
+        if((ticks - downStartTime) >= MICROBIT_BUTTON_LONG_CLICK_TIME)
+            MicroBitEvent evt(id,MICROBIT_BUTTON_EVT_LONG_CLICK);    
+        else
+            MicroBitEvent evt(id,MICROBIT_BUTTON_EVT_CLICK);
     }
 
     //if button is pressed and the hold triggered event state is not triggered AND we are greater than the button debounce value
-    if((status & MICROBIT_BUTTON_STATE) && !(status & MICROBIT_BUTTON_STATE_HOLD_TRIGGERED) && (ticks - downStartTime) >= MICROBIT_BUTTON_DEBOUNCE_HOLD)
+    if((status & MICROBIT_BUTTON_STATE) && !(status & MICROBIT_BUTTON_STATE_HOLD_TRIGGERED) && (ticks - downStartTime) >= MICROBIT_BUTTON_HOLD_TIME)
     {
         //set the hold triggered event flag
         status |= MICROBIT_BUTTON_STATE_HOLD_TRIGGERED;
         
         //fire hold event
         MicroBitEvent evt(id,MICROBIT_BUTTON_EVT_HOLD);
-    }
-    
-    //handle button debounce, this ensure we don't get multiple button events for a single press
-    //due to hardware.
-    if(eventStartTime && ticks > eventStartTime + MICROBIT_BUTTON_DEBOUNCE_PERIOD)
-    {
-        //reset
-        eventStartTime = 0;
-        
-        //set the new status and reset the STATE_SET flag
-        status = !pin;
-        
-        //if pressed...
-        if(status)
-            debounceDown(); 
-        else 
-            debounceUp();
     }
 }
 
@@ -105,6 +96,5 @@ void MicroBitButton::systemTick()
   */
 int MicroBitButton::isPressed()
 {
-    return status;
+    return status & MICROBIT_BUTTON_STATE ? 1 : 0;
 }
-
