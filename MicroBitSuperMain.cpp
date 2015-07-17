@@ -48,7 +48,6 @@ int main()
     
     uBit.sleep(100);
     
-#ifdef MICROBIT_BLE
     // Test if we need to enter BLE pairing mode...
     int i=0;
     while (uBit.buttonA.isPressed() && uBit.buttonB.isPressed() && i<10)
@@ -59,7 +58,6 @@ int main()
         if (i == 10 && uBit.ble_firmware_update_service != NULL)
             uBit.ble_firmware_update_service->pair();
     }
-#endif
         
     uBit.MessageBus.listen(MICROBIT_ID_BUTTON_RESET, MICROBIT_BUTTON_EVT_CLICK, onResetButtonPressed);
     app_main();
