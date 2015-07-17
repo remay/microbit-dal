@@ -37,6 +37,7 @@ void bleDisconnectionCallback(Gap::Handle_t handle, Gap::DisconnectionReason_t r
   * uBit.display; //The display object for the LED matrix.
   * uBit.buttonA; //The buttonA object for button a.
   * uBit.buttonB; //The buttonB object for button b.
+  * uBit.buttonAB; //The buttonAB object for button a+b multi press.  
   * uBit.resetButton; //The resetButton used for soft resets.
   * uBit.accelerometer; //The object that represents the inbuilt accelerometer
   * uBit.compass; //The object that represents the inbuilt compass(magnetometer)
@@ -50,6 +51,7 @@ MicroBit::MicroBit() :
     display(MICROBIT_ID_DISPLAY, 5, 5),
     buttonA(MICROBIT_ID_BUTTON_A,MICROBIT_PIN_BUTTON_A),
     buttonB(MICROBIT_ID_BUTTON_B,MICROBIT_PIN_BUTTON_B),
+    buttonAB(MICROBIT_ID_BUTTON_AB,MICROBIT_ID_BUTTON_A,MICROBIT_ID_BUTTON_B), 
     resetButton(MICROBIT_ID_BUTTON_RESET,MICROBIT_PIN_BUTTON_RESET),
     accelerometer(MICROBIT_ID_ACCELEROMETER, MMA8653_DEFAULT_ADDR),
     compass(MICROBIT_ID_COMPASS, MAG3110_DEFAULT_ADDR),

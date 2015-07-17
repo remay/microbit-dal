@@ -29,9 +29,9 @@ void panic(int statusCode);
 #include "MicroBitEvent.h"
 #include "MicroBitMessageBus.h"
 #include "DynamicPwm.h"
-
 #include "MicroBitComponent.h"
 #include "MicroBitButton.h"
+#include "MicroBitMultiButton.h"
 #include "MicroBitDisplay.h"
 #include "MicroBitPin.h"
 #include "MicroBitIO.h"
@@ -83,6 +83,7 @@ void panic(int statusCode);
 #define MICROBIT_ID_IO_P19              24          //SCL
 #define MICROBIT_ID_IO_P20              25          //SDA
 
+#define MICROBIT_ID_BUTTON_AB           26          // Button A+B multibutton
 
 // mBed pin assignments of core components.
 //TODO: When platform is built for MB2 - pins will be defined by default, these will change...
@@ -126,6 +127,7 @@ class MicroBit
     MicroBitDisplay         display;
     MicroBitButton          buttonA;
     MicroBitButton          buttonB;
+    MicroBitMultiButton     buttonAB;    
     MicroBitButton          resetButton;
     MicroBitAccelerometer   accelerometer;
     MicroBitCompass         compass;
