@@ -65,10 +65,13 @@
 #define MICROBIT_DISPLAY_ROW_PINS           P0_13, P0_14, P0_15
 #define MICROBIT_DISPLAY_COLUMN_COUNT       9
 #define MICROBIT_DISPLAY_COLUMN_PINS        P0_4, P0_5, P0_6, P0_7, P0_8, P0_9, P0_10, P0_11, P0_12
+#define MICROBIT_DISPLAY_COLUMN_START       P0_4
 #endif
 
 #define MICROBIT_DISPLAY_SPACING 1
 #define MICROBIT_DISPLAY_ERROR_CHARS 4
+
+#define MICROBIT_DISPLAY_GREYSCALE_BIT_DEPTH 8
 
 #include "mbed.h"
 #include "MicroBit.h"
@@ -79,6 +82,11 @@ enum AnimationMode {
     ANIMATION_MODE_PRINT_TEXT,
     ANIMATION_MODE_SCROLL_IMAGE,
     ANIMATION_MODE_ANIMATE_IMAGE
+};
+
+enum DisplayMode {
+    DISPLAY_MODE_NORMAL,
+    DISPLAY_MODE_GREYSCALE    
 };
 
 struct MatrixPoint {
@@ -99,10 +107,14 @@ class MicroBitDisplay : public MicroBitComponent
     uint8_t height;
     uint8_t brightness;
     uint8_t strobeRow;
+    uint8_t strobeBitMsk;
     uint8_t rotation;
-    
-    BusOut columnPins;
-    DynamicPwm* rowDrive;
+    uint8_t mode;
+    uint8_t greyscaleBitMsk;
+    uint8_t timingCount;
+
+    Timeout greyscaleTimer;
+
     MicroBitFont font;
     
     //
@@ -169,6 +181,17 @@ class MicroBitDisplay : public MicroBitComponent
       *  Periodic callback, that we use to perform any animations we have running.
       */
     void animationUpdate();
+    
+    /**
+      * Translates a bit mask to a bit mask suitable for the nrf PORT0 and PORT1.
+      * Brightness has two levels on, or off.
+      */
+    void render();
+    
+    /**
+      * Translates a bit mask into a timer interrupt that gives the appearence of greyscale.
+      */
+    void renderGreyscale();
     
     /**
       * Internal scrollText update method. 
@@ -389,6 +412,18 @@ public:
       */
     void setBrightness(uint8_t b);
 
+
+    /**
+      * Sets the mode of the display.
+      * @param mode The mode to swap the display into. (can be either DISPLAY_MODE_GREYSCALE, or DISPLAY_MODE_NORMAL)
+      * 
+      * Example:
+      * @code 
+      * uBit.display.setDisplayMode(DISPLAY_MODE_GREYSCALE); //per pixel brightness
+      * @endcode
+      */  
+    void setDisplayMode(DisplayMode mode);
+    
     /**
       * Fetches the current brightness of this display.
       * @return the brightness of this display, in the range 0..255.

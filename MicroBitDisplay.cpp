@@ -9,6 +9,8 @@
 #include "nrf_gpio.h"
 #include "mbed.h"
 
+const float timings[MICROBIT_DISPLAY_GREYSCALE_BIT_DEPTH] = {0.000010,0.000047, 0.000094, 0.000187, 0.000375, 0.000750, 0.001500, 0.003000};
+
 /**
   * Constructor.
   * Create a Point representation of an LED on a matrix
@@ -34,21 +36,23 @@ MatrixPoint::MatrixPoint(uint8_t x, uint8_t y)
   * @endcode
   */
 MicroBitDisplay::MicroBitDisplay(uint16_t id, uint8_t x, uint8_t y) : 
-    columnPins(MICROBIT_DISPLAY_COLUMN_PINS), 
     font(),
     image(x*2,y)
 {
-    this->rowDrive = DynamicPwm::allocate(rowPins[0],PWM_PERSISTENCE_PERSISTENT);
+    //set pins as output
+    nrf_gpio_range_cfg_output(MICROBIT_DISPLAY_COLUMN_START,MICROBIT_DISPLAY_COLUMN_START + MICROBIT_DISPLAY_COLUMN_COUNT + MICROBIT_DISPLAY_ROW_COUNT);
+    
     this->id = id;
     this->width = x;
     this->height = y;
     this->strobeRow = 0;
-    this->rowDrive->period_us(MICROBIT_DISPLAY_PWM_PERIOD);
-    
+    this->strobeBitMsk = 0x20;
     this->rotation = MICROBIT_DISPLAY_ROTATION_0;
-    this->setBrightness(MICROBIT_DEFAULT_BRIGHTNESS);
-    
-    animationMode = ANIMATION_MODE_NONE;
+    this->greyscaleBitMsk = 0x01;
+    this->timingCount = 0;
+
+    this->mode = DISPLAY_MODE_NORMAL;
+    this->animationMode = ANIMATION_MODE_NONE;
     
     uBit.flags |= MICROBIT_FLAG_DISPLAY_RUNNING;
 }
@@ -61,51 +65,133 @@ MicroBitDisplay::MicroBitDisplay(uint16_t id, uint8_t x, uint8_t y) :
   */   
 void MicroBitDisplay::systemTick()
 {   
-    // TODO: Cache coldata for future use, so we don't recompute so often?
-    int coldata;
-
-    // Move on to the next row.    
-    strobeRow = (strobeRow+1) % MICROBIT_DISPLAY_ROW_COUNT;
+    if(!(uBit.flags & MICROBIT_FLAG_DISPLAY_RUNNING))
+        return;
         
+    // Move on to the next row. 
+    strobeBitMsk <<= 1;
+    strobeRow++;
+        
+    //reset the row counts and bit mask when we have hit the max.
+    if(strobeRow == MICROBIT_DISPLAY_ROW_COUNT){
+        strobeRow = 0;
+        strobeBitMsk = 0x20;   
+    }
+      
+    if(mode == DISPLAY_MODE_NORMAL)
+        render();
+    
+    if(mode == DISPLAY_MODE_GREYSCALE)
+    {
+        greyscaleBitMsk = 0x01;
+        timingCount = 0;
+        //clear the old bit pattern for this row.
+        //clear port 0 4-7 and retain lower 4 bits
+        nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT0, 0xF0 | nrf_gpio_port_read(NRF_GPIO_PORT_SELECT_PORT0) & 0x0F); 
+        
+        // clear port 1 8-12 for the current row
+        nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT1, strobeBitMsk | 0x1F);
+        renderGreyscale();
+    }
+    
+    // Update text and image animations if we need to.
+    this->animationUpdate();
+}
+
+void MicroBitDisplay::render()
+{   
+    int coldata = 0;
+    
     // Calculate the bitpattern to write.
-    coldata = 0;
     for (int i = 0; i<MICROBIT_DISPLAY_COLUMN_COUNT; i++)
     {
         int x = matrixMap[i][strobeRow].x;
         int y = matrixMap[i][strobeRow].y;
         int t = x;        
         
-        switch (rotation)
+        if(rotation == MICROBIT_DISPLAY_ROTATION_90)
         {
-            case MICROBIT_DISPLAY_ROTATION_90:
                 x = width - 1 - y;
                 y = t;
-                break;
+        }
                 
-            case MICROBIT_DISPLAY_ROTATION_180:
+        if(rotation == MICROBIT_DISPLAY_ROTATION_180)
+        {
                 x = width - 1 - x;
                 y = height - 1 - y;
-                break;
+        }
                 
-            case MICROBIT_DISPLAY_ROTATION_270:
+        if(rotation == MICROBIT_DISPLAY_ROTATION_270)
+        {
                 x = y;
                 y = height - 1 - t;
-                break;
         }
         
-        if(image.getPixelValue(x, y))
+        if(image.bitmap[y*(width*2)+x])
             coldata |= (1 << i);
     }
+    
+    //kept inline to reduce overhead
+    //clear the old bit pattern for this row.
+    //clear port 0 4-7 and retain lower 4 bits
+    nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT0, 0xF0 | nrf_gpio_port_read(NRF_GPIO_PORT_SELECT_PORT0) & 0x0F); 
+    
+    // clear port 1 8-12 for the current row
+    nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT1, strobeBitMsk | 0x1F); 
+                
+    //write the new bit pattern
+    //set port 0 4-7 and retain lower 4 bits
+    nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT0, ~coldata<<4 & 0xF0 | nrf_gpio_port_read(NRF_GPIO_PORT_SELECT_PORT0) & 0x0F); 
+    
+    //set port 1 8-12 for the current row
+    nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT1, strobeBitMsk | (~coldata>>4 & 0x1F)); 
+}
 
-    // Write to the matrix display.
-    columnPins.write(0xffff);    
+void MicroBitDisplay::renderGreyscale()
+{
+    int coldata = 0;
+    
+    // Calculate the bitpattern to write.
+    for (int i = 0; i<MICROBIT_DISPLAY_COLUMN_COUNT; i++)
+    {
+        int x = matrixMap[i][strobeRow].x;
+        int y = matrixMap[i][strobeRow].y;
+        int t = x;        
+        
+        if(rotation == MICROBIT_DISPLAY_ROTATION_90)
+        {
+                x = width - 1 - y;
+                y = t;
+        }
+                
+        if(rotation == MICROBIT_DISPLAY_ROTATION_180)
+        {
+                x = width - 1 - x;
+                y = height - 1 - y;
+        }
+                
+        if(rotation == MICROBIT_DISPLAY_ROTATION_270)
+        {
+                x = y;
+                y = height - 1 - t;
+        }
+        
+        if(image.bitmap[y * (width * 2) + x] & greyscaleBitMsk)
+            coldata |= (1 << i);
+    }            
+    //write the new bit pattern
+    //set port 0 4-7 and retain lower 4 bits
+    nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT0, ~coldata<<4 & 0xF0 | nrf_gpio_port_read(NRF_GPIO_PORT_SELECT_PORT0) & 0x0F); 
+    
+    //set port 1 8-12 for the current row
+    nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT1, strobeBitMsk | (~coldata>>4 & 0x1F)); 
 
-    rowDrive->redirect(rowPins[strobeRow]);
+    if(timingCount > MICROBIT_DISPLAY_GREYSCALE_BIT_DEPTH-1)
+        return;
 
-    columnPins.write(~coldata);
-
-    // Update text and image animations if we need to.
-    this->animationUpdate();
+    greyscaleBitMsk <<= 1;
+    
+    greyscaleTimer.attach(this,&MicroBitDisplay::renderGreyscale, timings[timingCount++]);
 }
 
 /**
@@ -520,15 +606,24 @@ void MicroBitDisplay::animateImage(MicroBitImage image, uint16_t delay, int8_t s
   * @endcode
   */  
 void MicroBitDisplay::setBrightness(uint8_t b)
-{
-    //sanitise the brightness level
-    //if(b < 0 || b > 255)
-    //    return;
-    
+{   
     float level = (float)b / float(MICROBIT_DISPLAY_MAX_BRIGHTNESS);
     
     this->brightness = b;
-    this->rowDrive->write(level);
+}
+
+/**
+  * Sets the mode of the display.
+  * @param mode The mode to swap the display into. (can be either DISPLAY_MODE_GREYSCALE, or DISPLAY_MODE_NORMAL)
+  * 
+  * Example:
+  * @code 
+  * uBit.display.setDisplayMode(DISPLAY_MODE_GREYSCALE); //per pixel brightness
+  * @endcode
+  */  
+void MicroBitDisplay::setDisplayMode(DisplayMode mode)
+{   
+    this->mode = mode;
 }
 
 /**
@@ -585,10 +680,6 @@ void MicroBitDisplay::enable()
 {
     if(!(uBit.flags & MICROBIT_FLAG_DISPLAY_RUNNING))
     {
-        new(&columnPins) BusOut(MICROBIT_DISPLAY_COLUMN_PINS);  //bring columnPins back up
-        columnPins.write(0xFFFF);                               //write 0xFFFF to reset all column pins 
-        rowDrive = DynamicPwm::allocate(rowPins[0],PWM_PERSISTENCE_PERSISTENT); //bring rowDrive back up
-        rowDrive->period_us(MICROBIT_DISPLAY_PWM_PERIOD);                          
         setBrightness(brightness);
         uBit.flags |= MICROBIT_FLAG_DISPLAY_RUNNING;            //set the display running flag
     }
@@ -608,8 +699,6 @@ void MicroBitDisplay::disable()
     if(uBit.flags & MICROBIT_FLAG_DISPLAY_RUNNING)
     {
         uBit.flags &= ~MICROBIT_FLAG_DISPLAY_RUNNING;           //unset the display running flag
-        columnPins.~BusOut();
-        rowDrive->free();
     }   
 }
 

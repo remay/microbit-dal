@@ -8,6 +8,8 @@ const char MICROBIT_BLE_HARDWARE_VERSION[] = "0.2";
 const char MICROBIT_BLE_FIRMWARE_VERSION[] = "1.1";
 const char MICROBIT_BLE_SOFTWARE_VERSION[] = "1.0";
 
+DigitalOut pin(MICROBIT_PIN_P0,0);
+
 /**
   * custom function for panic for malloc & new due to scoping issue.
   */
@@ -186,6 +188,8 @@ int MicroBit::random(int max)
   */
 void MicroBit::systemTick()
 {   
+    
+
     // Scheduler callback. We do this here just as a single timer is more efficient. :-)
     if (uBit.flags & MICROBIT_FLAG_SCHEDULER_RUNNING)
         scheduler_tick();  
@@ -198,10 +202,12 @@ void MicroBit::systemTick()
             break;
         }
         
+    pin = 1;
     //update any components in the systemComponents array
     for(int i = 0; i < MICROBIT_SYSTEM_COMPONENTS; i++)
         if(systemTickComponents[i] != NULL)
             systemTickComponents[i]->systemTick();
+    pin = 0;
 }
 
 /**

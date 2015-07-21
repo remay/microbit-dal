@@ -38,7 +38,7 @@ MicroBitButton::MicroBitButton(uint16_t id, PinName name) : pin(name, PullNone)
   * Check for state change for this button, and fires a hold event if button is pressed.
   */  
 void MicroBitButton::systemTick()
-{
+{   
     //
     // If the pin is pulled low (touched), increment our culumative counter.
     // otherwise, decrement it. We're essentially building a lazy follower here.
