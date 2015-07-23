@@ -50,6 +50,7 @@ class MicroBitButton : public MicroBitComponent
       * Create a pin representation with the given ID.
       * @param id the ID of the new MicroBitButton object.
       * @param name the physical pin on the processor that this butotn is connected to.
+      * @param mode the configuration of internal pullups/pulldowns, as define in the mbed PinMode class. PullNone by default.
       *
       * Example:
       * @code 
@@ -66,7 +67,7 @@ class MicroBitButton : public MicroBitComponent
       * MICROBIT_BUTTON_EVT_HOLD
       * @endcode
       */
-    MicroBitButton(uint16_t id, PinName name);
+    MicroBitButton(uint16_t id, PinName name, PinMode mode = PullNone);
     
     /**
       * Tests if this Button is currently pressed.

@@ -514,11 +514,14 @@ void MicroBitDisplay::animateImage(MicroBitImage image, uint16_t delay, int8_t s
   * uBit.display.setBrightness(255); //max brightness
   * @endcode
   */  
-void MicroBitDisplay::setBrightness(uint8_t b)
+void MicroBitDisplay::setBrightness(int b)
 {
     //sanitise the brightness level
-    //if(b < 0 || b > 255)
-    //    return;
+    if(b < 0)
+        b = 0;
+        
+    if(b > 255)
+        b = 255;
     
     float level = (float)b / float(MICROBIT_DISPLAY_MAX_BRIGHTNESS);
     

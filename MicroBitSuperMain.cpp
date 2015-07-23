@@ -4,16 +4,21 @@
 Serial pc(USBTX, USBRX);
 #endif
 
-MicroBit    uBit;
+MicroBit        uBit;
+InterruptIn     resetButton(MICROBIT_PIN_BUTTON_RESET);
 
 void
-onResetButtonPressed(MicroBitEvent evt)
+onResetButtonPressed()
 {
     NVIC_SystemReset();
 }
 
 int main()
-{
+{    
+    // Bring up soft reset button.
+    resetButton.mode(PullUp);
+    resetButton.fall(onResetButtonPressed);
+    
 #ifdef MICROBIT_DBG
     pc.baud(115200);
 
@@ -42,8 +47,10 @@ int main()
     
 #else
 
-    // Bring up core services.
+    // Bring up fiber scheduler
     scheduler_init();
+    
+    // bring up random number generator, BLE, display and system timers.    
     uBit.init();
     
     uBit.sleep(100);
@@ -59,7 +66,6 @@ int main()
             uBit.ble_firmware_update_service->pair();
     }
         
-    uBit.MessageBus.listen(MICROBIT_ID_BUTTON_RESET, MICROBIT_BUTTON_EVT_CLICK, onResetButtonPressed);
     app_main();
     
     while(1)

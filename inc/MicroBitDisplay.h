@@ -383,7 +383,7 @@ public:
       * uBit.display.setBrightness(255); //max brightness
       * @endcode
       */
-    void setBrightness(uint8_t b);
+    void setBrightness(int b);
 
     /**
       * Fetches the current brightness of this display.

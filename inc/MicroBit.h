@@ -88,19 +88,25 @@ void panic(int statusCode);
 #define MICROBIT_PIN_SDA                P0_30
 #define MICROBIT_PIN_SCL                P0_0
 
-#define MICROBIT_SYSTEM_COMPONENTS      8
+#define MICROBIT_SYSTEM_COMPONENTS      10
 #define MICROBIT_IDLE_COMPONENTS        6
 
 #ifdef MICROBIT_DEBUG
 extern Serial pc;
 #endif
+
 /**
   * Class definition for a MicroBit device.
   *
   * Represents the device as a whole, and includes member variables to that reflect the components of the system.
   */
 class MicroBit
-{                                    
+{                                  
+    private:
+    
+    void                    seedRandom();
+    uint32_t                randomValue;
+  
     public:
     
     // Map of device state.
@@ -126,7 +132,6 @@ class MicroBit
     MicroBitButton          buttonA;
     MicroBitButton          buttonB;
     MicroBitMultiButton     buttonAB;    
-    MicroBitButton          resetButton;
     MicroBitAccelerometer   accelerometer;
     MicroBitCompass         compass;
 
