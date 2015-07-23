@@ -27,7 +27,7 @@
 #define MICROBIT_BUTTON_SIGMA_MAX               12
 #define MICROBIT_BUTTON_SIGMA_THRESH_HI         8
 #define MICROBIT_BUTTON_SIGMA_THRESH_LO         2
-#define MICROBIT_BUTTON_DOUBLE_CLICK_THRESH     100
+#define MICROBIT_BUTTON_DOUBLE_CLICK_THRESH     50
 
 /**
   * Class definition for MicroBit Button.
@@ -50,6 +50,7 @@ class MicroBitButton : public MicroBitComponent
       * Create a pin representation with the given ID.
       * @param id the ID of the new MicroBitButton object.
       * @param name the physical pin on the processor that this butotn is connected to.
+      * @param mode the configuration of internal pullups/pulldowns, as define in the mbed PinMode class. PullNone by default.
       *
       * Example:
       * @code 
@@ -66,7 +67,7 @@ class MicroBitButton : public MicroBitComponent
       * MICROBIT_BUTTON_EVT_HOLD
       * @endcode
       */
-    MicroBitButton(uint16_t id, PinName name);
+    MicroBitButton(uint16_t id, PinName name, PinMode mode = PullNone);
     
     /**
       * Tests if this Button is currently pressed.

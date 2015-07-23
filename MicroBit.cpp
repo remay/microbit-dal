@@ -8,8 +8,6 @@ const char MICROBIT_BLE_HARDWARE_VERSION[] = "0.2";
 const char MICROBIT_BLE_FIRMWARE_VERSION[] = "1.1";
 const char MICROBIT_BLE_SOFTWARE_VERSION[] = "1.0";
 
-DigitalOut pin(MICROBIT_PIN_P0,0);
-
 /**
   * custom function for panic for malloc & new due to scoping issue.
   */
@@ -54,7 +52,6 @@ MicroBit::MicroBit() :
     buttonA(MICROBIT_ID_BUTTON_A,MICROBIT_PIN_BUTTON_A),
     buttonB(MICROBIT_ID_BUTTON_B,MICROBIT_PIN_BUTTON_B),
     buttonAB(MICROBIT_ID_BUTTON_AB,MICROBIT_ID_BUTTON_A,MICROBIT_ID_BUTTON_B), 
-    resetButton(MICROBIT_ID_BUTTON_RESET,MICROBIT_PIN_BUTTON_RESET),
     accelerometer(MICROBIT_ID_ACCELEROMETER, MMA8653_DEFAULT_ADDR),
     compass(MICROBIT_ID_COMPASS, MAG3110_DEFAULT_ADDR),
     io(MICROBIT_ID_IO_P0,MICROBIT_ID_IO_P1,MICROBIT_ID_IO_P2,
@@ -80,13 +77,15 @@ MicroBit::MicroBit() :
   */
 void MicroBit::init()
 {   
-
     //add the display to the systemComponent array
     addSystemComponent(&uBit.display);
     
     //add the compass and accelerometer to the idle array
     addIdleComponent(&uBit.accelerometer);
     addIdleComponent(&uBit.compass);
+
+    // Seed our random number generator
+    seedRandom();
 
     // Start the BLE stack.        
     ble = new BLEDevice();
@@ -141,10 +140,16 @@ void MicroBit::sleep(int milliseconds)
         wait_ms(milliseconds);
 }
 
+
 /**
   * Generate a random number in the given range.
-  * We use the NRF51822 in built random number generator here
-  * TODO: Determine if we want to, given its relatively high power consumption!
+  * We use a simple Galois LFSR random number generator here,
+  * as a Galois LFSR is sufficient for our applications, and much more lightweight
+  * than the hardware random number generator built int the processor, which takes
+  * a long time and uses a lot of energy.
+  *
+  * KIDS: You shouldn't use this is the real world to generte cryptographic keys though... 
+  * have a think why not. :-)
   *
   * @param max the upper range to generate a number for. This number cannot be negative
   * @return A random, natural number between 0 and the max-1. Or MICROBIT_INVALID_VALUE (defined in ErrorNo.h) if max is <= 0.
@@ -159,13 +164,32 @@ int MicroBit::random(int max)
     //return MICROBIT_INVALID_VALUE if max is <= 0...
     if(max <= 0)
         return MICROBIT_INVALID_VALUE;
-        
-    int retVal = 0;
+    
+    // Cycle the LFSR (Linear Feedback Shift Register).
+    // We use an optimal sequence with a period of 2^32-1, as defined by Bruce Schneider here (a true legend in the field!), 
+    // For those interested, it's documented in his paper:
+    // "Pseudo-Random Sequence Generator for 32-Bit CPUs: A fast, machine-independent generator for 32-bit Microprocessors"
+    
+    randomValue = ((((randomValue >> 31) ^ (randomValue >> 6) ^ (randomValue >> 4) ^ (randomValue >> 2) ^ (randomValue >> 1) ^ randomValue) & 0x0000001) << 31 ) | (randomValue >> 1);   
+    return randomValue % max;
+}
+
+
+/**
+  * Seed our a random number generator (RNG).
+  * We use the NRF51822 in built cryptographic random number generator to seed a Galois LFSR.
+  * We do this as the hardware RNG is relatively high power, and use the the BLE stack internally,
+  * with a less than optimal application interface. A Galois LFSR is sufficient for our
+  * applications, and much more lightweight.
+  */
+void MicroBit::seedRandom()
+{
+    randomValue = 0;
         
     // Start the Random number generator. No need to leave it running... I hope. :-)
     NRF_RNG->TASKS_START = 1;
     
-    for(int i = 0; i< 4 ;i++)
+    for(int i = 0; i < 4 ;i++)
     {
         // Clear the VALRDY EVENT
         NRF_RNG->EVENTS_VALRDY = 0;
@@ -173,13 +197,11 @@ int MicroBit::random(int max)
         // Wait for a number ot be generated.
         while ( NRF_RNG->EVENTS_VALRDY == 0);
         
-        retVal += (int) NRF_RNG->VALUE;
+        randomValue = (randomValue << 8) | ((int) NRF_RNG->VALUE);
     }
+    
     // Disable the generator to save power.
     NRF_RNG->TASKS_STOP = 1;
-    
-    // Set output according to the random value
-    return (retVal) % max;
 }
 
 
@@ -188,8 +210,6 @@ int MicroBit::random(int max)
   */
 void MicroBit::systemTick()
 {   
-    
-
     // Scheduler callback. We do this here just as a single timer is more efficient. :-)
     if (uBit.flags & MICROBIT_FLAG_SCHEDULER_RUNNING)
         scheduler_tick();  
@@ -202,12 +222,10 @@ void MicroBit::systemTick()
             break;
         }
         
-    pin = 1;
     //update any components in the systemComponents array
     for(int i = 0; i < MICROBIT_SYSTEM_COMPONENTS; i++)
         if(systemTickComponents[i] != NULL)
             systemTickComponents[i]->systemTick();
-    pin = 0;
 }
 
 /**
@@ -215,7 +233,6 @@ void MicroBit::systemTick()
   */
 void MicroBit::systemTasks()
 {   
-
     //call the idleTick member function indiscriminately 
     for(int i = 0; i < MICROBIT_IDLE_COMPONENTS; i++)
         if(idleThreadComponents[i] != NULL)

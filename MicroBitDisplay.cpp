@@ -178,7 +178,7 @@ void MicroBitDisplay::renderGreyscale()
                 y = height - 1 - t;
         }
         
-        if(image.bitmap[y * (width * 2) + x] & greyscaleBitMsk)
+        if(min(image.bitmap[y * (width * 2) + x],brightness) & greyscaleBitMsk)
             coldata |= (1 << i);
     }            
     //write the new bit pattern
@@ -253,7 +253,7 @@ void MicroBitDisplay::updateScrollText()
         if (scrollingChar > scrollingText.length())
         {
             animationMode = ANIMATION_MODE_NONE;
-            this->sendEvent(MICROBIT_DISPLAY_EVT_SCROLLTEXT_COMPLETE);
+            this->sendEvent(MICROBIT_DISPLAY_EVT_ANIMATION_COMPLETE);
             return;
         }
         scrollingChar++;
@@ -271,7 +271,7 @@ void MicroBitDisplay::updatePrintText()
     if (printingChar > printingText.length())
     {
         animationMode = ANIMATION_MODE_NONE;   
-        this->sendEvent(MICROBIT_DISPLAY_EVT_PRINTTEXT_COMPLETE);
+        this->sendEvent(MICROBIT_DISPLAY_EVT_ANIMATION_COMPLETE);
         return;
     }
     
@@ -289,7 +289,7 @@ void MicroBitDisplay::updateScrollImage()
     if ((image.paste(scrollingImage, scrollingImagePosition, 0, 0) == 0) && scrollingImageRendered)
     {
         animationMode = ANIMATION_MODE_NONE;  
-        this->sendEvent(MICROBIT_DISPLAY_EVT_SCROLLIMAGE_COMPLETE);     
+        this->sendEvent(MICROBIT_DISPLAY_EVT_ANIMATION_COMPLETE);     
         return;
     }
 
@@ -307,7 +307,7 @@ void MicroBitDisplay::updateAnimateImage()
     if (scrollingImagePosition <= -scrollingImage.getWidth() && scrollingImageRendered)
     {
         animationMode = ANIMATION_MODE_NONE;  
-        this->sendEvent(MICROBIT_DISPLAY_EVT_ANIMATEIMAGE_COMPLETE);     
+        this->sendEvent(MICROBIT_DISPLAY_EVT_ANIMATION_COMPLETE);     
         return;
     }
     
@@ -329,11 +329,14 @@ void MicroBitDisplay::resetAnimation(uint16_t delay)
         delay = MICROBIT_DEFAULT_SCROLL_SPEED;
         
     // Reset any ongoing animation.
+    if (animationMode != ANIMATION_MODE_NONE)
+    {
+        animationMode = ANIMATION_MODE_NONE;
+        this->sendEvent(MICROBIT_DISPLAY_EVT_ANIMATION_COMPLETE);
+    }
+    
     // Clear the display and setup the animation timers.
-    animationMode = ANIMATION_MODE_NONE;
-
     this->image.clear();
-
     this->animationDelay = delay;
     this->animationTick = delay-1;
 }
@@ -403,9 +406,7 @@ void MicroBitDisplay::printString(ManagedString s, uint16_t delay)
     this->printStringAsync(s, delay);
     
     // Wait for completion.
-    // TODO: We're polling here for now, but should really block on an event here.
-    while (animationMode == ANIMATION_MODE_PRINT_TEXT)
-        uBit.sleep(100);
+    fiber_wait_for_event(MICROBIT_ID_DISPLAY, MICROBIT_DISPLAY_EVT_ANIMATION_COMPLETE);
 }
 
 
@@ -460,9 +461,7 @@ void MicroBitDisplay::scrollString(ManagedString s, uint16_t delay)
     this->scrollStringAsync(s, delay);
     
     // Wait for completion.
-    // TODO: We're polling here for now, but should really block on an event here.
-    while (animationMode == ANIMATION_MODE_SCROLL_TEXT)
-        uBit.sleep(100);
+    fiber_wait_for_event(MICROBIT_ID_DISPLAY, MICROBIT_DISPLAY_EVT_ANIMATION_COMPLETE);
 }
 
 
@@ -522,9 +521,7 @@ void MicroBitDisplay::scrollImage(MicroBitImage image, uint16_t delay, int8_t st
     this->scrollImageAsync(image, delay, stride);
     
     // Wait for completion.
-    // TODO: We're polling here for now, but should really block on an event here.
-    while (animationMode == ANIMATION_MODE_SCROLL_IMAGE)
-        uBit.sleep(100);
+    fiber_wait_for_event(MICROBIT_ID_DISPLAY, MICROBIT_DISPLAY_EVT_ANIMATION_COMPLETE);
 }
 
 /**
@@ -592,9 +589,7 @@ void MicroBitDisplay::animateImage(MicroBitImage image, uint16_t delay, int8_t s
     this->animateImageAsync(image, delay, stride);
     
     // Wait for completion.
-    // TODO: We're polling here for now, but should really block on an event here.
-    while (animationMode == ANIMATION_MODE_ANIMATE_IMAGE)
-        uBit.sleep(100);
+    fiber_wait_for_event(MICROBIT_ID_DISPLAY, MICROBIT_DISPLAY_EVT_ANIMATION_COMPLETE);
 }
 
 
@@ -607,20 +602,19 @@ void MicroBitDisplay::animateImage(MicroBitImage image, uint16_t delay, int8_t s
   * uBit.display.setBrightness(255); //max brightness
   * @endcode
   */  
-void MicroBitDisplay::setBrightness(uint8_t b)
+void MicroBitDisplay::setBrightness(int b)
 {   
-    if(mode == DISPLAY_MODE_BLACK_AND_WHITE)
-        this->brightness = b;
-        
-    if(mode == DISPLAY_MODE_GREYSCALE)
-    {
-        //clamp the pixel values
-        for(int row = 0; row < height; row++)
-            for(int column = 0; column < (width*2); column++)
-                if(image.getPixelValue(column,row) > b)
-                    image.setPixelValue(column, row, b);
-    }
+    //sanitise the brightness level
+    if(b < 0)
+        b = 0;
+    
+    if (b > 255)
+        b = 255;
+
+    this->brightness = b;
 }
+
+
 
 /**
   * Sets the mode of the display.

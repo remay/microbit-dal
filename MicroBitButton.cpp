@@ -7,6 +7,7 @@
   * Create a pin representation with the given ID.
   * @param id the ID of the new MicroBitButton object.
   * @param name the physical pin on the processor that this butotn is connected to.
+  * @param mode the configuration of internal pullups/pulldowns, as define in the mbed PinMode class. PullNone by default.
   *
   * Example:
   * @code 
@@ -23,7 +24,7 @@
   * MICROBIT_BUTTON_EVT_HOLD
   * @endcode
   */
-MicroBitButton::MicroBitButton(uint16_t id, PinName name) : pin(name, PullNone)
+MicroBitButton::MicroBitButton(uint16_t id, PinName name, PinMode mode) : pin(name, mode)
 {
     this->id = id;
     this->name = name;

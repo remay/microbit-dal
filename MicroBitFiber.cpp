@@ -21,7 +21,8 @@
 Fiber *currentFiber = NULL;                 // The context in which the current fiber is executing.
 Fiber *runQueue = NULL;                     // The list of runnable fibers.
 Fiber *sleepQueue = NULL;                   // The list of blocked fibers waiting on a fiber_sleep() operation.
-Fiber *idle = NULL;                         // IDLE task - performs a power efficient sleep.
+Fiber *waitQueue = NULL;                    // The list of blocked fibers waiting on an event.
+Fiber *idle = NULL;                         // IDLE task - performs a power efficient sleep, and system maintenance tasks.
 Fiber *fiberPool = NULL;                    // Pool of unused fibers, just waiting for a job to do.
 
 Cortex_M0_TCB  *emptyContext = NULL;        // Initialized context for fiber entry state.
@@ -142,6 +143,37 @@ void scheduler_tick()
 }
 
 /**
+  * Event callback. Called from the message bus whenever an event is raised. 
+  * Checks to determine if any fibers blocked on the wait queue need to be woken up 
+  * and made runnable due to the event.
+  */
+void scheduler_event(MicroBitEvent evt)
+{
+    Fiber *f = waitQueue;
+    Fiber *t;
+    
+    // Check the wait queue, and wake up any fibers as necessary.
+    while (f != NULL)
+    {
+        t = f->next;        
+    
+        // extract the event data this fiber is blocked on.    
+        uint16_t id = f->context & 0xFF;
+        uint16_t value = (f->context & 0xFF00) >> 16;
+        
+        if ((id == MICROBIT_ID_ANY || id == evt.source) && (value == MICROBIT_EVT_ANY || value == evt.value))
+        {
+            // Wakey wakey!
+            dequeue_fiber(f);
+            queue_fiber(f,&runQueue);
+        }
+        
+        f = t;
+    }
+}
+
+
+/**
   * Blocks the calling thread for the given period of time.
   * The calling thread will be immediatley descheduled, and placed onto a 
   * wait queue until the requested amount of time has elapsed. 
@@ -165,6 +197,33 @@ void fiber_sleep(unsigned long t)
     // Finally, enter the scheduler.
     schedule();
 }
+
+/**
+  * Blocks the calling thread until the specified event is raised.
+  * The calling thread will be immediatley descheduled, and placed onto a 
+  * wait queue until the requested event is received.
+  * 
+  * n.b. the fiber will not be be made runnable until after the event is raised, but there
+  * are no guarantees precisely when the fiber will next be scheduled.
+  *
+  * @param id The ID field of the event to listen for (e.g. MICROBIT_ID_BUTTON_A)
+  * @param value The VALUE of the event to listen for (e.g. MICROBIT_BUTTON_EVT_CLICK)
+  */
+void fiber_wait_for_event(uint16_t id, uint16_t value)
+{
+    // Encode the event data in the context field. It's handy having a 32 bit core. :-)
+    currentFiber->context = value << 16 | id;
+    
+    // Remove ourselve from the run queue
+    dequeue_fiber(currentFiber);
+        
+    // Add ourselves to the sleep queue. We maintain strict ordering here to reduce lookup times.
+    queue_fiber(currentFiber, &waitQueue);
+    
+    // Finally, enter the scheduler.
+    schedule();
+}
+
 
 Fiber *getFiberContext()
 {

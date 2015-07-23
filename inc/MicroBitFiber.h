@@ -136,6 +136,28 @@ void fiber_sleep(unsigned long t);
 void scheduler_tick();
 
 /**
+  * Blocks the calling thread until the specified event is raised.
+  * The calling thread will be immediatley descheduled, and placed onto a 
+  * wait queue until the requested event is received.
+  * 
+  * n.b. the fiber will not be be made runnable until after the event is raised, but there
+  * are no guarantees precisely when the fiber will next be scheduled.
+  *
+  * @param id The ID field of the event to listen for (e.g. MICROBIT_ID_BUTTON_A)
+  * @param value The VALUE of the event to listen for (e.g. MICROBIT_BUTTON_EVT_CLICK)
+  */
+void fiber_wait_for_event(uint16_t id, uint16_t value);
+
+
+/**
+  * Event callback. Called from the message bus whenever an event is raised. 
+  * Checks to determine if any fibers blocked on the wait queue need to be woken up 
+  * and made runnable due to the event.
+  */
+void scheduler_event(MicroBitEvent evt);
+
+
+/**
   * Utility function to add the currenty running fiber to the given queue. 
   * Perform a simple add at the head, to avoid complexity,
   * Queues are normally very short, so maintaining a doubly linked, sorted list typically outweighs the cost of

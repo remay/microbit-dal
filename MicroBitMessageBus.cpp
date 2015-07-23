@@ -142,7 +142,12 @@ void MicroBitMessageBus::send(MicroBitEvent &evt, MicroBitMessageBusCache *c)
 		c->seq = this->seq;
 	}
 	
-	// Finally, see if thsi event needs to be propogated through our BLE interface
+	// Wake up any fibers that are blocked on this event
+	if (uBit.flags & MICROBIT_FLAG_SCHEDULER_RUNNING)
+        scheduler_event(evt);  
+ 
+	
+	// Finally, see if this event needs to be propogated through our BLE interface 
 	if (uBit.ble_event_service)
     	uBit.ble_event_service->onMicroBitEvent(evt);
 }
