@@ -85,7 +85,7 @@ enum AnimationMode {
 };
 
 enum DisplayMode {
-    DISPLAY_MODE_NORMAL,
+    DISPLAY_MODE_BLACK_AND_WHITE,
     DISPLAY_MODE_GREYSCALE    
 };
 
@@ -113,7 +113,7 @@ class MicroBitDisplay : public MicroBitComponent
     uint8_t greyscaleBitMsk;
     uint8_t timingCount;
 
-    Timeout greyscaleTimer;
+    Timeout renderTimer;
 
     MicroBitFont font;
     
@@ -181,6 +181,8 @@ class MicroBitDisplay : public MicroBitComponent
       *  Periodic callback, that we use to perform any animations we have running.
       */
     void animationUpdate();
+    
+    void renderFinish();
     
     /**
       * Translates a bit mask to a bit mask suitable for the nrf PORT0 and PORT1.

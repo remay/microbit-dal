@@ -50,8 +50,10 @@ MicroBitDisplay::MicroBitDisplay(uint16_t id, uint8_t x, uint8_t y) :
     this->rotation = MICROBIT_DISPLAY_ROTATION_0;
     this->greyscaleBitMsk = 0x01;
     this->timingCount = 0;
+    
+    this->setBrightness(MICROBIT_DEFAULT_BRIGHTNESS);
 
-    this->mode = DISPLAY_MODE_NORMAL;
+    this->mode = DISPLAY_MODE_BLACK_AND_WHITE;
     this->animationMode = ANIMATION_MODE_NONE;
     
     uBit.flags |= MICROBIT_FLAG_DISPLAY_RUNNING;
@@ -78,24 +80,29 @@ void MicroBitDisplay::systemTick()
         strobeBitMsk = 0x20;   
     }
       
-    if(mode == DISPLAY_MODE_NORMAL)
+    if(mode == DISPLAY_MODE_BLACK_AND_WHITE)
         render();
     
     if(mode == DISPLAY_MODE_GREYSCALE)
     {
         greyscaleBitMsk = 0x01;
         timingCount = 0;
-        //clear the old bit pattern for this row.
-        //clear port 0 4-7 and retain lower 4 bits
-        nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT0, 0xF0 | nrf_gpio_port_read(NRF_GPIO_PORT_SELECT_PORT0) & 0x0F); 
-        
-        // clear port 1 8-12 for the current row
-        nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT1, strobeBitMsk | 0x1F);
         renderGreyscale();
     }
     
     // Update text and image animations if we need to.
     this->animationUpdate();
+}
+
+void MicroBitDisplay::renderFinish()
+{
+    //kept inline to reduce overhead
+    //clear the old bit pattern for this row.
+    //clear port 0 4-7 and retain lower 4 bits
+    nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT0, 0xF0 | nrf_gpio_port_read(NRF_GPIO_PORT_SELECT_PORT0) & 0x0F); 
+    
+    // clear port 1 8-12 for the current row
+    nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT1, strobeBitMsk | 0x1F); 
 }
 
 void MicroBitDisplay::render()
@@ -130,21 +137,16 @@ void MicroBitDisplay::render()
         if(image.bitmap[y*(width*2)+x])
             coldata |= (1 << i);
     }
-    
-    //kept inline to reduce overhead
-    //clear the old bit pattern for this row.
-    //clear port 0 4-7 and retain lower 4 bits
-    nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT0, 0xF0 | nrf_gpio_port_read(NRF_GPIO_PORT_SELECT_PORT0) & 0x0F); 
-    
-    // clear port 1 8-12 for the current row
-    nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT1, strobeBitMsk | 0x1F); 
-                
+                    
     //write the new bit pattern
     //set port 0 4-7 and retain lower 4 bits
     nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT0, ~coldata<<4 & 0xF0 | nrf_gpio_port_read(NRF_GPIO_PORT_SELECT_PORT0) & 0x0F); 
     
     //set port 1 8-12 for the current row
     nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT1, strobeBitMsk | (~coldata>>4 & 0x1F)); 
+
+    if(brightness != MICROBIT_DISPLAY_MAX_BRIGHTNESS)
+        renderTimer.attach(this, &MicroBitDisplay::renderFinish, (((float)brightness) / ((float)MICROBIT_DISPLAY_MAX_BRIGHTNESS)) * (float)MICROBIT_DISPLAY_REFRESH_PERIOD);
 }
 
 void MicroBitDisplay::renderGreyscale()
@@ -191,7 +193,7 @@ void MicroBitDisplay::renderGreyscale()
 
     greyscaleBitMsk <<= 1;
     
-    greyscaleTimer.attach(this,&MicroBitDisplay::renderGreyscale, timings[timingCount++]);
+    renderTimer.attach(this,&MicroBitDisplay::renderGreyscale, timings[timingCount++]);
 }
 
 /**
@@ -607,9 +609,17 @@ void MicroBitDisplay::animateImage(MicroBitImage image, uint16_t delay, int8_t s
   */  
 void MicroBitDisplay::setBrightness(uint8_t b)
 {   
-    float level = (float)b / float(MICROBIT_DISPLAY_MAX_BRIGHTNESS);
-    
-    this->brightness = b;
+    if(mode == DISPLAY_MODE_BLACK_AND_WHITE)
+        this->brightness = b;
+        
+    if(mode == DISPLAY_MODE_GREYSCALE)
+    {
+        //clamp the pixel values
+        for(int row = 0; row < height; row++)
+            for(int column = 0; column < (width*2); column++)
+                if(image.getPixelValue(column,row) > b)
+                    image.setPixelValue(column, row, b);
+    }
 }
 
 /**
