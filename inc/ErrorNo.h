@@ -9,6 +9,7 @@ enum Error{
     MICROBIT_IO_OP_NA = -2, // used in MicroBitPin.cpp for when a pin cannot perform a transition. (microbit io operation not allowed)
     MICROBIT_COMPASS_IS_CALIBRATING = -3, // used in MicroBitPin.cpp for when a pin cannot perform a transition. (microbit io operation not allowed)
     MICROBIT_COMPASS_CALIBRATE_REQUIRED = -4,
-    MICROBIT_OOM = 20 // the MicroBit Out of memory error code...
+    MICROBIT_OOM = 20, // the MicroBit Out of memory error code...
+    MICROBIT_I2C_LOCKUP = 10 // the MicroBit I2C bus has locked up
 };
 #endif
