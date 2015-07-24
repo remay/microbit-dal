@@ -9,7 +9,7 @@
 #include "nrf_gpio.h"
 #include "mbed.h"
 
-const float timings[MICROBIT_DISPLAY_GREYSCALE_BIT_DEPTH] = {0.000010,0.000047, 0.000094, 0.000187, 0.000375, 0.000750, 0.001500, 0.003000};
+const float timings[MICROBIT_DISPLAY_GREYSCALE_BIT_DEPTH] = {0.000010, 0.000047, 0.000094, 0.000187, 0.000375, 0.000750, 0.001500, 0.003000};
 
 /**
   * Constructor.
@@ -107,6 +107,9 @@ void MicroBitDisplay::renderFinish()
 
 void MicroBitDisplay::render()
 {   
+    if(brightness == 0)
+        return;
+
     int coldata = 0;
     
     // Calculate the bitpattern to write.
