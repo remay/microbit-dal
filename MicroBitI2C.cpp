@@ -23,9 +23,9 @@ int MicroBitI2C::read(int address, char *data, int length, bool repeated)
 {
     int result = I2C::read(address,data,length,repeated);
     
-    while(result == I2C_ERROR_BUS_BUSY && retries < MICROBIT_I2C_MAX_RETRIES)
+    //0 indicates a success, presume failure
+    while(result != 0 && retries < MICROBIT_I2C_MAX_RETRIES)
     {
-        //waiting for the platform to be available
         twi_master_init_and_clear();
         result = I2C::read(address,data,length,repeated);
         retries++;
@@ -43,7 +43,8 @@ int MicroBitI2C::write(int address, const char *data, int length, bool repeated)
 {   
     int result = I2C::write(address,data,length,repeated);
     
-    while(result == I2C_ERROR_BUS_BUSY && retries < MICROBIT_I2C_MAX_RETRIES)
+    //0 indicates a success, presume failure
+    while(result != 0 && retries < MICROBIT_I2C_MAX_RETRIES)
     {
         twi_master_init_and_clear();
         result = I2C::write(address,data,length,repeated);

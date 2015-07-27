@@ -5,7 +5,7 @@
 #include "MicroBitComponent.h"
 #include "mbed.h"
 
-#define MICROBIT_I2C_MAX_RETRIES 2
+#define MICROBIT_I2C_MAX_RETRIES 9
 
 /**
   * Class definition for MicroBitI2C.

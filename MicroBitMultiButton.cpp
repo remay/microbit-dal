@@ -26,7 +26,6 @@ onMultiButtonEvent(MicroBitEvent evt)
   * MICROBIT_BUTTON_EVT_UP
   * MICROBIT_BUTTON_EVT_CLICK
   * MICROBIT_BUTTON_EVT_LONG_CLICK
-  * MICROBIT_BUTTON_EVT_DOUBLE_CLICK
   * MICROBIT_BUTTON_EVT_HOLD
   * @endcode
   */  
@@ -130,7 +129,6 @@ void MicroBitMultiButton::onEvent(MicroBitEvent evt)
         
         case MICROBIT_BUTTON_EVT_CLICK:
         case MICROBIT_BUTTON_EVT_LONG_CLICK:
-        case MICROBIT_BUTTON_EVT_DOUBLE_CLICK:
             setButtonState(button, 0);
             setHoldState(button, 0);
             if(isSubButtonPressed(otherButton))
