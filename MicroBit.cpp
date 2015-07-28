@@ -47,6 +47,7 @@ void bleDisconnectionCallback(Gap::Handle_t handle, Gap::DisconnectionReason_t r
 MicroBit::MicroBit() : 
     flags(0x00),
     i2c(MICROBIT_PIN_SDA, MICROBIT_PIN_SCL),
+    serial(USBTX, USBRX),
     MessageBus(),
     display(MICROBIT_ID_DISPLAY, 5, 5),
     buttonA(MICROBIT_ID_BUTTON_A,MICROBIT_PIN_BUTTON_A),

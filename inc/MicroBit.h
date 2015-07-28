@@ -29,6 +29,7 @@ void panic(int statusCode);
 #include "DynamicPwm.h"
 #include "MicroBitComponent.h"
 #include "MicroBitI2C.h"
+#include "MicroBitSerial.h"
 #include "MicroBitButton.h"
 #include "MicroBitMultiButton.h"
 #include "MicroBitDisplay.h"
@@ -117,7 +118,10 @@ class MicroBit
     Ticker                  systemTicker;
 
     // I2C Interface
-    MicroBitI2C             i2c;   
+    MicroBitI2C             i2c;  
+    
+    // Serial Interface
+    MicroBitSerial          serial;   
 
     // Array of components which are iterated during a system tick
     MicroBitComponent*      systemTickComponents[MICROBIT_SYSTEM_COMPONENTS];

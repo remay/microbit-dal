@@ -1,6 +1,7 @@
 #include "MicroBit.h"
 #include "mbed.h"
 #include "twi_master.h"
+#include "nrf_delay.h"
 
 /**
   * Constructor. 
@@ -26,6 +27,12 @@ int MicroBitI2C::read(int address, char *data, int length, bool repeated)
     //0 indicates a success, presume failure
     while(result != 0 && retries < MICROBIT_I2C_MAX_RETRIES)
     {
+        _i2c.i2c->EVENTS_ERROR = 0;
+        _i2c.i2c->ENABLE       = TWI_ENABLE_ENABLE_Disabled << TWI_ENABLE_ENABLE_Pos; 
+        _i2c.i2c->POWER        = 0;
+        nrf_delay_us(5);
+        _i2c.i2c->POWER        = 1;
+        _i2c.i2c->ENABLE       = TWI_ENABLE_ENABLE_Enabled << TWI_ENABLE_ENABLE_Pos;
         twi_master_init_and_clear();
         result = I2C::read(address,data,length,repeated);
         retries++;
@@ -41,11 +48,20 @@ int MicroBitI2C::read(int address, char *data, int length, bool repeated)
 
 int MicroBitI2C::write(int address, const char *data, int length, bool repeated)
 {   
+    
+
     int result = I2C::write(address,data,length,repeated);
     
     //0 indicates a success, presume failure
     while(result != 0 && retries < MICROBIT_I2C_MAX_RETRIES)
     {
+        _i2c.i2c->EVENTS_ERROR = 0;
+        _i2c.i2c->ENABLE       = TWI_ENABLE_ENABLE_Disabled << TWI_ENABLE_ENABLE_Pos; 
+        _i2c.i2c->POWER        = 0;
+        nrf_delay_us(5);
+        _i2c.i2c->POWER        = 1;
+        _i2c.i2c->ENABLE       = TWI_ENABLE_ENABLE_Enabled << TWI_ENABLE_ENABLE_Pos;
+        
         twi_master_init_and_clear();
         result = I2C::write(address,data,length,repeated);
         retries++;
