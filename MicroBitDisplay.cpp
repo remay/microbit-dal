@@ -148,8 +148,13 @@ void MicroBitDisplay::render()
     //set port 1 8-12 for the current row
     nrf_gpio_port_write(NRF_GPIO_PORT_SELECT_PORT1, strobeBitMsk | (~coldata>>4 & 0x1F)); 
 
-    if(brightness != MICROBIT_DISPLAY_MAX_BRIGHTNESS)
+    //timer does not have enough resolution for brightness of 1. 23.53 us
+    if(brightness != MICROBIT_DISPLAY_MAX_BRIGHTNESS && brightness > MICROBIT_DISPLAY_MIN_BRIGHTNESS)
         renderTimer.attach(this, &MicroBitDisplay::renderFinish, (((float)brightness) / ((float)MICROBIT_DISPLAY_MAX_BRIGHTNESS)) * (float)MICROBIT_DISPLAY_REFRESH_PERIOD);
+    
+    //this will take around 23us to execute
+    if(brightness <= MICROBIT_DISPLAY_MIN_BRIGHTNESS)
+        renderFinish();
 }
 
 void MicroBitDisplay::renderGreyscale()
