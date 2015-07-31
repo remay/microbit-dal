@@ -15,7 +15,7 @@
   */
   
 #include "MicroBit.h"
-#include "UUID.h"
+#include "ble/UUID.h"
 
 /**
   * Constructor. 

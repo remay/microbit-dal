@@ -4,7 +4,7 @@
   */
   
 #include "MicroBit.h"
-#include "UUID.h"
+#include "ble/UUID.h"
 
 #include "ExternalEvents.h"
 #include "MicroBitEventService.h"

@@ -726,9 +726,9 @@ int MicroBitImage::getHeight()
     return height;
 }   
 
-ManagedString MicroBitImage::toString(x)
+ManagedString MicroBitImage::toString()
 {       
-    //width including commas and \n * height
+    //width including commans and \n * height
     int stringSize = ((width * 2) * height);
     
     //plus one for string terminator
@@ -737,6 +737,7 @@ ManagedString MicroBitImage::toString(x)
     parseBuffer[stringSize] = '\0';
     
     uint8_t *bitmapPtr = bitmap;
+    uint8_t *end = bitmapPtr + stringSize;
     
     int parseIndex = 0;
     int widthCount = 0;
