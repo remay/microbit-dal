@@ -8,6 +8,8 @@
 #define MICROBIT_SERIAL_DEFAULT_BAUD_RATE 115200
 #define MICROBIT_SERIAL_BUFFER_SIZE 20
 
+#define MICROBIT_SERIAL_DEFAULT_EOF '\n'
+
 /**
   * Class definition for MicroBitSerial.
   *
@@ -15,8 +17,7 @@
   */
 class MicroBitSerial : public Serial
 {
-    
-    char buffer[MICROBIT_SERIAL_BUFFER_SIZE];
+    ssize_t readChars(void* buffer, size_t length, char eof = MICROBIT_SERIAL_DEFAULT_EOF);
     
     public:
     
@@ -34,7 +35,13 @@ class MicroBitSerial : public Serial
     
     void printString(ManagedString s);
     
-    ManagedString readString();
+    ManagedString readString(int len = MICROBIT_SERIAL_BUFFER_SIZE);
+    
+    void printImage(MicroBitImage i);
+
+    MicroBitImage readImage();
+    
+    void screenshot();
     
 };
 

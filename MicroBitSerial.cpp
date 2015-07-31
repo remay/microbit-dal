@@ -15,7 +15,6 @@
 MicroBitSerial::MicroBitSerial(PinName tx, PinName rx) : Serial(tx,rx)
 {
     this->baud(MICROBIT_SERIAL_DEFAULT_BAUD_RATE);
-    this->buffer[MICROBIT_SERIAL_BUFFER_SIZE-1] = '\0' ;
 }
 
 void MicroBitSerial::printString(ManagedString s)
@@ -26,14 +25,65 @@ void MicroBitSerial::printString(ManagedString s)
     Serial::write(data,len);   
 }
 
-ManagedString MicroBitSerial::readString()
+ManagedString MicroBitSerial::readString(int len)
 {   
-    //read up until the null terminator
+    if(len < 3)
+        len = 3;
+
+    char buffer[len];
+    
+    memset(buffer, 0, sizeof(buffer));
     
     //needs work, read until we timeout
     //custom implementation...?
-    Serial::read(buffer,MICROBIT_SERIAL_BUFFER_SIZE-2); 
+    int length = 0;
+    uBit.display.scrollString((int)'\n');
+    length = readChars(buffer,len, '\n'); 
+    
+    if(length == 0)
+        return ManagedString();
+    
+    //add in a null terminator so bad things don't happen with ManagedString
+    buffer[length] = '\0';
     
     return ManagedString(buffer);   
 }
+
+void MicroBitSerial::printImage(MicroBitImage i)
+{
+       
+}
+
+MicroBitImage MicroBitSerial::readImage()
+{
+    return MicroBitImage();
+}
+
+void MicroBitSerial::screenshot()
+{
+    
+}
+
+ssize_t MicroBitSerial::readChars(void* buffer, size_t length, char eof) {
+    
+    char* ptr = (char*)buffer;
+    char* end = ptr + length;
+    
+    int eofAscii = (int)eof;
+    
+    while (ptr != end) {
+        
+        int c = _getc();
+        
+        //check EOF
+        if (c == eofAscii) 
+            break;
+        
+        //store the character    
+        *ptr++ = c;    
+    }      
+    
+    return ptr - (const char*)buffer;
+}
+
 

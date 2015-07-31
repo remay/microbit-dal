@@ -726,3 +726,45 @@ int MicroBitImage::getHeight()
     return height;
 }   
 
+ManagedString MicroBitImage::toString(x)
+{       
+    //width including commas and \n * height
+    int stringSize = ((width * 2) * height);
+    
+    //plus one for string terminator
+    char parseBuffer[stringSize + 1];
+    
+    parseBuffer[stringSize] = '\0';
+    
+    uint8_t *bitmapPtr = bitmap;
+    
+    int parseIndex = 0;
+    int widthCount = 0;
+
+    while (parseIndex < stringSize)
+    {
+        if(*bitmapPtr)
+            parseBuffer[parseIndex] = '1';
+        else 
+            parseBuffer[parseIndex] = '0';
+        
+        parseIndex++;
+        
+        if(widthCount == width-1)
+        {
+            parseBuffer[parseIndex] = '\n';
+            widthCount = 0;
+        }
+        else
+        {
+            parseBuffer[parseIndex] = ',';
+            widthCount++;
+        }
+        
+        parseIndex++;
+        bitmapPtr++;
+    }
+    
+    return ManagedString(parseBuffer);
+}
+

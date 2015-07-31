@@ -330,6 +330,8 @@ class MicroBitImage
       * @endcode
       */
     int getHeight();
+    
+    ManagedString toString();
 
 };
 
