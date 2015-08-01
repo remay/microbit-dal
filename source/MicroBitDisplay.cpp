@@ -276,7 +276,7 @@ void MicroBitDisplay::updatePrintText()
 {        
     image.print(printingChar < printingText.length() ? printingText.charAt(printingChar) : ' ',0,0);
 
-    if (printingChar > printingText.length())
+    if (printingChar > printingText.length()-1)
     {
         animationMode = ANIMATION_MODE_NONE;   
         this->sendEvent(MICROBIT_DISPLAY_EVT_ANIMATION_COMPLETE);
@@ -826,4 +826,12 @@ void MicroBitDisplay::setFont(MicroBitFont font)
 MicroBitFont MicroBitDisplay::getFont()
 {
     return this->font;
+}
+
+/**
+  * Captures the bitmap currently being rendered on the display.
+  */
+MicroBitImage MicroBitDisplay::screenShot()
+{
+    return image.crop(0,0,MICROBIT_DISPLAY_WIDTH,MICROBIT_DISPLAY_HEIGHT);
 }

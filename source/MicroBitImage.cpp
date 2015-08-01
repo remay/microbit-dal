@@ -726,6 +726,16 @@ int MicroBitImage::getHeight()
     return height;
 }   
 
+/**
+  * Converts the bitmap to a csv string.
+  *
+  * Example:
+  * @code
+  * const uint8_t heart[] = { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, }; // a cute heart
+  * MicroBitImage i(10,5,heart);
+  * uBit.serial.printString(i.toString()); // "0,1,0,1,0,0,0,0,0,0\n..."
+  * @endcode
+  */
 ManagedString MicroBitImage::toString()
 {       
     //width including commans and \n * height
@@ -737,7 +747,6 @@ ManagedString MicroBitImage::toString()
     parseBuffer[stringSize] = '\0';
     
     uint8_t *bitmapPtr = bitmap;
-    uint8_t *end = bitmapPtr + stringSize;
     
     int parseIndex = 0;
     int widthCount = 0;
@@ -769,3 +778,49 @@ ManagedString MicroBitImage::toString()
     return ManagedString(parseBuffer);
 }
 
+/**
+  * Crops the image to the given dimensions
+  *
+  * @param startx the location to start the crop in the x-axis
+  * @param starty the location to start the crop in the y-axis
+  * @param width the width of the desired cropped region
+  * @param height the height of the desired cropped region
+  *
+  * Example:
+  * @code
+  * const uint8_t heart[] = { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, }; // a cute heart
+  * MicroBitImage i(10,5,heart);
+  * uBit.serial.printString(i.crop(0,0,2,2).toString()); // "0,1\n1,1\n"
+  * @endcode
+  */
+MicroBitImage MicroBitImage::crop(int startx, int starty, int cropWidth, int cropHeight)
+{
+    int newWidth = startx + cropWidth;
+    int newHeight = starty + cropHeight;
+
+    if (newWidth >= width || newWidth <=0)
+        newWidth = width;
+        
+    if (newHeight >= height || newHeight <= 0)
+        newHeight = height;      
+    
+    //allocate our storage.
+    uint8_t cropped[newWidth * newHeight];
+    
+    //calculate the pointer to where we want to begin cropping
+    uint8_t *copyPointer = bitmap + (width * starty) + startx; 
+    
+    //get a reference to our storage
+    uint8_t *pastePointer = cropped;
+    
+    //go through row by row and select our image.
+    for (int i = starty; i < newHeight; i++)
+    {
+        memcpy(pastePointer, copyPointer, newWidth);
+        
+        copyPointer += width;
+        pastePointer += newHeight;
+    }
+    
+    return MicroBitImage(newWidth, newHeight, cropped);  
+}

@@ -331,7 +331,36 @@ class MicroBitImage
       */
     int getHeight();
     
+    /**
+      * Converts the bitmap to a csv string.
+      *
+      * Example:
+      * @code
+      * const uint8_t heart[] = { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, }; // a cute heart
+      * MicroBitImage i(10,5,heart);
+      * uBit.serial.printString(i.toString()); // "0,1,0,1,0,0,0,0,0,0\n..."
+      * @endcode
+      */
     ManagedString toString();
+    
+    /**
+      * Crops the image to the given dimensions
+      *
+      * @param startx the location to start the crop in the x-axis
+      * @param starty the location to start the crop in the y-axis
+      * @param width the width of the desired cropped region
+      * @param height the height of the desired cropped region
+      *
+      * @return an instance of MicroBitImage with your cropped region
+      *
+      * Example:
+      * @code
+      * const uint8_t heart[] = { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, }; // a cute heart
+      * MicroBitImage i(10,5,heart);
+      * uBit.serial.printImage(i.crop(0,0,2,2)); // "0,1\n1,1\n"
+      * @endcode
+      */
+    MicroBitImage crop(int startx, int starty, int finx, int finy);
 
 };
 

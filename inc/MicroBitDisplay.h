@@ -63,6 +63,9 @@
 #define MICROBIT_DISPLAY_COLUMN_COUNT       9
 #define MICROBIT_DISPLAY_COLUMN_PINS        P0_4, P0_5, P0_6, P0_7, P0_8, P0_9, P0_10, P0_11, P0_12
 #define MICROBIT_DISPLAY_COLUMN_START       P0_4
+
+#define MICROBIT_DISPLAY_WIDTH              5
+#define MICROBIT_DISPLAY_HEIGHT             5
 #endif
 
 #define MICROBIT_DISPLAY_SPACING 1
@@ -178,6 +181,10 @@ class MicroBitDisplay : public MicroBitComponent
       */
     void animationUpdate();
     
+    /**
+      *  Called by the display in an interval determined by the brightness of the display, to give an impression
+      *  of brightness.
+      */
     void renderFinish();
     
     /**
@@ -497,6 +504,11 @@ public:
       * Retreives the font object used for rendering characters on the display.
       */
     MicroBitFont getFont();
+    
+    /**
+      * Captures the bitmap currently being rendered on the display.
+      */
+    MicroBitImage screenShot();
 };
 
 #endif
