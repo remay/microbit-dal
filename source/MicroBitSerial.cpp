@@ -161,7 +161,7 @@ void MicroBitSerial::readDisplayState()
         {
             int c = _getc();
             
-            if (c == eofAscii) 
+            if (c == MICROBIT_SERIAL_DEFAULT_EOF) 
                 break;
                 
             uBit.display.image.setPixelValue(j,i,c);
