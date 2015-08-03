@@ -113,6 +113,9 @@ MicroBitImage MicroBitSerial::readImage(int width, int height)
     
     memset(buffer, 0, sizeof(buffer));
     
+    //add in a null terminator so bad things don't happen with MicroBitImage
+    buffer[len+1] = '\0';
+    
     for(int i = 0; i < height; i++)
     {
         int offset = i * rowLength;
@@ -121,9 +124,6 @@ MicroBitImage MicroBitSerial::readImage(int width, int height)
         
         buffer[(offset + rowLength) - 1] = '\n'; 
     }
-    
-    //add in a null terminator so bad things don't happen with MicroBitImage
-    buffer[len+1] = '\0';
     
     uBit.serial.sendString(MicroBitImage(buffer).toString());
     
@@ -152,7 +152,6 @@ void MicroBitSerial::sendDisplayState()
   * @code 
   * uBit.serial.readDisplayState();
   * @endcode
-  * @note to break early send a LF character!
   */
 void MicroBitSerial::readDisplayState()
 {
@@ -160,10 +159,6 @@ void MicroBitSerial::readDisplayState()
         for(int j = 0; j < MICROBIT_DISPLAY_WIDTH; j++)
         {
             int c = _getc();
-            
-            if (c == MICROBIT_SERIAL_DEFAULT_EOF) 
-                break;
-                
             uBit.display.image.setPixelValue(j,i,c);
         }
 }
