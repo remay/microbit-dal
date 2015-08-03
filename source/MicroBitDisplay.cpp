@@ -231,6 +231,9 @@ MicroBitDisplay::animationUpdate()
         if (animationMode == ANIMATION_MODE_ANIMATE_IMAGE)
             this->updateAnimateImage();
             
+        if(animationMode == ANIMATION_MODE_PRINT_CHARACTER)
+            this->sendEvent(MICROBIT_DISPLAY_EVT_ANIMATION_COMPLETE);
+            
     }
 }
 
@@ -276,7 +279,7 @@ void MicroBitDisplay::updatePrintText()
 {        
     image.print(printingChar < printingText.length() ? printingText.charAt(printingChar) : ' ',0,0);
 
-    if (printingChar > printingText.length()-1)
+    if (printingChar > printingText.length())
     {
         animationMode = ANIMATION_MODE_NONE;   
         this->sendEvent(MICROBIT_DISPLAY_EVT_ANIMATION_COMPLETE);
@@ -359,9 +362,18 @@ void MicroBitDisplay::resetAnimation(uint16_t delay)
   * uBit.display.print('p');
   * @endcode
   */
-void MicroBitDisplay::print(char c)
+void MicroBitDisplay::print(char c, int delay)
 {
     image.print(c, 0, 0);
+    
+    if(delay == 0)
+        return;
+        
+    this->animationDelay = delay;
+    animationMode = ANIMATION_MODE_PRINT_CHARACTER;
+    
+    // Wait for completion.
+    fiber_wait_for_event(MICROBIT_ID_DISPLAY, MICROBIT_DISPLAY_EVT_ANIMATION_COMPLETE);
 }
 
 /**

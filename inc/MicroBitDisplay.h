@@ -81,7 +81,8 @@ enum AnimationMode {
     ANIMATION_MODE_SCROLL_TEXT,
     ANIMATION_MODE_PRINT_TEXT,
     ANIMATION_MODE_SCROLL_IMAGE,
-    ANIMATION_MODE_ANIMATE_IMAGE
+    ANIMATION_MODE_ANIMATE_IMAGE,
+    ANIMATION_MODE_PRINT_CHARACTER
 };
 
 enum DisplayMode {
@@ -270,7 +271,7 @@ public:
       * uBit.display.print('p');
       * @endcode
       */
-    void print(char c);
+    void print(char c, int delay = 0);
 
     /**
       * Prints the given string to the display, one character at a time.
