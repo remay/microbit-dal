@@ -3,6 +3,6 @@
 
 #define MICROBIT_ID_BLE             1000
 
-#include "SamsungEvents.h"
+#include "BLEEvents.h"
 
 #endif
