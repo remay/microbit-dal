@@ -315,17 +315,21 @@ void MicroBitDisplay::updateScrollImage()
   */   
 void MicroBitDisplay::updateAnimateImage()
 {   
-    if (scrollingImagePosition <= -scrollingImage.getWidth() && scrollingImageRendered)
+    //wait until we have rendered the last position to give a continuous animation.
+    if (scrollingImagePosition <= -scrollingImage.getWidth() + (MICROBIT_DISPLAY_WIDTH + scrollingImageStride) && scrollingImageRendered)
     {
         animationMode = ANIMATION_MODE_NONE;  
         this->sendEvent(MICROBIT_DISPLAY_EVT_ANIMATION_COMPLETE);     
         return;
     }
     
-    image.clear();     
+    if(scrollingImagePosition > 0)
+        image.shiftLeft(-scrollingImageStride);
+        
     image.paste(scrollingImage, scrollingImagePosition, 0, 0);
-    
+        
     scrollingImageRendered = true;
+        
     scrollingImagePosition += scrollingImageStride;
 }
 
@@ -366,7 +370,7 @@ void MicroBitDisplay::print(char c, int delay)
 {
     image.print(c, 0, 0);
     
-    if(delay == 0)
+    if(delay <= 0)
         return;
         
     this->animationDelay = delay;
@@ -571,13 +575,15 @@ void MicroBitDisplay::animateImageAsync(MicroBitImage image, uint16_t delay, int
     if(delay <= 0 )
         delay = MICROBIT_DEFAULT_SCROLL_SPEED;
             
-    this->resetAnimation(delay);
+    this->animationDelay = delay;
+    this->animationTick = delay-1;
 
-    this->scrollingImagePosition = 0;//stride < 0 ? width : -image.getWidth();
+    //calculate starting position which is offset by the stride
+    this->scrollingImagePosition = MICROBIT_DISPLAY_WIDTH + stride; 
     this->scrollingImageStride = stride;
     this->scrollingImage = image;
     this->scrollingImageRendered = false;
-        
+    
     animationMode = ANIMATION_MODE_ANIMATE_IMAGE;
 }
 
