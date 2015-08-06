@@ -566,7 +566,7 @@ void MicroBitDisplay::scrollImage(MicroBitImage image, uint16_t delay, int8_t st
   * uBit.display.animateImageAsync(i,100,5);
   * @endcode
   */
-void MicroBitDisplay::animateImageAsync(MicroBitImage image, uint16_t delay, int8_t stride)
+void MicroBitDisplay::animateImageAsync(MicroBitImage image, uint16_t delay, int8_t stride, int startingPosition)
 {
     // Assume right to left functionality, to align with scrollString()
     stride = -stride;
@@ -579,7 +579,7 @@ void MicroBitDisplay::animateImageAsync(MicroBitImage image, uint16_t delay, int
     this->animationTick = delay-1;
 
     //calculate starting position which is offset by the stride
-    this->scrollingImagePosition = MICROBIT_DISPLAY_WIDTH + stride; 
+    this->scrollingImagePosition = (startingPosition == MICROBIT_DISPLAY_ANIMATE_DEFAULT_POS)?MICROBIT_DISPLAY_WIDTH + stride:startingPosition; 
     this->scrollingImageStride = stride;
     this->scrollingImage = image;
     this->scrollingImageRendered = false;
@@ -605,14 +605,14 @@ void MicroBitDisplay::animateImageAsync(MicroBitImage image, uint16_t delay, int
   * uBit.display.animateImage(i,100,5);
   * @endcode
   */
-void MicroBitDisplay::animateImage(MicroBitImage image, uint16_t delay, int8_t stride)
+void MicroBitDisplay::animateImage(MicroBitImage image, uint16_t delay, int8_t stride, int startingPosition)
 {
     //sanitise the delay value
     if(delay <= 0 )
         delay = MICROBIT_DEFAULT_SCROLL_SPEED;
     
     // Start the effect.
-    this->animateImageAsync(image, delay, stride);
+    this->animateImageAsync(image, delay, stride, startingPosition);
     
     // Wait for completion.
     fiber_wait_for_event(MICROBIT_ID_DISPLAY, MICROBIT_DISPLAY_EVT_ANIMATION_COMPLETE);

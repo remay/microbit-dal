@@ -73,6 +73,8 @@
 
 #define MICROBIT_DISPLAY_GREYSCALE_BIT_DEPTH 8
 
+#define MICROBIT_DISPLAY_ANIMATE_DEFAULT_POS -255
+
 #include "mbed.h"
 #include "MicroBit.h"
 
@@ -385,7 +387,7 @@ public:
       * uBit.display.animateImageAsync(i,100,5);
       * @endcode
       */
-    void animateImageAsync(MicroBitImage image, uint16_t delay, int8_t stride);
+    void animateImageAsync(MicroBitImage image, uint16_t delay, int8_t stride, int startingPosition = MICROBIT_DISPLAY_ANIMATE_DEFAULT_POS);
 
     /**
       * "Animates" the current image across the display with a given stride, finishing on the last frame of the animation.
@@ -405,7 +407,7 @@ public:
       * uBit.display.animateImage(i,100,5);
       * @endcode
       */
-    void animateImage(MicroBitImage image, uint16_t delay, int8_t stride);
+    void animateImage(MicroBitImage image, uint16_t delay, int8_t stride, int startingPosition = MICROBIT_DISPLAY_ANIMATE_DEFAULT_POS);
 
     /**
       * Sets the display brightness to the specified level.
