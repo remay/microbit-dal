@@ -81,7 +81,7 @@ class MicroBitSerial : public Serial
       *
       * Example:
       * @code 
-      * MicroBitImage i = uBit.serial.readImage(5,5);
+      * MicroBitImage i = uBit.serial.readImage(2,2);
       * @endcode
       *
       * Example Serial Format:

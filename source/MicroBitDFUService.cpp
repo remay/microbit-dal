@@ -63,7 +63,7 @@ int MicroBitDFUService::getName(char *name)
     // We count right to left, so fast forward the pointer.
     name += MICROBIT_DFU_HISTOGRAM_WIDTH;
 
-    int n = NRF_FICR->DEVICEID[1];
+    uint32_t n = NRF_FICR->DEVICEID[1];
     
     int ld = 1;
     int d = MICROBIT_DFU_HISTOGRAM_HEIGHT;
@@ -242,7 +242,7 @@ void MicroBitDFUService::showNameHistogram()
 
     uBit.display.resetAnimation(0);
 
-    int n = NRF_FICR->DEVICEID[1];
+    uint32_t n = NRF_FICR->DEVICEID[1];
     int ld = 1;
     int d = MICROBIT_DFU_HISTOGRAM_HEIGHT;
     int h;

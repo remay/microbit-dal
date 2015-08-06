@@ -231,6 +231,9 @@ MicroBitDisplay::animationUpdate()
         if (animationMode == ANIMATION_MODE_ANIMATE_IMAGE)
             this->updateAnimateImage();
             
+        if(animationMode == ANIMATION_MODE_PRINT_CHARACTER)
+            this->sendEvent(MICROBIT_DISPLAY_EVT_ANIMATION_COMPLETE);
+
     }
 }
 
@@ -276,7 +279,7 @@ void MicroBitDisplay::updatePrintText()
 {        
     image.print(printingChar < printingText.length() ? printingText.charAt(printingChar) : ' ',0,0);
 
-    if (printingChar > printingText.length()-1)
+    if (printingChar > printingText.length())
     {
         animationMode = ANIMATION_MODE_NONE;   
         this->sendEvent(MICROBIT_DISPLAY_EVT_ANIMATION_COMPLETE);
@@ -312,17 +315,21 @@ void MicroBitDisplay::updateScrollImage()
   */   
 void MicroBitDisplay::updateAnimateImage()
 {   
-    if (scrollingImagePosition <= -scrollingImage.getWidth() && scrollingImageRendered)
+    //wait until we have rendered the last position to give a continuous animation.
+    if (scrollingImagePosition <= -scrollingImage.getWidth() + (MICROBIT_DISPLAY_WIDTH + scrollingImageStride) && scrollingImageRendered)
     {
         animationMode = ANIMATION_MODE_NONE;  
         this->sendEvent(MICROBIT_DISPLAY_EVT_ANIMATION_COMPLETE);     
         return;
     }
     
-    image.clear();     
+    if(scrollingImagePosition > 0)
+        image.shiftLeft(-scrollingImageStride);
+
     image.paste(scrollingImage, scrollingImagePosition, 0, 0);
-    
+
     scrollingImageRendered = true;
+
     scrollingImagePosition += scrollingImageStride;
 }
 
@@ -359,9 +366,18 @@ void MicroBitDisplay::resetAnimation(uint16_t delay)
   * uBit.display.print('p');
   * @endcode
   */
-void MicroBitDisplay::print(char c)
+void MicroBitDisplay::print(char c, int delay)
 {
     image.print(c, 0, 0);
+
+    if(delay <= 0)
+        return;
+
+    this->animationDelay = delay;
+    animationMode = ANIMATION_MODE_PRINT_CHARACTER;
+
+    // Wait for completion.
+    fiber_wait_for_event(MICROBIT_ID_DISPLAY, MICROBIT_DISPLAY_EVT_ANIMATION_COMPLETE);
 }
 
 /**
@@ -550,7 +566,7 @@ void MicroBitDisplay::scrollImage(MicroBitImage image, uint16_t delay, int8_t st
   * uBit.display.animateImageAsync(i,100,5);
   * @endcode
   */
-void MicroBitDisplay::animateImageAsync(MicroBitImage image, uint16_t delay, int8_t stride)
+void MicroBitDisplay::animateImageAsync(MicroBitImage image, uint16_t delay, int8_t stride, int startingPosition)
 {
     // Assume right to left functionality, to align with scrollString()
     stride = -stride;
@@ -559,13 +575,15 @@ void MicroBitDisplay::animateImageAsync(MicroBitImage image, uint16_t delay, int
     if(delay <= 0 )
         delay = MICROBIT_DEFAULT_SCROLL_SPEED;
             
-    this->resetAnimation(delay);
+    this->animationDelay = delay;
+    this->animationTick = delay-1;
 
-    this->scrollingImagePosition = 0;//stride < 0 ? width : -image.getWidth();
+    //calculate starting position which is offset by the stride
+    this->scrollingImagePosition = (startingPosition == MICROBIT_DISPLAY_ANIMATE_DEFAULT_POS)?MICROBIT_DISPLAY_WIDTH + stride:startingPosition;
     this->scrollingImageStride = stride;
     this->scrollingImage = image;
     this->scrollingImageRendered = false;
-        
+
     animationMode = ANIMATION_MODE_ANIMATE_IMAGE;
 }
 
@@ -587,14 +605,14 @@ void MicroBitDisplay::animateImageAsync(MicroBitImage image, uint16_t delay, int
   * uBit.display.animateImage(i,100,5);
   * @endcode
   */
-void MicroBitDisplay::animateImage(MicroBitImage image, uint16_t delay, int8_t stride)
+void MicroBitDisplay::animateImage(MicroBitImage image, uint16_t delay, int8_t stride, int startingPosition)
 {
     //sanitise the delay value
     if(delay <= 0 )
         delay = MICROBIT_DEFAULT_SCROLL_SPEED;
     
     // Start the effect.
-    this->animateImageAsync(image, delay, stride);
+    this->animateImageAsync(image, delay, stride, startingPosition);
     
     // Wait for completion.
     fiber_wait_for_event(MICROBIT_ID_DISPLAY, MICROBIT_DISPLAY_EVT_ANIMATION_COMPLETE);

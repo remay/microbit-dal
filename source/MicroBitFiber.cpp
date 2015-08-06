@@ -297,7 +297,7 @@ Fiber *create_fiber(void (*entry_fn)(void), void (*completion_fn)(void))
         
         // Assign the new stack pointer and entry point.
         newFiber->tcb.SP = CORTEX_M0_STACK_BASE;    
-        newFiber->tcb.LR = (uint32_t) &&LAUNCH_NEW_FIBER;
+        newFiber->tcb.LR = (uint32_t) &&LAUNCH_NEW_FIBER | 0x1;
         
         // Store this context for later use.
         emptyContext = (Cortex_M0_TCB *) malloc (sizeof(Cortex_M0_TCB));
@@ -360,7 +360,7 @@ Fiber *create_fiber(void (*entry_fn)(void *), void *param, void (*completion_fn)
     memcpy(&newFiber->tcb, emptyContext, sizeof(Cortex_M0_TCB));
 
     // Assign the link register to refer to the thread entry point in THIS function.
-    newFiber->tcb.LR = (uint32_t) &&LAUNCH_NEW_FIBER;
+    newFiber->tcb.LR = (uint32_t) &&LAUNCH_NEW_FIBER | 0x1;
     
     // Add new fiber to the run queue.
     queue_fiber(newFiber, &runQueue);

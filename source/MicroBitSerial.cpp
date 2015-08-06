@@ -125,8 +125,6 @@ MicroBitImage MicroBitSerial::readImage(int width, int height)
         buffer[(offset + rowLength) - 1] = '\n'; 
     }
     
-    uBit.serial.sendString(MicroBitImage(buffer).toString());
-    
     return MicroBitImage(buffer);
 }
 
