@@ -1,19 +1,18 @@
 #ifdef __CC_ARM
-   AREA asm_func, CODE, READONLY
-    
 ; Export our context switching subroutine as a C function for use in mBed
+
+    AREA asm_func, CODE, READONLY
+
     EXPORT swap_context
     EXPORT save_context
     
     ALIGN
 #elif defined(__GNUC__)
-   .section  asm_func, "x"
-
-// Export our context switching subroutine as a C function for use in mBed
+    .section  .text, "x"
     .global swap_context
     .global save_context
     .syntax unified
-    .ALIGN
+    .ALIGN 2
 #else
 #error Only armcc and gcc are currently supported
 #endif
@@ -33,7 +32,7 @@ swap_context:
     ; Write our core registers into the TCB   
     ; First, store the general registers
 #endif
-	
+    
     STR     R0, [R0,#0]
     STR     R1, [R0,#4]
     STR     R2, [R0,#8]
@@ -42,7 +41,7 @@ swap_context:
     STR     R5, [R0,#20]
     STR     R6, [R0,#24]
     STR     R7, [R0,#28]
-	
+    
 #ifdef __CC_ARM
     ; Now the high general purpose registers 
 #endif
@@ -107,11 +106,11 @@ store_stack:
 #ifdef __CC_ARM
     ; Copy the stack in.
     ; n.b. we do this after setting the SP to make comparisons easier.
-	; Load R4 with top of System Stack space.
+    ; Load R4 with top of System Stack space.
 #endif
 
     MOV     R4, R7
-	
+    
 #ifdef __CC_ARM
 restore_stack
 #elif defined(__GNUC__)
@@ -146,10 +145,10 @@ restore_stack:
     LDR     R2, [R1, #8]
     LDR     R0, [R1, #0]
     LDR     R1, [R1, #4]
-	
+    
 #ifdef __CC_ARM
     ; Return to caller (scheduler).     
-#endif	
+#endif  
 
     BX      LR
 
@@ -169,8 +168,8 @@ save_context:
 #ifdef __CC_ARM
     ; Write our core registers into the TCB   
     ; First, store the general registers
-#endif	
-	
+#endif  
+    
     STR     R0, [R0,#0]
     STR     R1, [R0,#4]
     STR     R2, [R0,#8]
@@ -182,7 +181,7 @@ save_context:
  
 #ifdef __CC_ARM
     ; Now the high general purpose registers 
-#endif	
+#endif  
 
     MOV     R4, R8
     STR     R4, [R0,#32]
@@ -199,9 +198,9 @@ save_context:
     ; Now the Stack and Link Register.
     ; As this context is only intended for use with a fiber scheduler,
     ; we don't need the PC.
-#endif	
+#endif  
 
-	MOV     R6, SP
+    MOV     R6, SP
     STR     R6, [R0,#52]
     MOV     R4, LR
     STR     R4, [R0,#56] 
@@ -210,7 +209,7 @@ save_context:
     ; Finally, Copy the stack. We do this to reduce RAM footprint, as stackis usually very small at the point
     ; of sceduling, but we need a lot of capacity for interrupt handling and other functions.
 #endif
-	
+    
     MOVS    R5, #0x20
     LSLS    R5, #24
     MOVS    R4, #0x40          
@@ -243,7 +242,7 @@ store_stack1:
 #ifdef __CC_ARM
     ; Return to caller (scheduler).   
 #endif
-	
+    
     BX      LR
 
 #ifdef __CC_ARM
