@@ -91,6 +91,15 @@ void release_fiber(void);
 void release_fiber(void *param);
 
 /**
+ * Launches a fiber
+  */
+void launch_new_fiber() 
+#ifdef __GNUC__
+    __attribute__((naked))
+#endif
+;
+
+/**
  * Creates a new Fiber, and launches it.
   *
   * @param entry_fn The function the new Fiber will begin execution in.
@@ -100,6 +109,14 @@ void release_fiber(void *param);
 Fiber *create_fiber(void (*entry_fn)(void), void (*completion_fn)(void) = release_fiber);
 
 /**
+ * Launches a paramaterised fiber
+  */
+void launch_new_fiber_param() 
+#ifdef __GNUC__
+    __attribute__((naked))
+#endif
+;
+/**
  * Creates a new parameterised Fiber, and launches it.
   *
   * @param entry_fn The function the new Fiber will begin execution in.
@@ -108,6 +125,8 @@ Fiber *create_fiber(void (*entry_fn)(void), void (*completion_fn)(void) = releas
   * @return The new Fiber.
   */
 Fiber *create_fiber(void (*entry_fn)(void *), void *param, void (*completion_fn)(void *) = release_fiber);
+
+
 
 /**
   * Calls the Fiber scheduler.

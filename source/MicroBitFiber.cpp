@@ -260,6 +260,24 @@ Fiber *getFiberContext()
     return f;
 }
 
+void launch_new_fiber()
+{
+    // Launch into the entry point, now we're in the correct context. 
+    //uint32_t ep = currentFiber->stack_bottom;
+    uint32_t ep = *((uint32_t *)(currentFiber->stack_bottom + 0));
+    uint32_t cp = *((uint32_t *)(currentFiber->stack_bottom + 4));
+
+    // Execute the thread's entrypoint
+    (*(void(*)())(ep))();
+
+    // Execute the thread's completion routine;
+    (*(void(*)())(cp))();
+
+    // If we get here, then the completion routine didn't recycle the fiber
+    // so do it anyway. :-)
+    release_fiber();
+}
+
 /**
  * Creates a new Fiber, and launches it.
   *
@@ -297,7 +315,7 @@ Fiber *create_fiber(void (*entry_fn)(void), void (*completion_fn)(void))
         
         // Assign the new stack pointer and entry point.
         newFiber->tcb.SP = CORTEX_M0_STACK_BASE;    
-        newFiber->tcb.LR = (uint32_t) &&LAUNCH_NEW_FIBER;
+        newFiber->tcb.LR = (uint32_t) &launch_new_fiber;
         
         // Store this context for later use.
         emptyContext = (Cortex_M0_TCB *) malloc (sizeof(Cortex_M0_TCB));
@@ -308,25 +326,24 @@ Fiber *create_fiber(void (*entry_fn)(void), void (*completion_fn)(void))
     queue_fiber(newFiber, &runQueue);
         
     return newFiber;
+}
 
-LAUNCH_NEW_FIBER:     
- 
+void launch_new_fiber_param()
+{
     // Launch into the entry point, now we're in the correct context. 
-    //uint32_t ep = currentFiber->stack_bottom;
     uint32_t ep = *((uint32_t *)(currentFiber->stack_bottom + 0));
-    uint32_t cp = *((uint32_t *)(currentFiber->stack_bottom + 4));
+    uint32_t pm = *((uint32_t *)(currentFiber->stack_bottom + 4));
+    uint32_t cp = *((uint32_t *)(currentFiber->stack_bottom + 8));
 
-    // Execute the thread's entrypoint
-    (*(void(*)())(ep))();
+    // Execute the thread's entry routine.
+    (*(void(*)(void *))(ep))((void *)pm);
 
-    // Execute the thread's completion routine;
-    (*(void(*)())(cp))();
-    
-    // If we get here, then the completion routine didn't recycle the fiber
-    // so do it anyway. :-)
-    release_fiber();
-    
-    return NULL;
+    // Execute the thread's completion routine.
+    // Execute the thread's entry routine.
+    (*(void(*)(void *))(cp))((void *)pm);
+
+    // If we get here, then recycle the fiber context.
+    release_fiber((void *)pm);
 }
 
 /**
@@ -360,32 +377,15 @@ Fiber *create_fiber(void (*entry_fn)(void *), void *param, void (*completion_fn)
     memcpy(&newFiber->tcb, emptyContext, sizeof(Cortex_M0_TCB));
 
     // Assign the link register to refer to the thread entry point in THIS function.
-    newFiber->tcb.LR = (uint32_t) &&LAUNCH_NEW_FIBER;
+    newFiber->tcb.LR = (uint32_t) &launch_new_fiber_param;
     
     // Add new fiber to the run queue.
     queue_fiber(newFiber, &runQueue);
         
     return newFiber;
-
-LAUNCH_NEW_FIBER:     
- 
-    // Launch into the entry point, now we're in the correct context. 
-    uint32_t ep = *((uint32_t *)(currentFiber->stack_bottom + 0));
-    uint32_t pm = *((uint32_t *)(currentFiber->stack_bottom + 4));
-    uint32_t cp = *((uint32_t *)(currentFiber->stack_bottom + 8));
-
-    // Execute the thread's entry routine.
-    (*(void(*)(void *))(ep))((void *)pm);
-
-    // Execute the thread's completion routine.
-    // Execute the thread's entry routine.
-    (*(void(*)(void *))(cp))((void *)pm);
-    
-    // If we get here, then recycle the fiber context.
-    release_fiber((void *)pm);
-    
-    return NULL;
 }
+
+
 
 /**
   * Exit point for parameterised fibers.
