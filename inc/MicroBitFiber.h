@@ -94,7 +94,7 @@ void release_fiber(void *param);
  * Launches a fiber
   */
 void launch_new_fiber() 
-#ifdef __GNUC__
+#ifdef __GCC__
     __attribute__((naked))
 #endif
 ;
@@ -112,7 +112,7 @@ Fiber *create_fiber(void (*entry_fn)(void), void (*completion_fn)(void) = releas
  * Launches a paramaterised fiber
   */
 void launch_new_fiber_param() 
-#ifdef __GNUC__
+#ifdef __GCC__
     __attribute__((naked))
 #endif
 ;
