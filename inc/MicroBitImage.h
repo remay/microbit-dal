@@ -71,7 +71,7 @@ class MicroBitImage
       * MicroBitImage i("0,1,0,1,0\n1,0,1,0,1\n0,1,0,1,0\n1,0,1,0,1\n0,1,0,1,0\n"); // 5x5 image
       * @endcode
       */
-    MicroBitImage(const char *s);
+    explicit MicroBitImage(const char *s);
 
     /**
       * Constructor. 

@@ -357,6 +357,33 @@ void MicroBitDisplay::resetAnimation(uint16_t delay)
 }
 
 /**
+  * Prints the given string to the display, one character at a time.
+  * Uses the given delay between characters.
+  * Returns immediately, and executes the animation asynchronously.
+  *
+  * @param s The string to display.
+  * @param delay The time to delay between characters, in timer ticks.
+  *
+  * Example:
+  * @code
+  * uBit.display.printAsync("abc123",400);
+  * @endcode
+  */
+void MicroBitDisplay::printAsync(ManagedString s, int delay)
+{
+    //sanitise this value
+    if(delay <= 0 )
+        delay = MICROBIT_DEFAULT_SCROLL_SPEED;
+    
+    this->resetAnimation(delay);
+    
+    this->printingChar = 0;
+    this->printingText = s;
+    
+    animationMode = ANIMATION_MODE_PRINT_TEXT;
+}
+
+/**
   * Prints the given character to the display.
   *
   * @param c The character to display.
@@ -383,56 +410,55 @@ void MicroBitDisplay::print(char c, int delay)
 /**
   * Prints the given string to the display, one character at a time.
   * Uses the given delay between characters.
-  * Returns immediately, and executes the animation asynchronously.
-  *
-  * @param s The string to display.
-  * @param delay The time to delay between characters, in timer ticks.
-  * 
-  * Example:
-  * @code 
-  * uBit.display.printStringAsync("abc123",400);
-  * @endcode
-  */
-void MicroBitDisplay::printStringAsync(ManagedString s, uint16_t delay)
-{
-    //sanitise this value
-    if(delay <= 0 )
-        delay = MICROBIT_DEFAULT_SCROLL_SPEED;
-    
-    this->resetAnimation(delay);
-    
-    this->printingChar = 0;
-    this->printingText = s;
-    
-    animationMode = ANIMATION_MODE_PRINT_TEXT;
-}
-
-/**
-  * Prints the given string to the display, one character at a time.
-  * Uses the given delay between characters.
   * Blocks the calling thread until all the text has been displayed.
   *
   * @param s The string to display.
   * @param delay The time to delay between characters, in timer ticks.
-  * 
+  *
   * Example:
-  * @code 
-  * uBit.display.printString("abc123",400);
+  * @code
+  * uBit.display.print("abc123",400);
   * @endcode
   */
-void MicroBitDisplay::printString(ManagedString s, uint16_t delay)
+void MicroBitDisplay::print(ManagedString s, int delay)
 {
     //sanitise this value
     if(delay <= 0 )
         delay = MICROBIT_DEFAULT_SCROLL_SPEED;
     
     // Start the effect.
-    this->printStringAsync(s, delay);
+    this->printAsync(s, delay);
     
     // Wait for completion.
     fiber_wait_for_event(MICROBIT_ID_DISPLAY, MICROBIT_DISPLAY_EVT_ANIMATION_COMPLETE);
 }
 
+/**
+  * Prints the given image to the display.
+  * Blocks the calling thread until all the text has been displayed.
+  *
+  * @param i The image to display.
+  * @param delay The time to delay between characters, in timer ticks.
+  *
+  * Example:
+  * @code
+  * MicrobitImage i("1,1,1,1,1\n1,1,1,1,1\n");
+  * uBit.display.print(i,400);
+  * @endcode
+  */
+void MicroBitDisplay::print(MicroBitImage i, int x, int y, int alpha, int delay)
+{
+    image.paste(i, x, y, alpha);
+    
+    if(delay <= 0)
+        return;
+        
+    this->animationDelay = delay;
+    animationMode = ANIMATION_MODE_PRINT_CHARACTER;
+    
+    // Wait for completion.
+    fiber_wait_for_event(MICROBIT_ID_DISPLAY, MICROBIT_DISPLAY_EVT_ANIMATION_COMPLETE);
+}
 
 /**
   * Scrolls the given string to the display, from right to left.
@@ -441,13 +467,13 @@ void MicroBitDisplay::printString(ManagedString s, uint16_t delay)
   *
   * @param s The string to display.
   * @param delay The time to delay between characters, in timer ticks.
-  * 
+  *
   * Example:
-  * @code 
-  * uBit.display.scrollStringAsync("abc123",100);
+  * @code
+  * uBit.display.scrollAsync("abc123",100);
   * @endcode
   */
-void MicroBitDisplay::scrollStringAsync(ManagedString s, uint16_t delay)
+void MicroBitDisplay::scrollAsync(ManagedString s, int delay)
 {
     //sanitise this value
     if(delay <= 0 )
@@ -463,50 +489,20 @@ void MicroBitDisplay::scrollStringAsync(ManagedString s, uint16_t delay)
 }
 
 /**
-  * Scrolls the given string to the display, from right to left.
-  * Uses the given delay between characters.
-  * Blocks the calling thread until all the text has been displayed.
-  *
-  * @param s The string to display.
-  * @param delay The time to delay between characters, in timer ticks.
-  * 
-  * Example:
-  * @code 
-  * uBit.display.scrollString("abc123",100);
-  * @endcode
-  */
-void MicroBitDisplay::scrollString(ManagedString s, uint16_t delay)
-{
-    //sanitise this value
-    if(delay <= 0 )
-        delay = MICROBIT_DEFAULT_SCROLL_SPEED;
-    
-    // Start the effect.
-    this->scrollStringAsync(s, delay);
-    
-    // Wait for completion.
-    fiber_wait_for_event(MICROBIT_ID_DISPLAY, MICROBIT_DISPLAY_EVT_ANIMATION_COMPLETE);
-}
-
-
-/**
   * Scrolls the given image across the display, from right to left.
   * Returns immediately, and executes the animation asynchronously.
   * @param image The image to display.
   * @param delay The time to delay between each scroll update, in timer ticks. Has a default.
   * @param stride The number of pixels to move in each quantum. Has a default.
-  * 
+  *
   * Example:
-  * @code 
-  * MicrobitImage i("1,1,1,1,1\n1,1,1,1,1\n"); 
-  * uBit.display.scrollImageAsync(i,100,1);
+  * @code
+  * MicrobitImage i("1,1,1,1,1\n1,1,1,1,1\n");
+  * uBit.display.scrollAsync(i,100,1);
   * @endcode
   */
-void MicroBitDisplay::scrollImageAsync(MicroBitImage image, uint16_t delay, int8_t stride)
-{
-    // Assume right to left functionality, to align with scrollString()
-    stride = -stride;
-    
+void MicroBitDisplay::scrollAsync(MicroBitImage image, int delay, int stride)
+{   
     //sanitise the delay value
     if(delay <= 0 )
         delay = MICROBIT_DEFAULT_SCROLL_SPEED;
@@ -522,27 +518,53 @@ void MicroBitDisplay::scrollImageAsync(MicroBitImage image, uint16_t delay, int8
 }
 
 /**
+  * Scrolls the given string to the display, from right to left.
+  * Uses the given delay between characters.
+  * Blocks the calling thread until all the text has been displayed.
+  *
+  * @param s The string to display.
+  * @param delay The time to delay between characters, in timer ticks.
+  * 
+  * Example:
+  * @code 
+  * uBit.display.scrollString("abc123",100);
+  * @endcode
+  */
+void MicroBitDisplay::scroll(ManagedString s, int delay)
+{
+    //sanitise this value
+    if(delay <= 0 )
+        delay = MICROBIT_DEFAULT_SCROLL_SPEED;
+    
+    // Start the effect.
+    this->scrollAsync(s, delay);
+    
+    // Wait for completion.
+    fiber_wait_for_event(MICROBIT_ID_DISPLAY, MICROBIT_DISPLAY_EVT_ANIMATION_COMPLETE);
+}
+
+/**
   * Scrolls the given image across the display, from right to left.
   * Blocks the calling thread until all the text has been displayed.
   *
   * @param image The image to display.
   * @param delay The time to delay between each scroll update, in timer ticks. Has a default.
-  * @param stride The number of pixels to move in each quantum. Has a default. 
-  * 
+  * @param stride The number of pixels to move in each quantum. Has a default.
+  *
   * Example:
-  * @code 
-  * MicrobitImage i("1,1,1,1,1\n1,1,1,1,1\n"); 
-  * uBit.display.scrollImage(i,100,1);
+  * @code
+  * MicrobitImage i("1,1,1,1,1\n1,1,1,1,1\n");
+  * uBit.display.scroll(i,100,1);
   * @endcode
   */
-void MicroBitDisplay::scrollImage(MicroBitImage image, uint16_t delay, int8_t stride)
-{
+void MicroBitDisplay::scroll(MicroBitImage image, int delay, int stride)
+{   
     //sanitise the delay value
     if(delay <= 0 )
         delay = MICROBIT_DEFAULT_SCROLL_SPEED;
     
     // Start the effect.
-    this->scrollImageAsync(image, delay, stride);
+    this->scrollAsync(image, delay, stride);
     
     // Wait for completion.
     fiber_wait_for_event(MICROBIT_ID_DISPLAY, MICROBIT_DISPLAY_EVT_ANIMATION_COMPLETE);
@@ -555,18 +577,18 @@ void MicroBitDisplay::scrollImage(MicroBitImage image, uint16_t delay, int8_t st
   * @param image The image to display.
   * @param delay The time to delay between each animation update, in timer ticks. Has a default.
   * @param stride The number of pixels to move in each quantum. Has a default.
-  * 
+  *
   * Example:
-  * @code 
+  * @code
   * const int heart_w = 10;
   * const int heart_h = 5;
   * const uint8_t heart[] = { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, };
   *
   * MicroBitImage i(heart_w,heart_h,heart);
-  * uBit.display.animateImageAsync(i,100,5);
+  * uBit.display.animateAsync(i,100,5);
   * @endcode
   */
-void MicroBitDisplay::animateImageAsync(MicroBitImage image, uint16_t delay, int8_t stride, int startingPosition)
+void MicroBitDisplay::animateAsync(MicroBitImage image, int delay, int stride, int startingPosition)
 {
     // Assume right to left functionality, to align with scrollString()
     stride = -stride;
@@ -574,6 +596,13 @@ void MicroBitDisplay::animateImageAsync(MicroBitImage image, uint16_t delay, int
     //sanitise the delay value
     if(delay <= 0 )
         delay = MICROBIT_DEFAULT_SCROLL_SPEED;
+    
+    // Reset any ongoing animation.
+    if (animationMode != ANIMATION_MODE_NONE)
+    {
+        animationMode = ANIMATION_MODE_NONE;
+        this->sendEvent(MICROBIT_DISPLAY_EVT_ANIMATION_COMPLETE);
+    }
             
     this->animationDelay = delay;
     this->animationTick = delay-1;
@@ -590,29 +619,29 @@ void MicroBitDisplay::animateImageAsync(MicroBitImage image, uint16_t delay, int
 /**
   * "Animates" the current image across the display with a given stride, finishing on the last frame of the animation.
   * Blocks the calling thread until the animation is complete.
-  * 
+  *
   * @param image The image to display.
   * @param delay The time to delay between each animation update, in timer ticks. Has a default.
   * @param stride The number of pixels to move in each quantum. Has a default.
-  * 
+  *
   * Example:
-  * @code 
+  * @code
   * const int heart_w = 10;
   * const int heart_h = 5;
   * const uint8_t heart[] = { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, };
   *
   * MicroBitImage i(heart_w,heart_h,heart);
-  * uBit.display.animateImage(i,100,5);
+  * uBit.display.animate(i,100,5);
   * @endcode
   */
-void MicroBitDisplay::animateImage(MicroBitImage image, uint16_t delay, int8_t stride, int startingPosition)
+void MicroBitDisplay::animate(MicroBitImage image, int delay, int stride, int startingPosition)
 {
     //sanitise the delay value
     if(delay <= 0 )
         delay = MICROBIT_DEFAULT_SCROLL_SPEED;
     
     // Start the effect.
-    this->animateImageAsync(image, delay, stride, startingPosition);
+    this->animateAsync(image, delay, stride, startingPosition);
     
     // Wait for completion.
     fiber_wait_for_event(MICROBIT_ID_DISPLAY, MICROBIT_DISPLAY_EVT_ANIMATION_COMPLETE);

@@ -98,7 +98,7 @@ void MicroBitDFUService::pair()
     ManagedString blueZoneString("BLUE ZONE...");
     ManagedString pairString("PAIR?");
     
-    uBit.display.scrollString(blueZoneString);
+    uBit.display.scroll(blueZoneString);
 
     showNameHistogram();
     
@@ -108,7 +108,7 @@ void MicroBitDFUService::pair()
         {
             if (flashCodeRequested)
             {
-                uBit.display.scrollStringAsync(pairString);
+                uBit.display.scrollAsync(pairString);
                 for (int j=0; j<40; j++)
                 {          
                     if (uBit.buttonA.isPressed())

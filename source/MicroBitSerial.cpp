@@ -114,7 +114,7 @@ MicroBitImage MicroBitSerial::readImage(int width, int height)
     memset(buffer, 0, sizeof(buffer));
     
     //add in a null terminator so bad things don't happen with MicroBitImage
-    buffer[len+1] = '\0';
+    buffer[len] = '\0';
     
     for(int i = 0; i < height; i++)
     {

@@ -262,6 +262,21 @@ public:
       * Frame update method, invoked periodically to strobe the display.
       */
     virtual void systemTick();
+    
+    /**
+      * Prints the given string to the display, one character at a time.
+      * Uses the given delay between characters.
+      * Returns immediately, and executes the animation asynchronously.
+      *
+      * @param s The string to display.
+      * @param delay The time to delay between characters, in timer ticks.
+      *
+      * Example:
+      * @code
+      * uBit.display.printAsync("abc123",400);
+      * @endcode
+      */
+    void printAsync(ManagedString s, int delay = MICROBIT_DEFAULT_PRINT_SPEED);
 
     /**
       * Prints the given character to the display.
@@ -285,13 +300,28 @@ public:
       *
       * Example:
       * @code
-      * uBit.display.printString("abc123",400);
+      * uBit.display.print("abc123",400);
       * @endcode
       */
-    void printString(ManagedString s, uint16_t delay = MICROBIT_DEFAULT_PRINT_SPEED);
-
+    void print(ManagedString s, int delay = MICROBIT_DEFAULT_PRINT_SPEED);
+    
     /**
-      * Prints the given string to the display, one character at a time.
+      * Prints the given image to the display.
+      * Blocks the calling thread until all the text has been displayed.
+      *
+      * @param i The image to display.
+      * @param delay The time to delay between characters, in timer ticks.
+      *
+      * Example:
+      * @code
+      * MicrobitImage i("1,1,1,1,1\n1,1,1,1,1\n");
+      * uBit.display.print(i,400);
+      * @endcode
+      */
+    void print(MicroBitImage i, int x, int y, int alpha, int delay = MICROBIT_DEFAULT_PRINT_SPEED);
+    
+    /**
+      * Scrolls the given string to the display, from right to left.
       * Uses the given delay between characters.
       * Returns immediately, and executes the animation asynchronously.
       *
@@ -300,11 +330,25 @@ public:
       *
       * Example:
       * @code
-      * uBit.display.printStringAsync("abc123",400);
+      * uBit.display.scrollAsync("abc123",100);
       * @endcode
       */
-    void printStringAsync(ManagedString s, uint16_t delay = MICROBIT_DEFAULT_PRINT_SPEED);
+    void scrollAsync(ManagedString s, int delay = MICROBIT_DEFAULT_SCROLL_SPEED);
 
+    /**
+      * Scrolls the given image across the display, from right to left.
+      * Returns immediately, and executes the animation asynchronously.
+      * @param image The image to display.
+      * @param delay The time to delay between each scroll update, in timer ticks. Has a default.
+      * @param stride The number of pixels to move in each quantum. Has a default.
+      *
+      * Example:
+      * @code
+      * MicrobitImage i("1,1,1,1,1\n1,1,1,1,1\n");
+      * uBit.display.scrollAsync(i,100,1);
+      * @endcode
+      */
+    void scrollAsync(MicroBitImage image, int delay = MICROBIT_DEFAULT_SCROLL_SPEED, int stride = MICROBIT_DEFAULT_SCROLL_STRIDE);
 
     /**
       * Scrolls the given string to the display, from right to left.
@@ -316,26 +360,10 @@ public:
       *
       * Example:
       * @code
-      * uBit.display.scrollString("abc123",100);
+      * uBit.display.scroll("abc123",100);
       * @endcode
       */
-    void scrollString(ManagedString s, uint16_t delay = MICROBIT_DEFAULT_SCROLL_SPEED);
-
-    /**
-      * Scrolls the given string to the display, from right to left.
-      * Uses the given delay between characters.
-      * Returns immediately, and executes the animation asynchronously.
-      *
-      * @param s The string to display.
-      * @param delay The time to delay between characters, in timer ticks.
-      *
-      * Example:
-      * @code
-      * uBit.display.scrollStringAsync("abc123",100);
-      * @endcode
-      */
-    void scrollStringAsync(ManagedString s, uint16_t delay = MICROBIT_DEFAULT_SCROLL_SPEED);
-
+    void scroll(ManagedString s, int delay = MICROBIT_DEFAULT_SCROLL_SPEED);
 
     /**
       * Scrolls the given image across the display, from right to left.
@@ -348,26 +376,10 @@ public:
       * Example:
       * @code
       * MicrobitImage i("1,1,1,1,1\n1,1,1,1,1\n");
-      * uBit.display.scrollImage(i,100,1);
+      * uBit.display.scroll(i,100,1);
       * @endcode
       */
-    void scrollImage(MicroBitImage image, uint16_t delay = MICROBIT_DEFAULT_SCROLL_SPEED, int8_t stride = MICROBIT_DEFAULT_SCROLL_STRIDE);
-
-
-    /**
-      * Scrolls the given image across the display, from right to left.
-      * Returns immediately, and executes the animation asynchronously.
-      * @param image The image to display.
-      * @param delay The time to delay between each scroll update, in timer ticks. Has a default.
-      * @param stride The number of pixels to move in each quantum. Has a default.
-      *
-      * Example:
-      * @code
-      * MicrobitImage i("1,1,1,1,1\n1,1,1,1,1\n");
-      * uBit.display.scrollImageAsync(i,100,1);
-      * @endcode
-      */
-    void scrollImageAsync(MicroBitImage image, uint16_t delay = MICROBIT_DEFAULT_SCROLL_SPEED, int8_t stride = MICROBIT_DEFAULT_SCROLL_STRIDE);
+    void scroll(MicroBitImage image, int delay = MICROBIT_DEFAULT_SCROLL_SPEED, int stride = MICROBIT_DEFAULT_SCROLL_STRIDE);
 
     /**
       * "Animates" the current image across the display with a given stride, finishing on the last frame of the animation.
@@ -384,10 +396,10 @@ public:
       * const uint8_t heart[] = { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, };
       *
       * MicroBitImage i(heart_w,heart_h,heart);
-      * uBit.display.animateImageAsync(i,100,5);
+      * uBit.display.animateAsync(i,100,5);
       * @endcode
       */
-    void animateImageAsync(MicroBitImage image, uint16_t delay, int8_t stride, int startingPosition = MICROBIT_DISPLAY_ANIMATE_DEFAULT_POS);
+    void animateAsync(MicroBitImage image, int delay, int stride, int startingPosition = MICROBIT_DISPLAY_ANIMATE_DEFAULT_POS);
 
     /**
       * "Animates" the current image across the display with a given stride, finishing on the last frame of the animation.
@@ -404,10 +416,10 @@ public:
       * const uint8_t heart[] = { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, };
       *
       * MicroBitImage i(heart_w,heart_h,heart);
-      * uBit.display.animateImage(i,100,5);
+      * uBit.display.animate(i,100,5);
       * @endcode
       */
-    void animateImage(MicroBitImage image, uint16_t delay, int8_t stride, int startingPosition = MICROBIT_DISPLAY_ANIMATE_DEFAULT_POS);
+    void animate(MicroBitImage image, int delay, int stride, int startingPosition = MICROBIT_DISPLAY_ANIMATE_DEFAULT_POS);
 
     /**
       * Sets the display brightness to the specified level.
