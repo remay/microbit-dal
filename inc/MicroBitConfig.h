@@ -71,7 +71,6 @@
 #if defined(YOTTA_CFG_MICROBIT_S130) && (YOTTA_CFG_MICROBIT_S130 == 1)
 #define MICROBIT_HEAP_SD_LIMIT                  0x20002800
 #else
-#error S130 BUILD
 #define MICROBIT_HEAP_SD_LIMIT                  0x20002000
 #endif
 #endif
