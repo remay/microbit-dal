@@ -11,7 +11,7 @@
 template <class T>
 class ManagedType
 {
-private:
+protected:
 
     int *ref;
 
@@ -103,6 +103,8 @@ public:
      * x->m(); // resolves to T::m
      */
     T* operator->() {
+        if (object == NULL)
+            panic(MICROBIT_NULL_DEREFERENCE);
         return object;
     }
 
