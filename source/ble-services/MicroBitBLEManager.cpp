@@ -102,7 +102,7 @@ void MicroBitBLEManager::init(ManagedString deviceName, ManagedString serialNumb
     // Setup our security requirements.
     ble->securityManager().onPasskeyDisplay(passkeyDisplayCallback);
     ble->securityManager().onSecuritySetupCompleted(securitySetupCompletedCallback);
-    ble->securityManager().init(MICROBIT_BLE_ENABLE_BONDING, MICROBIT_BLE_REQUIRE_MITM, SecurityManager::IO_CAPS_DISPLAY_ONLY);
+    ble->securityManager().init(MICROBIT_BLE_ENABLE_BONDING, MICROBIT_BLE_REQUIRE_MITM, SecurityManager::IO_CAPS_KEYBOARD_ONLY);
 
     // Bring up any configured auxiliary services.
 #if CONFIG_ENABLED(MICROBIT_BLE_DFU_SERVICE)
@@ -149,12 +149,14 @@ void MicroBitBLEManager::init(ManagedString deviceName, ManagedString serialNumb
     fast.slaveLatency = 0;
     ble->setPreferredConnectionParams(&fast);
 
+#ifdef 0
     // Setup advertising.
     ble->accumulateAdvertisingPayload(GapAdvertisingData::BREDR_NOT_SUPPORTED | GapAdvertisingData::LE_GENERAL_DISCOVERABLE);
     ble->accumulateAdvertisingPayload(GapAdvertisingData::COMPLETE_LOCAL_NAME, (uint8_t *)BLEName.toCharArray(), BLEName.length());
     ble->setAdvertisingType(GapAdvertisingParams::ADV_CONNECTABLE_UNDIRECTED);
     ble->setAdvertisingInterval(Gap::MSEC_TO_ADVERTISEMENT_DURATION_UNITS(200));
     ble->startAdvertising();  
+#endif
 }
 
 /**
