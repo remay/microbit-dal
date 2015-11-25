@@ -149,7 +149,7 @@ void MicroBitBLEManager::init(ManagedString deviceName, ManagedString serialNumb
     fast.slaveLatency = 0;
     ble->setPreferredConnectionParams(&fast);
 
-#ifdef 0
+#if 0
     // Setup advertising.
     ble->accumulateAdvertisingPayload(GapAdvertisingData::BREDR_NOT_SUPPORTED | GapAdvertisingData::LE_GENERAL_DISCOVERABLE);
     ble->accumulateAdvertisingPayload(GapAdvertisingData::COMPLETE_LOCAL_NAME, (uint8_t *)BLEName.toCharArray(), BLEName.length());
