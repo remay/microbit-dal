@@ -97,12 +97,13 @@ void MicroBitBLEManager::init(ManagedString deviceName, ManagedString serialNumb
     ble->init();
 
     // automatically restart advertising after a device disconnects.
-    ble->onDisconnection(bleDisconnectionCallback);
+//    ble->onDisconnection(bleDisconnectionCallback);
 
     // Setup our security requirements.
-    ble->securityManager().onPasskeyDisplay(passkeyDisplayCallback);
-    ble->securityManager().onSecuritySetupCompleted(securitySetupCompletedCallback);
-    ble->securityManager().init(MICROBIT_BLE_ENABLE_BONDING, MICROBIT_BLE_REQUIRE_MITM, SecurityManager::IO_CAPS_KEYBOARD_ONLY);
+//    ble->securityManager().onPasskeyDisplay(passkeyDisplayCallback);
+//    ble->securityManager().onSecuritySetupCompleted(securitySetupCompletedCallback);
+    ble_error_t e = ble->securityManager().init(MICROBIT_BLE_ENABLE_BONDING, MICROBIT_BLE_REQUIRE_MITM, SecurityManager::IO_CAPS_KEYBOARD_ONLY);
+    uBit.serial.printf("D SM init() returned %d\n", e);
 
     // Bring up any configured auxiliary services.
 #if CONFIG_ENABLED(MICROBIT_BLE_DFU_SERVICE)
