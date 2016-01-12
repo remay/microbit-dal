@@ -77,7 +77,7 @@ void microbit_heap_print(HeapDefinition &heap)
 	while (block < heap.heap_end)
 	{
 		blockSize = *block & ~MICROBIT_HEAP_BLOCK_FREE;
-        uBit.serialpc.printf("[%C:%d] ", *block & MICROBIT_HEAP_BLOCK_FREE ? 'F' : 'U', blockSize*4);
+        uBit.serialpc.printf("[%c:%d] ", *block & MICROBIT_HEAP_BLOCK_FREE ? 'F' : 'U', blockSize*4);
         if (cols++ == 20)
         {
             uBit.serial.printf("\n");
