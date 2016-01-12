@@ -1,15 +1,5 @@
 #include "MicroBit.h"
 
-char MICROBIT_BLE_DEVICE_NAME[] = "BBC micro:bit [xxxxx]";
-
-#if CONFIG_ENABLED(MICROBIT_BLE_ENABLED) && CONFIG_ENABLED(MICROBIT_BLE_DEVICE_INFORMATION_SERVICE)
-const char* MICROBIT_BLE_MANUFACTURER = "The Cast of W1A";
-const char* MICROBIT_BLE_MODEL = "BBC micro:bit";
-const char* MICROBIT_BLE_HARDWARE_VERSION = "1.0";
-const char* MICROBIT_BLE_FIRMWARE_VERSION = MICROBIT_DAL_VERSION;
-const char* MICROBIT_BLE_SOFTWARE_VERSION = NULL;
-#endif
-
 /**
   * custom function for panic for malloc & new due to scoping issue.
   */
@@ -19,25 +9,43 @@ void panic(int statusCode)
 }
 
 /**
-  * Perform a hard reset of the micro:bit.
+  * Callback that performs a hard reset when a BLE GAP disconnect occurs.
+  * Only used when an explicit reset is invoked locally whilst a BLE connection is in progress.
+  * This allows for a clean diconnect of the BLE connection before resetting.
   */
-void
-microbit_reset()
+void bleDisconnectionResetCallback(const Gap::DisconnectionCallbackParams_t *)
 {
     NVIC_SystemReset();
 }
 
-
 /**
-  * Callback when a BLE GATT disconnect occurs.
+  * Perform a hard reset of the micro:bit.
+  * If BLE connected, then try to signal a disconnect first
   */
-void bleDisconnectionCallback(Gap::Handle_t handle, Gap::DisconnectionReason_t reason)
+void
+microbit_reset()
 {
-    (void) handle; /* -Wunused-param */
+    if(uBit.ble && uBit.ble->getGapState().connected) {
+        uBit.ble->onDisconnection(bleDisconnectionResetCallback);
+
+        uBit.ble->gap().disconnect(Gap::REMOTE_USER_TERMINATED_CONNECTION);
+        // We should be reset by the disconnection callback, so we wait to
+        // allow that to happen.  If it doesn't happen, then we fall through to the
+        // hard rest here.  (For example there is a race condition where
+        // the remote device disconnects between us testing the connection
+        // state and re-setting the disconnection callback).
+        uBit.sleep(1000);
+    }
+    NVIC_SystemReset();
+}
+
+void bleDisconnectionCallback(const Gap::DisconnectionCallbackParams_t *reason)
+{
     (void) reason; /* -Wunused-param */
 
     uBit.ble->startAdvertising(); 
 }
+
 
 /**
   * Constructor. 
@@ -76,7 +84,8 @@ MicroBit::MicroBit() :
        MICROBIT_ID_IO_P9,MICROBIT_ID_IO_P10,MICROBIT_ID_IO_P11,
        MICROBIT_ID_IO_P12,MICROBIT_ID_IO_P13,MICROBIT_ID_IO_P14,
        MICROBIT_ID_IO_P15,MICROBIT_ID_IO_P16,MICROBIT_ID_IO_P19,
-       MICROBIT_ID_IO_P20)
+       MICROBIT_ID_IO_P20),
+	bleManager()
 {   
 }
 
@@ -93,9 +102,6 @@ MicroBit::MicroBit() :
   */
 void MicroBit::init()
 {   
-    // Set the default baud rate for the serial port.`
-    uBit.serial.baud(115200);
-        
     //add the display to the systemComponent array
     addSystemComponent(&uBit.display);
     
@@ -107,77 +113,160 @@ void MicroBit::init()
     // Seed our random number generator
     seedRandom();
 
-    // Generate the name for our device.
-    this->deriveName();
-
 #if CONFIG_ENABLED(MICROBIT_BLE_ENABLED)
     // Start the BLE stack.        
-    ble = new BLEDevice();
-    ble->init();
-    ble->onDisconnection(bleDisconnectionCallback);
-
-    // Bring up any configured auxiliary services.
-#if CONFIG_ENABLED(MICROBIT_BLE_DFU_SERVICE)
-    ble_firmware_update_service = new MicroBitDFUService(*ble);
+    bleManager.init(this->getName(), this->getSerial());
+	  
+    ble = bleManager.ble;
 #endif
-
-#if CONFIG_ENABLED(MICROBIT_BLE_DEVICE_INFORMATION_SERVICE)
-    DeviceInformationService ble_device_information_service (*ble, MICROBIT_BLE_MANUFACTURER, MICROBIT_BLE_MODEL, getSerial().toCharArray(), MICROBIT_BLE_HARDWARE_VERSION, MICROBIT_BLE_FIRMWARE_VERSION, MICROBIT_BLE_SOFTWARE_VERSION);
-#endif
-
-#if CONFIG_ENABLED(MICROBIT_BLE_EVENT_SERVICE)
-    new MicroBitEventService(*ble);
-#endif    
-    
-#if CONFIG_ENABLED(MICROBIT_BLE_LED_SERVICE) 
-    new MicroBitLEDService(*ble);
-#endif
-
-#if CONFIG_ENABLED(MICROBIT_BLE_ACCELEROMETER_SERVICE) 
-    new MicroBitAccelerometerService(*ble);
-#endif
-
-#if CONFIG_ENABLED(MICROBIT_BLE_MAGNETOMETER_SERVICE) 
-    new MicroBitMagnetometerService(*ble);
-#endif
-
-#if CONFIG_ENABLED(MICROBIT_BLE_BUTTON_SERVICE) 
-    new MicroBitButtonService(*ble);
-#endif
-
-#if CONFIG_ENABLED(MICROBIT_BLE_IO_PIN_SERVICE) 
-    new MicroBitIOPinService(*ble);
-#endif
-
-#if CONFIG_ENABLED(MICROBIT_BLE_TEMPERATURE_SERVICE) 
-    new MicroBitTemperatureService(*ble);
-#endif
-
-    // Configure for high speed mode where possible.
-    Gap::ConnectionParams_t fast;
-    ble->getPreferredConnectionParams(&fast);
-    fast.minConnectionInterval = 8; // 10 ms
-    fast.maxConnectionInterval = 16; // 20 ms
-    fast.slaveLatency = 0;
-    ble->setPreferredConnectionParams(&fast);
-
-    // Setup advertising.
-    ble->accumulateAdvertisingPayload(GapAdvertisingData::BREDR_NOT_SUPPORTED | GapAdvertisingData::LE_GENERAL_DISCOVERABLE);
-    ble->accumulateAdvertisingPayload(GapAdvertisingData::COMPLETE_LOCAL_NAME, (uint8_t *)MICROBIT_BLE_DEVICE_NAME, sizeof(MICROBIT_BLE_DEVICE_NAME));
-    ble->setAdvertisingType(GapAdvertisingParams::ADV_CONNECTABLE_UNDIRECTED);
-    ble->setAdvertisingInterval(Gap::MSEC_TO_ADVERTISEMENT_DURATION_UNITS(200));
-    ble->startAdvertising();  
-#endif    
 
     // Start refreshing the Matrix Display
     systemTicker.attach(this, &MicroBit::systemTick, MICROBIT_DISPLAY_REFRESH_PERIOD);     
+
+    // Register our compass calibration algorithm.
+    MessageBus.listen(MICROBIT_ID_COMPASS, MICROBIT_COMPASS_EVT_CALIBRATE, this, &MicroBit::compassCalibrator, MESSAGE_BUS_LISTENER_IMMEDIATE);
 }
 
 /**
-  * Derives the friendly name for this device, autogenerated from our hardware Device ID.
+  * Performs a simple game that in parallel, calibrates the compass.
+  * This function is executed automatically when the user requests a compass bearing, and compass calibration is required.
+  * This function is, by design, synchronous and only returns once calibration is complete.
   */
-void MicroBit::deriveName()
+void MicroBit::compassCalibrator(MicroBitEvent)
 {
+    struct Point
+    {
+        uint8_t x;
+        uint8_t y;
+        uint8_t on;
+    };
+
+    const int PERIMETER_POINTS = 12;
+    const int PIXEL1_THRESHOLD = 200;
+    const int PIXEL2_THRESHOLD = 800;
+
+	Matrix4 X(PERIMETER_POINTS, 4);
+    Point perimeter[PERIMETER_POINTS] = {{1,0,0}, {2,0,0}, {3,0,0}, {4,1,0}, {4,2,0}, {4,3,0}, {3,4,0}, {2,4,0}, {1,4,0}, {0,3,0}, {0,2,0}, {0,1,0}}; 
+    Point cursor = {2,2,0};
+
+    MicroBitImage img(5,5);
+    MicroBitImage smiley("0,255,0,255,0\n0,255,0,255,0\n0,0,0,0,0\n255,0,0,0,255\n0,255,255,255,0\n");
+    int samples = 0;
+
+    // Firstly, we need to take over the display. Ensure all active animations are paused.
+    display.stopAnimation();
+    display.scrollAsync("DRAW A CIRCLE");
+    for (int i=0; i<110; i++)
+    {
+        if (buttonA.isPressed() || buttonB.isPressed())
+        {
+            break;
+        }
+        sleep(100);
+    }
+
+    display.stopAnimation();
+    display.clear();
+
+    while(samples < PERIMETER_POINTS)
+    {
+        // update our model of the flash status of the user controlled pixel.
+        cursor.on = (cursor.on + 1) % 4;
+
+        // take a snapshot of the current accelerometer data.
+        int x = uBit.accelerometer.getX();
+        int y = uBit.accelerometer.getY();
+
+        // Deterine the position of the user controlled pixel on the screen.
+        if (x < -PIXEL2_THRESHOLD)
+            cursor.x = 0;
+        else if (x < -PIXEL1_THRESHOLD)
+            cursor.x = 1;
+        else if (x > PIXEL2_THRESHOLD)
+            cursor.x = 4;
+        else if (x > PIXEL1_THRESHOLD)
+            cursor.x = 3;
+        else 
+            cursor.x = 2;
+
+        if (y < -PIXEL2_THRESHOLD)
+            cursor.y = 0;
+        else if (y < -PIXEL1_THRESHOLD)
+            cursor.y = 1;
+        else if (y > PIXEL2_THRESHOLD)
+            cursor.y = 4;
+        else if (y > PIXEL1_THRESHOLD)
+            cursor.y = 3;
+        else
+            cursor.y = 2;
+
+        img.clear();
+
+        // Turn on any pixels that have been visited.
+        for (int i=0; i<PERIMETER_POINTS; i++)
+            if (perimeter[i].on)
+                img.setPixelValue(perimeter[i].x, perimeter[i].y, 255);
+
+        // Update the pixel at the users position.
+        img.setPixelValue(cursor.x, cursor.y, 255);
+
+        // Update the buffer to the screen.
+        uBit.display.image.paste(img,0,0,0);
+
+        // test if we need to update the state at the users position.
+        for (int i=0; i<PERIMETER_POINTS; i++)
+        {
+            if (cursor.x == perimeter[i].x && cursor.y == perimeter[i].y && !perimeter[i].on)
+            {
+                // Record the sample data for later processing...
+                X.set(samples, 0, compass.getX(RAW));
+                X.set(samples, 1, compass.getY(RAW));
+                X.set(samples, 2, compass.getZ(RAW));
+                X.set(samples, 3, 1);
+
+                // Record that this pixel has been visited.
+                perimeter[i].on = 1;
+                samples++;
+            }
+        }
+
+        uBit.sleep(100);
+    }
+
+    // We have enough sample data to make a fairly accurate calibration.
+    // We use a Least Mean Squares approximation, as detailed in Freescale application note AN2426.
+
+    // Firstly, calculate the square of each sample.
+	Matrix4 Y(X.height(), 1);
+	for (int i = 0; i < X.height(); i++)
+	{
+		double v = X.get(i, 0)*X.get(i, 0) + X.get(i, 1)*X.get(i, 1) + X.get(i, 2)*X.get(i, 2);
+		Y.set(i, 0, v);
+	}
+
+    // Now perform a Least Squares Approximation. 
+	Matrix4 XT = X.transpose();
+	Matrix4 Beta = XT.multiply(X).invert().multiply(XT).multiply(Y);
+
+    // The result contains the approximate zero point of each axis, but doubled.
+    // Halve each sample, and record this as the compass calibration data.
+    CompassSample cal = {(int)(Beta.get(0,0) / 2), (int)(Beta.get(1,0) / 2), (int)(Beta.get(2,0) / 2)};
+    compass.setCalibration(cal);
+
+    // Show a smiley to indicate that we're done, and continue on with the user program.
+    display.clear();
+    display.print(smiley, 0, 0, 0, 1500);
+    display.clear();
+}
+
+/**
+  * Return the friendly name for this device.
+  *
+  * @return A string representing the friendly name of this device.
+  */
+ManagedString MicroBit::getName()
+{
+    char nameBuffer[MICROBIT_NAME_LENGTH];
     const uint8_t codebook[MICROBIT_NAME_LENGTH][MICROBIT_NAME_CODE_LETTERS] = 
     {
         {'z', 'v', 'g', 'p', 't'},  
@@ -187,13 +276,12 @@ void MicroBit::deriveName()
         {'z', 'v', 'g', 'p', 't'}
     };
 
-    char *name = MICROBIT_BLE_DEVICE_NAME+15;
-
-    // We count right to left, so fast forward the pointer.
+    // We count right to left, so create a pointer to the end of the buffer.
+	char *name = nameBuffer;
     name += MICROBIT_NAME_LENGTH;
 
+	// Derive our name from the nrf51822's unique ID.
     uint32_t n = NRF_FICR->DEVICEID[1];
-    
     int ld = 1;
     int d = MICROBIT_NAME_CODE_LETTERS;
     int h;
@@ -206,16 +294,8 @@ void MicroBit::deriveName()
         ld *= MICROBIT_NAME_CODE_LETTERS;
         *--name = codebook[i][h];
     }
-}
 
-/**
-  * Return the friendly name for this device.
-  *
-  * @return A string representing the friendly name of this device.
-  */
-ManagedString MicroBit::getName()
-{
-    return ManagedString(MICROBIT_BLE_DEVICE_NAME+15, MICROBIT_NAME_LENGTH);
+    return ManagedString(nameBuffer, MICROBIT_NAME_LENGTH);
 }
 
 /**
@@ -233,7 +313,7 @@ ManagedString MicroBit::getSerial()
     ManagedString s1 = ManagedString(n1);
     ManagedString s2 = ManagedString(n2);
 
-    return s1+s2;
+    return s1 + s2;
 }
 
 /**
@@ -301,17 +381,44 @@ int MicroBit::sleep(int milliseconds)
   */
 int MicroBit::random(int max)
 {
+    uint32_t m, result;
+
     //return MICROBIT_INVALID_VALUE if max is <= 0...
     if(max <= 0)
         return MICROBIT_INVALID_PARAMETER;
-    
-    // Cycle the LFSR (Linear Feedback Shift Register).
-    // We use an optimal sequence with a period of 2^32-1, as defined by Bruce Schneider here (a true legend in the field!), 
-    // For those interested, it's documented in his paper:
-    // "Pseudo-Random Sequence Generator for 32-Bit CPUs: A fast, machine-independent generator for 32-bit Microprocessors"
-    
-    randomValue = ((((randomValue >> 31) ^ (randomValue >> 6) ^ (randomValue >> 4) ^ (randomValue >> 2) ^ (randomValue >> 1) ^ randomValue) & 0x0000001) << 31 ) | (randomValue >> 1);   
-    return randomValue % max;
+
+    // Our maximum return value is actually one less than passed
+    max--;
+
+    do {
+        m = (uint32_t)max;
+        result = 0;
+		do {
+            // Cycle the LFSR (Linear Feedback Shift Register).
+            // We use an optimal sequence with a period of 2^32-1, as defined by Bruce Schneier here (a true legend in the field!), 
+            // For those interested, it's documented in his paper:
+            // "Pseudo-Random Sequence Generator for 32-Bit CPUs: A fast, machine-independent generator for 32-bit Microprocessors"
+            // https://www.schneier.com/paper-pseudorandom-sequence.html
+			uint32_t rnd = randomValue;
+
+            rnd = ((((rnd >> 31)
+                          ^ (rnd >> 6)
+                          ^ (rnd >> 4)
+                          ^ (rnd >> 2)
+                          ^ (rnd >> 1)
+                          ^ rnd)
+                          & 0x0000001)
+                          << 31 )
+                          | (rnd >> 1);
+
+			randomValue = rnd;
+
+            result = ((result << 1) | (rnd & 0x00000001));
+        } while(m >>= 1); 
+    } while (result > (uint32_t)max);
+
+
+    return result;
 }
 
 

@@ -77,7 +77,7 @@ void microbit_heap_print(HeapDefinition &heap)
 	while (block < heap.heap_end)
 	{
 		blockSize = *block & ~MICROBIT_HEAP_BLOCK_FREE;
-        uBit.serialpc.printf("[%C:%d] ", *block & MICROBIT_HEAP_BLOCK_FREE ? 'F' : 'U', blockSize*4);
+        uBit.serial.printf("[%C:%d] ", *block & MICROBIT_HEAP_BLOCK_FREE ? 'F' : 'U', blockSize*4);
         if (cols++ == 20)
         {
             uBit.serial.printf("\n");
@@ -127,20 +127,23 @@ microbit_create_sd_heap(HeapDefinition &heap)
 {
 #if CONFIG_ENABLED(MICROBIT_HEAP_REUSE_SD)
 
-    // OK, see how much of the RAM assigned to Soft Device we can reclaim.
 #if CONFIG_ENABLED(MICROBIT_BLE_ENABLED)
+    // Reclaim RAM from unusused areas on the BLE stack GATT table.
     heap.heap_start = (uint32_t *)MICROBIT_HEAP_BASE_BLE_ENABLED;
     heap.heap_end = (uint32_t *)MICROBIT_HEAP_SD_LIMIT;
 #else    
+    // Reclaim all the RAM normally reserved for the Nordic SoftDevice.
     heap.heap_start = (uint32_t *)MICROBIT_HEAP_BASE_BLE_DISABLED;
     heap.heap_end = (uint32_t *)MICROBIT_HEAP_SD_LIMIT;
 #endif
 
     microbit_initialise_heap(heap);
-    return MICROBIT_OK;
 #else
-    return MICROBIT_NOT_SUPPORTED;
+    heap.heap_start = 0;
+    heap.heap_end = 0;
 #endif
+
+    return MICROBIT_OK;
 }
 
 int
@@ -329,7 +332,7 @@ void *microbit_malloc(size_t size)
             if (p != NULL)
             {
 #if CONFIG_ENABLED(MICROBIT_DBG) && CONFIG_ENABLED(MICROBIT_HEAP_DBG)
-                pc.uBit.serial("microbit_malloc: ALLOCATED: %d [%p]\n", size, p);
+                uBit.serial.printf("microbit_malloc: ALLOCATED: %d [%p]\n", size, p);
 #endif    
                 return p;
             }
@@ -345,7 +348,7 @@ void *microbit_malloc(size_t size)
 #if CONFIG_ENABLED(MICROBIT_DBG) && CONFIG_ENABLED(MICROBIT_HEAP_DBG)
         // Keep everything trasparent if we've not been initialised yet
         if (microbit_active_heaps())
-            pc.uBit.serial("microbit_malloc: NATIVE ALLOCATED: %d [%p]\n", size, p);
+            uBit.serial.printf("microbit_malloc: NATIVE ALLOCATED: %d [%p]\n", size, p);
 #endif    
         return p;
     }
@@ -354,7 +357,7 @@ void *microbit_malloc(size_t size)
 #if CONFIG_ENABLED(MICROBIT_DBG) && CONFIG_ENABLED(MICROBIT_HEAP_DBG)
     // Keep everything trasparent if we've not been initialised yet
     if (microbit_active_heaps())
-        pc.uBit.serial("microbit_malloc: OUT OF MEMORY\n");
+        uBit.serial.printf("microbit_malloc: OUT OF MEMORY\n");
 #endif    
     
 #if CONFIG_ENABLED(MICROBIT_PANIC_HEAP_FULL)
@@ -375,7 +378,7 @@ void microbit_free(void *mem)
 
 #if CONFIG_ENABLED(MICROBIT_DBG) && CONFIG_ENABLED(MICROBIT_HEAP_DBG)
     if (microbit_active_heaps())
-        pc.uBit.serial("microbit_free:   %p\n", mem);
+        uBit.serial.printf("microbit_free:   %p\n", mem);
 #endif    
     // Sanity check.
 	if (memory == NULL)
